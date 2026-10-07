@@ -1,0 +1,8 @@
+Math Release Atlas
+Copyright 2026 jkbennitt
+
+This project contains titles and summaries from
+https://github.com/openai/math (Apache License 2.0), reformatted into
+JSON and into a website. We changed and derived these files. The
+upstream license is included here as UPSTREAM_LICENSE. PDFs and other
+originals are not mirrored; links point at the upstream repository.
