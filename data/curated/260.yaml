@@ -1,0 +1,8 @@
+id: "260"
+lenses:
+  - tag: gravity-qft
+    why: "The family treats spacetime Penrose inequalities for asymptotically flat initial data."
+    source: "Upstream family 260 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+community:
+  status: claimed
+  evidence: []

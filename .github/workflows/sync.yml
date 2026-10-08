@@ -53,7 +53,7 @@ jobs:
         if: steps.sync.outputs.code == '2' || steps.sync.outputs.code == '3'
         run: |
           set +e
-          python3 scripts/check.py --self-test --source > /tmp/guard.log 2>&1
+          python3 scripts/check.py --self-test --source --verify-upstream > /tmp/guard.log 2>&1
           guard=$?
           npm ci > /tmp/build.log 2>&1
           install=$?
@@ -71,9 +71,9 @@ jobs:
             echo "Pull requests opened by this workflow do not start the Build or Guard workflows, so the read-only job ran both before the pull request was opened."
             echo ""
             if [ "$guard" -eq 0 ]; then
-              echo "- Guard: passed (\`python3 scripts/check.py --self-test --source\`)."
+              echo "- Guard: passed (\`python3 scripts/check.py --self-test --source --verify-upstream\`)."
             else
-              echo "- Guard: failed (\`python3 scripts/check.py --self-test --source\`)."
+              echo "- Guard: failed (\`python3 scripts/check.py --self-test --source --verify-upstream\`)."
             fi
             if [ "$build" -eq 0 ]; then
               echo "- Build: passed (\`npm ci\` and \`npm run build\`, including the dist check)."

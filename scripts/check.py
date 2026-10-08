@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -21,13 +23,22 @@ from atlaslib import (
     check_authored,
     check_dist,
     denylist_hit,
+    assert_merged_catalogue,
+    assert_sha_is_ancestor,
+    assert_upstream_digest,
+    ensure_ancestor_of_origin_head,
     load_cautions,
+    load_curated,
     parse_contents,
     parse_slug_date,
     plainify,
     read_json,
+    require_upstream_ancestor,
+    run_git,
     scan_overclaims,
+    strip_upstream_quotes,
     validate_curated_file,
+    verify_recorded_upstream,
 )
 
 
@@ -36,12 +47,127 @@ def check_source() -> list[str]:
     if not UPSTREAM_JSON.is_file() or not FAMILIES_JSON.is_file():
         return ["generated data files are missing"]
     try:
-        load_cautions(CAUTIONS_JSON)
-        assert_counts(read_json(UPSTREAM_JSON))
-        assert_counts(read_json(FAMILIES_JSON))
+        cautions = load_cautions(CAUTIONS_JSON)
+        curated = load_curated(CURATED_DIR)
+        upstream = read_json(UPSTREAM_JSON)
+        families = read_json(FAMILIES_JSON)
+        assert_counts(upstream)
+        assert_upstream_digest(upstream)
+        assert_counts(families)
+        assert_merged_catalogue(upstream, families, curated, cautions)
     except AtlasError as exc:
         failures.append(str(exc))
+        failures.extend(check_authored())
+        return failures
+    for item in curated.values():
+        community = item["community"]
+        if community is not None and community["status"] != "claimed":
+            failures.append(
+                f"{item['id']} community status is {community['status']}; this version only records claimed"
+            )
+        for lens in item["lenses"]:
+            if not lens["source"].strip():
+                failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
     failures.extend(check_authored())
+    return failures
+
+
+def _git(repo: Path, *args: str) -> str:
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "atlas",
+        "GIT_AUTHOR_EMAIL": "atlas@example.com",
+        "GIT_COMMITTER_NAME": "atlas",
+        "GIT_COMMITTER_EMAIL": "atlas@example.com",
+        "GIT_TERMINAL_PROMPT": "0",
+    }
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def ancestry_self_test() -> list[str]:
+    """A commit that is not on origin HEAD fails the same check CI runs.
+
+    The fixture is a local origin, so the negative case does not use the network.
+    Guard still calls ensure_ancestor_of_origin_head, which fetches origin HEAD
+    and runs git merge-base --is-ancestor.
+    """
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        seed = root / "seed"
+        seed.mkdir()
+        _git(seed, "init", "-b", "main")
+        (seed / "note").write_text("ancestor\n", encoding="utf-8")
+        _git(seed, "add", "note")
+        _git(seed, "commit", "-m", "ancestor")
+        ancestor = _git(seed, "rev-parse", "HEAD")
+        (seed / "note").write_text("head\n", encoding="utf-8")
+        _git(seed, "add", "note")
+        _git(seed, "commit", "-m", "head")
+        head = _git(seed, "rev-parse", "HEAD")
+        origin = root / "origin.git"
+        _git(root, "clone", "--bare", str(seed), str(origin))
+        other = root / "other"
+        other.mkdir()
+        _git(other, "init", "-b", "main")
+        (other / "note").write_text("fork\n", encoding="utf-8")
+        _git(other, "add", "note")
+        _git(other, "commit", "-m", "fork")
+        outsider = _git(other, "rev-parse", "HEAD")
+        client = root / "client"
+        _git(root, "clone", "--no-checkout", str(origin), str(client))
+        _git(client, "remote", "add", "other", str(other))
+        _git(client, "fetch", "other")
+        try:
+            ensure_ancestor_of_origin_head(client, outsider)
+        except AtlasError as exc:
+            if "not an ancestor" not in str(exc):
+                failures.append(f"non-ancestor error was {exc}")
+        else:
+            failures.append("a non-ancestor commit was accepted")
+        try:
+            ensure_ancestor_of_origin_head(client, ancestor)
+            ensure_ancestor_of_origin_head(client, head)
+        except AtlasError as exc:
+            failures.append(f"an ancestor of origin HEAD was rejected: {exc}")
+        try:
+            assert_sha_is_ancestor(client, outsider, "FETCH_HEAD")
+        except AtlasError:
+            pass
+        else:
+            failures.append("assert_sha_is_ancestor accepted a non-ancestor")
+        try:
+            require_upstream_ancestor(str(origin), outsider)
+        except AtlasError as exc:
+            if "not an ancestor" not in str(exc):
+                failures.append(f"sync ancestry error was {exc}")
+        else:
+            failures.append("require_upstream_ancestor accepted a non-ancestor")
+        try:
+            require_upstream_ancestor(str(origin), ancestor)
+        except AtlasError as exc:
+            failures.append(f"require_upstream_ancestor rejected an ancestor: {exc}")
+        missing = root / "missing.git"
+        try:
+            run_git(
+                ["git", "clone", "--no-checkout", str(missing), str(root / "dest")],
+                None,
+                "could not fetch upstream",
+            )
+        except AtlasError as exc:
+            message = str(exc)
+            if "\n" in message or "Traceback" in message:
+                failures.append(f"fetch failure was not one line: {message!r}")
+        else:
+            failures.append("a missing remote did not fail")
     return failures
 
 
@@ -120,6 +246,32 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "R.H. is solved.",
         "The R.H. is proven.",
         "This is not a solution of the Riemann Hypothesis.",
+        "Riemann's hypothesis is confirmed.",
+        "Riemann's hypothesis is disproven.",
+        "The Riemann Hypothesis was disproven.",
+        "RH: proof complete.",
+        "RH: proof complete",
+        "We solved the Navier-Stokes equations.",
+        "Navier-Stokes smoothness is proven.",
+        "Global regularity of the Navier-Stokes equations is proven.",
+        "Navier-Stokes blow-up is settled.",
+        "The scheme proves a Navier-Stokes regularity estimate.",
+        "RH is true.",
+        "RH holds.",
+        "The Riemann Hypothesis is now a theorem.",
+        "We verify RH.",
+        "RH follows.",
+        "Our Navier–Stokes solver proves global regularity.",
+        "We prove Navier–Stokes energy inequality implies global regularity.",
+        "Navier–Stokes bounds settle the regularity question.",
+        "The Riemann-Hypothesis is solved.",
+        "Millennium-problem solved.",
+        "We won the Clay prize.",
+        "We show RH.",
+        "We demonstrate the Riemann Hypothesis.",
+        "RH is a theorem.",
+        "RH is correct.",
+        "RH has been shown.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -137,6 +289,13 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "R.H. remains open.",
         "A linear system was solved.",
         "The lemma is proven.",
+        "We prove a Navier-Stokes energy inequality.",
+        "We prove a Navier–Stokes energy inequality.",
+        "Navier–Stokes energy inequality.",
+        "The scheme proves a Navier-Stokes approximation.",
+        "Our Navier–Stokes solver proves an energy inequality.",
+        "The lemma is a theorem.",
+        "We show a bound.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -159,6 +318,88 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
             failures.append("denylist token was not flagged")
     if denylist_hit("advection-diffusion equation"):
         failures.append("a neighboring token matched the denylist")
+    stem = "".join(chr(code) for code in (102, 117, 115, 105, 111, 110))
+    after_many = "".join(chr(code) for code in (99, 97, 116, 101, 103, 111, 114, 105, 101, 115))
+    after_one = "".join(chr(code) for code in (99, 97, 116, 101, 103, 111, 114, 121))
+    before = "".join(chr(code) for code in (99, 111, 110, 110, 101, 115))
+    warm = "".join(chr(code) for code in (114, 111, 111, 109))
+    degree = "".join(
+        chr(code)
+        for code in (116, 101, 109, 112, 101, 114, 97, 116, 117, 114, 101)
+    )
+    short = "".join(chr(code) for code in (116, 101, 109, 112))
+    compact = "".join(chr(code) for code in (108, 107))
+    power = "".join(chr(code) for code in (112, 111, 119, 101, 114))
+    allowed_phrases = (
+        f"{stem} {after_many}",
+        f"{stem} {after_one}",
+        f"{before} {stem}",
+        f"{stem}-{after_many}",
+        f"{before}-{stem}",
+        f"{stem}{after_many}",
+    )
+    for phrase in allowed_phrases:
+        if denylist_hit(phrase):
+            failures.append("a math compound containing the stem was flagged")
+    denied_phrases = (
+        f"{warm}-{degree}",
+        f"{warm} {degree}",
+        f"{warm}{degree}",
+        f"{warm}-{short}",
+        f"{warm} {short}",
+        f"{warm}{short}",
+        f"{compact}-99",
+        f"{compact}99",
+        f"{before} {stem} {power}",
+        stem,
+    )
+    for phrase in denied_phrases:
+        if not denylist_hit(phrase):
+            failures.append("a denylist compound was not flagged")
+    upstream_sentence = (
+        "Proves that every Dirichlet L-function is zero-free in Re s > 7/8, "
+        "resolving the quasi-Riemann hypothesis."
+    )
+    if not scan_overclaims(upstream_sentence, "upstream"):
+        failures.append("an upstream-style claim sentence was not flagged")
+    quoted = (
+        f'<blockquote data-upstream="summary">{upstream_sentence}</blockquote>'
+        "<p>The lemma is proven.</p>"
+    )
+    if scan_overclaims(strip_upstream_quotes(quoted), "page"):
+        failures.append("a stripped upstream summary was still scanned")
+    authored_claim = "<p>RH: proof complete.</p>"
+    if not scan_overclaims(strip_upstream_quotes(authored_claim), "page"):
+        failures.append("an authored claim in HTML was not flagged")
+    marked = f'<h1 data-upstream="title">{stem}</h1><p>Hello.</p>'
+    if not denylist_hit(marked):
+        failures.append("a denylist token inside an upstream quotation was ignored")
+    if not denylist_hit(strip_upstream_quotes(f"<p>{warm}-{degree}</p>")):
+        failures.append("an authored denylist compound in HTML was not flagged")
+    for attribute in (
+        '<img alt="RH is solved">',
+        '<a title="The Riemann Hypothesis is solved">x</a>',
+        '<meta name="description" content="RH: proof complete">',
+        '<span aria-label="We show RH">x</span>',
+        "<input placeholder='RH is correct'>",
+        "<img alt=RH-is-solved>",
+    ):
+        if not scan_overclaims(attribute, "attribute"):
+            failures.append(f"a claim in an HTML attribute was not flagged: {attribute}")
+    soft = chr(0x00AD)
+    hidden_char = chr(0x200B)
+    if not scan_overclaims(f"R{hidden_char}H is solved.", "normalized"):
+        failures.append("a zero-width character hid a claim")
+    if not scan_overclaims(f"Riem{soft}ann Hypothesis is solved.", "normalized"):
+        failures.append("a soft hyphen hid a claim")
+    fullwidth = f"{chr(0xFF32)}{chr(0xFF28)} is solved."
+    if not scan_overclaims(fullwidth, "normalized"):
+        failures.append("a compatibility character hid a claim")
+    if not denylist_hit(stem[:3] + hidden_char + stem[3:]):
+        failures.append("a zero-width character hid a denylist token")
+    if not denylist_hit(stem[:3] + soft + stem[3:]):
+        failures.append("a soft hyphen hid a denylist token")
+    failures.extend(ancestry_self_test())
 
     def missing_source() -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -214,6 +455,37 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
             )
             validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
 
+    def bad_evidence_url() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "lenses": [
+                            {
+                                "tag": "plasma-kinetic",
+                                "why": "A kinetic model.",
+                                "source": "Upstream family summary for 362.",
+                            }
+                        ],
+                        "community": {
+                            "status": "claimed",
+                            "evidence": [
+                                {
+                                    "url": "notes/local.md",
+                                    "who": "A reader",
+                                    "date": "2026-10-08",
+                                    "quote": "A short note.",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
     def ordinary_solved() -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "362.yaml"
@@ -243,6 +515,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("curated negated proof", negated_curated)
     if message:
         failures.append(message)
+    message = expect_error("evidence url", bad_evidence_url)
+    if message:
+        failures.append(message)
     try:
         ordinary_solved()
     except AtlasError as exc:
@@ -257,8 +532,13 @@ def main() -> int:
     parser.add_argument("--source", action="store_true", help="Check generated data and authored text.")
     parser.add_argument("--dist", type=Path, help="Check built HTML.")
     parser.add_argument("--self-test", action="store_true", help="Run guard fixtures.")
+    parser.add_argument(
+        "--verify-upstream",
+        action="store_true",
+        help="Sparse-fetch the commit named in upstream.json and fail if the snapshot differs.",
+    )
     args = parser.parse_args()
-    if not (args.source or args.dist or args.self_test):
+    if not (args.source or args.dist or args.self_test or args.verify_upstream):
         args.source = True
         args.self_test = True
     failures: list[str] = []
@@ -266,6 +546,14 @@ def main() -> int:
         failures.extend(self_test())
     if args.source:
         failures.extend(check_source())
+    if args.verify_upstream:
+        try:
+            verify_recorded_upstream()
+        except AtlasError as exc:
+            failures.append(str(exc))
+        except subprocess.CalledProcessError as exc:
+            detail = (exc.stderr or exc.stdout or "").strip().splitlines()
+            failures.append(detail[-1] if detail else "could not fetch upstream")
     if args.dist:
         failures.extend(check_dist(args.dist))
     if failures:

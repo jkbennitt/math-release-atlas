@@ -1,0 +1,67 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, type Family } from "../../lib/atlas";
+import { lensLabel, LENS_TAGS, type LensTag } from "../../lib/lenses";
+
+export function getStaticPaths() {
+  return LENS_TAGS.map((tag) => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+interface Props {
+  tag: LensTag;
+}
+
+const { tag } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const label = lensLabel(tag);
+
+interface Tagged {
+  family: Family;
+  why: string;
+  source: string;
+}
+
+const tagged: Tagged[] = [];
+for (const family of atlas.families) {
+  for (const lens of family.lenses) {
+    if (lens.tag === tag) {
+      tagged.push({ family, why: lens.why, source: lens.source });
+    }
+  }
+}
+---
+
+<Base
+  title={`${label} · Math Release Atlas`}
+  description={`Families tagged ${tag} in the unofficial math release atlas.`}
+>
+  <article class="lens-page">
+    <p class="meta"><a href={`${base}lens/`}>All lenses</a></p>
+    <h1>{label}</h1>
+    <p class="meta">{tag}</p>
+    <p class="lede">
+      {tagged.length === 0
+        ? "No families are tagged with this lens."
+        : `${tagged.length} ${tagged.length === 1 ? "family is" : "families are"} tagged from the upstream catalogue text. Each note cites that text.`}
+    </p>
+    <ul class="lens-families">
+      {
+        tagged.map((item) => (
+          <li>
+            <p class="title">
+              <a href={`${base}f/${item.family.id}/`}>
+                <span class="id">{item.family.id}</span>{" "}
+                <span data-upstream="title">{item.family.title}</span>
+              </a>
+            </p>
+            <p>{item.why}</p>
+            <p class="meta">Source: {item.source}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </article>
+</Base>

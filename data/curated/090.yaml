@@ -1,0 +1,8 @@
+id: "090"
+lenses:
+  - tag: condensed-matter
+    why: "The family treats triangular-lattice minimizers of long-range Coulomb and Riesz energies."
+    source: "Upstream family 090 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+community:
+  status: claimed
+  evidence: []

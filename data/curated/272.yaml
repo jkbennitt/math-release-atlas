@@ -1,0 +1,8 @@
+id: "272"
+lenses:
+  - tag: quantum-information
+    why: "The family treats an entangled state with no distillable secret key under the stated protocols."
+    source: "Upstream family 272 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+community:
+  status: claimed
+  evidence: []

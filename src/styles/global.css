@@ -230,6 +230,20 @@ blockquote {
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
 }
+a.tag { color: var(--ink); text-decoration: none; }
+a.tag:hover { text-decoration: underline; }
+
+.family h2, .lens-page h2 {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  margin: 1.4rem 0 0.4rem;
+}
+.lens-index, .lens-families { padding-left: 1.15rem; }
+.lens-index li, .lens-families li { margin: 0.55rem 0; }
+.family code, .provenance code, .lens-page code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+}
 
 .prose { max-width: 68ch; }
 .prose h2 {
@@ -248,10 +262,13 @@ blockquote {
 }
 .site-footer p { margin: 0.25rem 0; }
 
+tr[hidden] { display: none; }
+
 @media (max-width: 800px) {
   .stats { grid-template-columns: 1fr 1fr; }
   .site-header .wrap { flex-direction: column; align-items: start; }
   table, tbody, tr, td { display: block; width: 100%; }
+  tr[hidden] { display: none; }
   thead, thead tr { display: block; }
   thead tr {
     display: flex;

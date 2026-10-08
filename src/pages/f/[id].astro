@@ -1,0 +1,147 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, formatIso, shortSha, type Family } from "../../lib/atlas";
+import { communityLabelFor, lensLabelFor } from "../../lib/lenses";
+import { leanLabel } from "../../lib/lean";
+
+export function getStaticPaths() {
+  return atlas.families.map((family) => ({
+    params: { id: family.id },
+    props: { family },
+  }));
+}
+
+interface Props {
+  family: Family;
+}
+
+const { family } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const status = family.community?.status ?? "claimed";
+const statusLabel = communityLabelFor(status);
+const commit = family.upstream_sha;
+---
+
+<Base
+  title={`${family.id} · Math Release Atlas`}
+  description={`Family ${family.id} in the unofficial math release atlas, with upstream links and Lean status.`}
+>
+  <article class="family">
+    <p class="meta"><a href={`${base}#f-${family.id}`}>Back to the table</a></p>
+    <h1 data-upstream="title">{family.title}</h1>
+    <p class="meta">Family {family.id}</p>
+
+    <h2>Subject areas</h2>
+    <ul>
+      {family.areas.map((area) => <li>{area}</li>)}
+    </ul>
+
+    {family.caution && <p class="caution">{family.caution}</p>}
+
+    <h2>Lens tags</h2>
+    {
+      family.lenses.length === 0 ? (
+        <p>No curated lens tag.</p>
+      ) : (
+        <ul class="notes">
+          {family.lenses.map((lens) => (
+            <li>
+              <a class="tag" href={`${base}lens/${lens.tag}/`}>
+                {lensLabelFor(lens.tag)}
+              </a>
+              <span class="meta"> {lens.tag}</span>
+              <p>{lens.why}</p>
+              <p class="meta">Source: {lens.source}</p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <h2>Community status</h2>
+    <p>
+      {statusLabel}.
+      {status === "claimed" && " No outside evidence is recorded on this page."}
+    </p>
+    {
+      family.community && family.community.evidence.length > 0 && (
+        <ul class="notes">
+          {family.community.evidence.map((item) => (
+            <li>
+              <a href={item.url}>{item.who}</a>
+              <span class="meta">
+                {" "}
+                · {item.date}. Source: {item.source}
+              </span>
+              <p>{item.quote}</p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <h2>Manuscripts</h2>
+    <ul class="links">
+      {
+        family.manuscripts.map((item) => (
+          <li>
+            <a data-upstream="manuscript" href={item.pdf}>
+              {item.title}
+            </a>
+            <span class="meta">
+              {" "}
+              · {formatIso(item.date)} · {item.date}
+              {item.main_result_formalized ? " · main result in formalization catalogue" : ""}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2>Lean status</h2>
+    <p>
+      <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
+    </p>
+    <p class="meta">
+      Upstream review: {family.lean.upstream_review_status}. Scope:{" "}
+      <span data-upstream="scope">{family.lean.scope}</span>
+    </p>
+    {family.lean.doc && (
+      <p>
+        <a href={family.lean.doc}>Lean note</a>
+      </p>
+    )}
+    {
+      family.lean.comparators.length > 0 && (
+        <div>
+          <p class="meta">Comparator files</p>
+          <ul class="links">
+            {family.lean.comparators.map((item) => (
+              <li>
+                <a href={item.url}>{item.file.split("/").pop()}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+    {
+      family.reasoning_trace && (
+        <p>
+          <a href={family.reasoning_trace.url}>Reasoning summary</a>
+        </p>
+      )
+    }
+
+    <h2>Upstream summary</h2>
+    <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+
+    <h2>Provenance</h2>
+    <p>
+      Upstream commit{" "}
+      <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
+      ({shortSha(commit)}). Titles, summaries, subject areas, and Lean links on this page are taken
+      from that commit.
+    </p>
+  </article>
+</Base>

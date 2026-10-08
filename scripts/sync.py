@@ -29,6 +29,7 @@ from atlaslib import (
     materialize_upstream,
     merge_data,
     read_json,
+    require_upstream_ancestor,
     write_json,
     CAUTIONS_JSON,
 )
@@ -59,6 +60,7 @@ def resolve_remote_sha(url: str, requested: str | None) -> str:
     if re.fullmatch(r"[0-9a-f]{4,40}", requested) and head.startswith(requested):
         return head
     if re.fullmatch(r"[0-9a-f]{40}", requested):
+        require_upstream_ancestor(url, requested)
         return requested
     raise AtlasError(f"{requested} is not upstream HEAD and is not a full commit sha")
 

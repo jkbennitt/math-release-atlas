@@ -2,10 +2,13 @@
 import Base from "../layouts/Base.astro";
 import { atlas, dateRange, shortSha } from "../lib/atlas";
 import { leanLabel, leanRank } from "../lib/lean";
+import { lensCounts, lensLabel } from "../lib/lenses";
 
 const commit = atlas.upstream.commit;
 const counts = atlas.counts;
 const generated = atlas.generated_at.slice(0, 10);
+const base = import.meta.env.BASE_URL;
+const lenses = lensCounts(atlas.families);
 ---
 
 <Base
@@ -14,9 +17,10 @@ const generated = atlas.generated_at.slice(0, 10);
 >
   <h1>Result families</h1>
   <p class="lede">
-    A receipted index of the families in the upstream manuscript catalogue. Each row quotes that
-    catalogue and links to its PDFs. Lean badges repeat the upstream review status. They are not
-    peer review, and they are not laboratory results.
+    A receipted index of the families in the upstream manuscript catalogue. Each result title
+    opens that family's page. The row still quotes the catalogue and links to its PDFs. Lean
+    badges repeat the upstream review status. They are not peer review, and they are not
+    laboratory results.
   </p>
   <div class="stats">
     <div class="stat"><b>{counts.families}</b><span>families</span></div>
@@ -47,6 +51,17 @@ const generated = atlas.generated_at.slice(0, 10);
       <select id="area-filter">
         <option value="">All subjects</option>
         {atlas.areas.map((area) => <option value={area.name}>{area.name} ({area.families})</option>)}
+      </select>
+    </label>
+    <label>
+      Lens
+      <select id="lens-filter">
+        <option value="">All lenses</option>
+        {lenses.map((lens) => (
+          <option value={lens.tag}>
+            {lensLabel(lens.tag)} ({lens.count})
+          </option>
+        ))}
       </select>
     </label>
     <label>
@@ -88,12 +103,15 @@ const generated = atlas.generated_at.slice(0, 10);
               data-areas={family.areas.join("|")}
               data-lean={family.lean.status}
               data-lean-rank={leanRank(family.lean.status)}
+              data-lenses={family.lenses.map((lens) => lens.tag).join("|")}
               data-date={dates[0]}
               data-manuscripts={family.manuscripts.length}
             >
               <td class="id">{family.id}</td>
               <td>
-                <p class="title">{family.title}</p>
+                <p class="title">
+                  <a data-upstream="title" href={`${base}f/${family.id}/`}>{family.title}</a>
+                </p>
                 {family.caution && <p class="caution">{family.caution}</p>}
                 <details>
                   <summary>Upstream summary</summary>
@@ -104,7 +122,7 @@ const generated = atlas.generated_at.slice(0, 10);
                   <ul class="links">
                     {family.manuscripts.map((item) => (
                       <li>
-                        <a href={item.pdf}>{item.title}</a>
+                        <a data-upstream="manuscript" href={item.pdf}>{item.title}</a>
                         <span class="meta"> · {item.date}{item.main_result_formalized ? " · main result in formalization catalogue" : ""}</span>
                       </li>
                     ))}
@@ -129,7 +147,10 @@ const generated = atlas.generated_at.slice(0, 10);
                 {family.lenses.length > 0 && (
                   <ul class="notes">
                     {family.lenses.map((lens) => (
-                      <li><span class="tag">{lens.tag}</span> {lens.why} <span class="meta">Source: {lens.source}</span></li>
+                      <li>
+                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                      </li>
                     ))}
                   </ul>
                 )}

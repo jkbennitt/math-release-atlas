@@ -1,0 +1,11 @@
+id: "275"
+lenses:
+  - tag: electronic-structure
+    why: "The family treats approximation of continuum Coulomb electronic energy."
+    source: "Upstream family 275 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+  - tag: computation-hardness
+    why: "The family treats QMA-hardness of approximating continuum Coulomb energy."
+    source: "Upstream family 275 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+community:
+  status: claimed
+  evidence: []
