@@ -444,6 +444,20 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Complete solution of Navier–Stokes.",
         "Navier–Stokes solution is complete.",
         "Navier–Stokes global regularity: solution.",
+        "A proof of the long-open conjecture known as the Riemann Hypothesis.",
+        "A numerical proof of RH.",
+        "Weak solution of the Riemann hypothesis.",
+        "A disproof of RH.",
+        "The lemma proof of RH.",
+        "An approximate solution of the Clay problem.",
+        "Strong solution of the Millennium problem.",
+        "A solution to NavierStokes.",
+        "RH disproof.",
+        "RH disproofs.",
+        "RH: proof scheme.",
+        "proof of the R H",
+        "A solution, long sought by many, to Navier–Stokes.",
+        "NavierStokes solution",
     ]
     for text in main_flagged:
         if not scan_overclaims(text, "main"):
@@ -625,6 +639,14 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         failures.append("exemption blanked a title on the summary element or left summary text")
     if not scan_overclaims(exempted_title, "template"):
         failures.append("a title on an exempt summary element was not flagged")
+    commented_summary = (
+        f'<blockquote data-upstream="summary">{exact_summary}<!-- RH is proven. --></blockquote>'
+    )
+    exempted_comment = exempt_upstream_text(commented_summary, {exact_summary, "003"})
+    if "<!-- RH is proven. -->" not in exempted_comment or "Dirichlet" in exempted_comment:
+        failures.append("exemption dropped an HTML comment or left summary text")
+    if not scan_overclaims(exempted_comment, "template"):
+        failures.append("an HTML comment inside an exempt summary was not flagged")
     manuscript_title = "The Quasi-Riemann Hypothesis (alternate 11/12 proof)"
     manuscript_html = f'<a data-upstream="manuscript">{manuscript_title}</a>'
     if scan_overclaims(exempt_upstream_text(manuscript_html, {manuscript_title, "003"}), "template"):

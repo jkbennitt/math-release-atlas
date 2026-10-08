@@ -125,23 +125,30 @@ separate the words blow and up, and the words well and posed. A sentence
 that only names an energy inequality for smooth data, and has no claim verb,
 still passes.
 
+Two patterns fail anywhere in a sentence that names a guarded problem, with
+no distance limit. They are proof or disproof followed by of, for, or
+complete, and solution or solutions followed by to or of. A comma-separated
+aside between solution and to or of fails the same way.
+
 A claim noun within four tokens of a guarded problem name also fails, in
 either order. Punctuation and possessives are ignored when the tokens are
-counted. The nouns are proof, proofs, solution, solutions, resolution, and
-resolved. The sentence passes when a technical qualifier sits immediately
-beside that noun. The qualifiers are scheme, operator, numerical, weak,
-Leray, mild, strong, assistant, lemma, estimate, estimates, approximate, and
-the pair energy inequality. A qualifier does not rescue a sentence that also
-contains complete, full, final, settled, solved, proven, finished, or the
-phrase “is done”.
+counted. The nouns are proof, proofs, disproof, disproofs, solution,
+solutions, resolution, and resolved. A technical qualifier sitting immediately
+beside that noun waives the noun only when the named problem is the
+incompressible-flow problem. The qualifiers are scheme, operator, numerical,
+weak, Leray, mild, strong, assistant, lemma, estimate, estimates, approximate,
+and the pair energy inequality. The pair “proof assistant” is not a claim
+noun. A qualifier does not rescue a sentence that also contains complete,
+full, final, settled, solved, proven, finished, or the phrase “is done”.
 
-Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
+Guarded problems: RH, the dotted form R.H., the spaced form R H, the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes
-(hyphen, dash, or space), the Clay problem, the Clay prize, the Millennium
+(hyphen, dash, space, or no separator), the Clay problem, the Clay prize, the Millennium
 problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
-disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
+disproved, disproving, disproven, proof of, proof for, proof complete,
+disproof of, solution to, solution of, confirm, confirms, confirmed, confirming,
 establish, establishes, established, establishing, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, cracking, finish, finishes,
@@ -156,7 +163,7 @@ and built HTML, including text inside an element marked as an upstream
 quotation. That text is left out of the check only when it exactly equals
 that family's upstream title, id, summary, or manuscript title. Only the text
 nodes are left out. Attributes on that element and on elements inside it are
-still checked. The page still shows it. Text that does not match fails the
+still checked. HTML comments inside that element are still checked. The page still shows it. Text that does not match fails the
 check. alt, title, meta content,
 aria-label, aria-description, placeholder, and data-* attributes are included,
 quoted or unquoted. In built HTML, a data-* value is left out only when it
