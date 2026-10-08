@@ -458,6 +458,16 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "proof of the R H",
         "A solution, long sought by many, to Navier–Stokes.",
         "NavierStokes solution",
+        "A numerical proof of Navier–Stokes global regularity.",
+        "Weak solutions of Navier–Stokes exist globally and are smooth.",
+        "Weak solutions of Navier–Stokes: global regularity and smoothness.",
+        "A numerical solution of Navier–Stokes gives a counterproof of blow-up.",
+        "Numerical solution of the Navier–Stokes existence and smoothness problem.",
+        "A weak solution of Navier–Stokes well-posedness.",
+        "A numerical disproof of Navier–Stokes.",
+        "Navier–Stokes numerical proof of the conjecture.",
+        "Numerical solution of the Navier–Stokes problem.",
+        "Numerical solution of Navier–Stokes is foolproof of the calculation.",
     ]
     for text in main_flagged:
         if not scan_overclaims(text, "main"):
@@ -505,6 +515,8 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
             failures.append(f"allowed sentence was flagged: {text}")
     if len(main_flagged) != 67:
         failures.append(f"main phrase list has {len(main_flagged)} entries")
+    if len(allowed) != 28:
+        failures.append(f"must-pass phrase list has {len(allowed)} entries")
 
     def why_overclaim(text: str) -> None:
         with tempfile.TemporaryDirectory() as tmp:

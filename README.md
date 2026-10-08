@@ -128,18 +128,26 @@ still passes.
 Two patterns fail anywhere in a sentence that names a guarded problem, with
 no distance limit. They are proof or disproof followed by of, for, or
 complete, and solution or solutions followed by to or of. A comma-separated
-aside between solution and to or of fails the same way.
+aside between solution and to or of fails the same way. A match inside a
+longer proof compound still counts.
+
+The solution pattern is waived only when a technical word comes directly
+before solution or solutions and the object is the incompressible-flow name,
+with an optional “the” and an optional equations or system. Proof compounds
+are never waived. Nothing is waived when the sentence also contains
+regularity, smoothness, smooth, existence, exist, blow-up, blowup,
+well-posed, well-posedness, global, problem, or conjecture, or complete,
+full, final, settled, solved, proven, finished, or the phrase “is done”.
+One pattern that is not waived still fails the sentence.
 
 A claim noun within four tokens of a guarded problem name also fails, in
 either order. Punctuation and possessives are ignored when the tokens are
 counted. The nouns are proof, proofs, disproof, disproofs, solution,
-solutions, resolution, and resolved. A technical qualifier sitting immediately
-beside that noun waives the noun only when the named problem is the
-incompressible-flow problem. The qualifiers are scheme, operator, numerical,
-weak, Leray, mild, strong, assistant, lemma, estimate, estimates, approximate,
-and the pair energy inequality. The pair “proof assistant” is not a claim
-noun. A qualifier does not rescue a sentence that also contains complete,
-full, final, settled, solved, proven, finished, or the phrase “is done”.
+solutions, resolution, and resolved. For that nearer check, solution or
+solutions may sit next to scheme, operator, numerical, weak, Leray, mild,
+strong, assistant, lemma, estimate, estimates, approximate, or the pair
+energy inequality, and only for the incompressible-flow name. The pair
+“proof assistant” is not a claim noun.
 
 Guarded problems: RH, the dotted form R.H., the spaced form R H, the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes

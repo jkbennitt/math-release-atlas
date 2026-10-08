@@ -145,11 +145,8 @@ _SOLUTION_ASIDE_RE = re.compile(
     re.IGNORECASE,
 )
 # A claim noun within four tokens of a guarded problem name is also a claim,
-# in either order. Punctuation and possessives are ignored. A technical
-# qualifier immediately beside the noun rescues that pair only when the nearby
-# name is Navier–Stokes. The rescue does not apply for RH, Clay, or Millennium,
-# and it does not apply when the sentence also says complete, full, final,
-# settled, solved, proven, finished, or "is done".
+# in either order. Punctuation and possessives are ignored. The main-pattern
+# rescue is separate and only covers solution or solutions.
 _CLAIM_NOUNS = frozenset(
     {"proof", "proofs", "disproof", "disproofs", "solution", "solutions", "resolution", "resolved"}
 )
@@ -170,8 +167,23 @@ _NOUN_QUALIFIERS = frozenset(
     }
 )
 _NOUN_PROXIMITY = 4
-_NOUN_RESCUE_BLOCK_RE = re.compile(
-    r"\b(?:complete|full|final|settled|solved|proven|finished)\b|\bis\s+done\b",
+# A rescue is refused if any of these appear anywhere in the sentence.
+# complete, full, final, settled, solved, proven, finished, and "is done" stay
+# in this list. smooth matches even before "data" here; that only blocks the
+# rescue, not the separate flow-name exception.
+_RESCUE_VETO_RE = re.compile(
+    rf"\b(?:regularity|smooth(?:ness)?|existence|exist|blow{_SEP}*up|"
+    rf"well{_SEP}*posed(?:ness)?|global|millennium|clay|problem|conjecture|"
+    rf"complete|full|final|settled|solved|proven|finished)\b|\bis\s+done\b",
+    re.IGNORECASE,
+)
+_QUALIFIER_BEFORE = "|".join(sorted(_NOUN_QUALIFIERS, key=len, reverse=True))
+# solution/solutions only, qualifier immediately before, object is Navier–Stokes
+# with an optional "the" and an optional equations/system.
+_NARROW_SOLUTION_RE = re.compile(
+    rf"\b(?P<qual>{_QUALIFIER_BEFORE})\s+"
+    rf"(?P<noun>solutions?)\s+(?P<prep>to|of)\s+"
+    rf"(?:the\s+)?navier{_SEP}*stokes(?:\s+(?:equations|system))?\b",
     re.IGNORECASE,
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
@@ -1565,42 +1577,33 @@ def _gap_to_span(index: int, start: int, end: int) -> int:
     return start - index - 1 if index < start else index - end
 
 
-def _within_flow(index: int, spans: list[tuple[int, int, str]]) -> bool:
-    for start, end, kind in spans:
-        if kind != "flow":
-            continue
-        gap = _gap_to_span(index, start, end)
-        if 0 <= gap <= _NOUN_PROXIMITY:
-            return True
-    return False
-
-
 def _names_non_flow_problem(sentence: str) -> bool:
     return any(match.group("name") for match in PROBLEM_RE.finditer(sentence))
 
 
-def _sentence_noun_indexes(tokens: list[str]) -> list[int]:
-    """Token indexes of main's proof-of and solution-to patterns."""
-    indexes: list[int] = []
-    for index, token in enumerate(tokens):
-        nxt = tokens[index + 1] if index + 1 < len(tokens) else ""
-        if token in {"proof", "proofs", "disproof", "disproofs"} and nxt in {"of", "for", "complete"}:
-            indexes.append(index)
-        elif token in {"solution", "solutions"} and nxt in {"to", "of"}:
-            indexes.append(index)
-    return indexes
+def _rescue_veto(sentence: str) -> bool:
+    """Clay wording, problem, conjecture, or another guarded name blocks every rescue."""
+    return _RESCUE_VETO_RE.search(sentence) is not None or _names_non_flow_problem(sentence)
 
 
-def _flow_nouns_rescued(sentence: str) -> bool:
-    """True when every sentence-level noun is a Navier–Stokes technical phrase."""
-    tokens = _claim_tokens(sentence)
-    indexes = _sentence_noun_indexes(tokens)
-    if not indexes or _NOUN_RESCUE_BLOCK_RE.search(sentence) is not None:
-        return False
-    spans = _problem_token_spans(tokens)
-    return all(
-        _qualifier_beside_noun(tokens, index) and _within_flow(index, spans) for index in indexes
-    )
+def _rescued_main_spans(sentence: str) -> set[tuple[int, int]]:
+    """Spans of main proof/solution matches that meet every rescue condition.
+
+    Only solution or solutions can be rescued, and only with a technical word
+    immediately before and Navier–Stokes as the object. A veto clears the set.
+    """
+    if _rescue_veto(sentence):
+        return set()
+    rescued: set[tuple[int, int]] = set()
+    mains = list(_SENTENCE_NOUN_RE.finditer(sentence))
+    for narrow in _NARROW_SOLUTION_RE.finditer(sentence):
+        start = narrow.start("noun")
+        end = narrow.end("prep")
+        for main in mains:
+            if main.start() == start and main.end() == end:
+                rescued.add(main.span())
+                break
+    return rescued
 
 
 def _other_claim_verb(sentence: str) -> bool:
@@ -1609,55 +1612,46 @@ def _other_claim_verb(sentence: str) -> bool:
 
 
 def sentence_level_claim(sentence: str) -> bool:
-    """Main's proof-of and solution-of checks, plus the Navier–Stokes rescue.
+    """Main's proof-of and solution-of checks, plus a narrow solution rescue.
 
-    The two patterns are unchanged and apply anywhere in the sentence. A
-    technical qualifier waives them only when every such noun sits within four
-    tokens of Navier–Stokes and the sentence names no other guarded problem.
+    The two patterns are unchanged. A match is rescued only when the noun is
+    solution or solutions, a technical qualifier is the immediately preceding
+    word, and the object is Navier–Stokes, with an optional "the" and an
+    optional equations or system. Proof, disproof, and any other proof compound
+    are never rescued. Clay wording, problem, or conjecture anywhere in the
+    sentence rescues nothing. If the rescued positions are not exactly the main
+    matches, one unrescued match fails the sentence, including a match inside
+    counterproof or foolproof.
     """
     if CLAIM_VERB_RE.search(sentence) is None or not mentions_guarded_problem(sentence):
         return False
     if _other_claim_verb(sentence):
         return True
-    if _names_non_flow_problem(sentence) or _NOUN_RESCUE_BLOCK_RE.search(sentence) is not None:
-        return True
-    return not _flow_nouns_rescued(sentence)
+    matches = list(_SENTENCE_NOUN_RE.finditer(sentence))
+    if not matches:
+        return False
+    rescued = _rescued_main_spans(sentence)
+    return len(rescued) != len(matches) or {match.span() for match in matches} != rescued
 
 
 def solution_aside_claim(sentence: str) -> bool:
-    """Flag solution, <aside>, to/of when it names a guarded problem.
-
-    The Navier–Stokes qualifier rescue still requires the noun within four tokens.
-    """
-    if _SOLUTION_ASIDE_RE.search(sentence) is None or not mentions_guarded_problem(sentence):
-        return False
-    if _names_non_flow_problem(sentence) or _NOUN_RESCUE_BLOCK_RE.search(sentence) is not None:
-        return True
-    tokens = _claim_tokens(sentence)
-    spans = _problem_token_spans(tokens)
-    rescued = False
-    for index, token in enumerate(tokens):
-        if token not in {"solution", "solutions"}:
-            continue
-        if _qualifier_beside_noun(tokens, index) and _within_flow(index, spans):
-            rescued = True
-            break
-    return not rescued
+    """A comma-separated aside before to/of is not the technical-solution rescue."""
+    return _SOLUTION_ASIDE_RE.search(sentence) is not None and mentions_guarded_problem(sentence)
 
 
 def proximate_claim_noun(sentence: str) -> bool:
     """True when a claim noun sits within four tokens of a guarded problem name.
 
-    A technical qualifier immediately beside the noun waives the pair only
-    when that name is Navier–Stokes. "proof assistant" is not a claim noun.
-    The rescue is ignored when the sentence also contains complete, full,
-    final, settled, solved, proven, finished, or the phrase "is done".
+    solution or solutions may be waived when a technical qualifier sits
+    immediately beside the noun and the name is Navier–Stokes. proof, disproof,
+    and any other proof compound are never waived. "proof assistant" is not a
+    claim noun. Clay wording, problem, conjecture, complete, full, final,
+    settled, solved, proven, finished, or "is done" waives nothing.
     """
     tokens = _claim_tokens(sentence)
     spans = _problem_token_spans(tokens)
     if not spans:
         return False
-    blocked = _NOUN_RESCUE_BLOCK_RE.search(sentence) is not None
     for index, token in enumerate(tokens):
         if token not in _CLAIM_NOUNS:
             continue
@@ -1667,7 +1661,13 @@ def proximate_claim_noun(sentence: str) -> bool:
             gap = _gap_to_span(index, start, end)
             if gap < 0 or gap > _NOUN_PROXIMITY:
                 continue
-            rescued = not blocked and kind == "flow" and _qualifier_beside_noun(tokens, index)
+            rescued = (
+                not token.endswith("proof")
+                and not token.endswith("proofs")
+                and not _rescue_veto(sentence)
+                and kind == "flow"
+                and _qualifier_beside_noun(tokens, index)
+            )
             if not rescued:
                 return True
     return False
@@ -1698,15 +1698,19 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     is also present, smooth cancels that exception even if the next word is data.
     A space, hyphen, or dash may separate blow and up, or well and posed.
     proof or disproof followed by of, for, or complete, and solution or
-    solutions followed by to or of, fail anywhere in the sentence. A claim
-    noun within four tokens of a guarded problem name also fails, in either
-    order, including disproof and disproofs. Punctuation and possessives are
-    ignored. scheme, operator, numerical, weak, Leray, mild, strong, assistant,
-    lemma, estimate, estimates, approximate, or the pair energy inequality may
-    sit immediately beside the noun. That rescue applies only when the nearby
-    problem is Navier–Stokes, and only when the sentence does not also contain
-    complete, full, final, settled, solved, proven, finished, or "is done".
-    It does not apply for RH, Clay, or Millennium. alt, title, content,
+    solutions followed by to or of, fail anywhere in the sentence. A match is
+    rescued only when the noun is solution or solutions, a technical qualifier
+    is the word immediately before it, and the object is Navier–Stokes, with
+    an optional "the" and an optional equations or system. Proof, disproof, and
+    any other proof compound are never rescued. regularity, smoothness, smooth,
+    existence, exist, blow-up, blowup, well-posed, well-posedness, global,
+    Millennium, Clay, problem, or conjecture anywhere in the sentence rescues
+    nothing. If the rescued positions are not exactly the main matches, the
+    sentence fails. A claim noun within four tokens of a guarded problem name
+    also fails, in either order. Punctuation and possessives are ignored.
+    scheme, operator, numerical, weak, Leray, mild, strong, assistant, lemma,
+    estimate, estimates, approximate, or the pair energy inequality may sit
+    immediately beside solution or solutions for that nearer check. alt, title, content,
     aria-label, aria-description, placeholder, and data-* attributes are scanned
     with the prose, including unquoted values. Text nodes inside a data-upstream
     element are left out only when that element's text exactly equals the
