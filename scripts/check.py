@@ -469,6 +469,31 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Numerical solution of the Navier–Stokes problem.",
         "Numerical solution of Navier–Stokes is foolproof of the calculation.",
     ]
+    review_ns = "Navier\u2013Stokes"
+    review_flagged = [
+        f"Weak solutions of {review_ns} are globally regular.",
+        f"A weak solution of {review_ns} exists for all time.",
+        f"Weak solutions of {review_ns} never develop singularities.",
+        f"A weak solution of the {review_ns} question.",
+        f"A Leray solution of {review_ns} exists globally.",
+        f"Weak solutions of {review_ns} stay regular forever.",
+        f"Weak solutions of {review_ns} have no singularities.",
+        f"Weak solutions of {review_ns} are singularity-free.",
+        f"Weak solutions of {review_ns} do not break down.",
+        f"Weak solutions of {review_ns} are analytic for all time.",
+        f"Weak solutions of {review_ns} persist for all time.",
+        f"A weak solution of the {review_ns} challenge.",
+        f"A weak solution of the {review_ns} prize.",
+        f"A weak solution of the {review_ns} puzzle.",
+        f"A weak solution of the {review_ns} riddle.",
+        f"A weak solution of the {review_ns} open question.",
+    ]
+    review_flagged.extend(
+        phrase.replace("\u2013", separator)
+        for phrase in list(review_flagged)
+        for separator in ("\u2011", "\u2014", "", "\uff0d")
+    )
+    flagged.extend(review_flagged)
     for text in main_flagged:
         if not scan_overclaims(text, "main"):
             failures.append(f"main phrase was not flagged: {text}")

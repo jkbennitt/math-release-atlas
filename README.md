@@ -131,23 +131,33 @@ complete, and solution or solutions followed by to or of. A comma-separated
 aside between solution and to or of fails the same way. A match inside a
 longer proof compound still counts.
 
-The solution pattern is waived only when a technical word comes directly
-before solution or solutions and the object is the incompressible-flow name,
-with an optional “the” and an optional equations or system. Proof compounds
-are never waived. Nothing is waived when the sentence also contains
-regularity, smoothness, smooth, existence, exist, blow-up, blowup,
-well-posed, well-posedness, global, problem, or conjecture, or complete,
-full, final, settled, solved, proven, finished, or the phrase “is done”.
-One pattern that is not waived still fails the sentence.
+The solution pattern is waived only when the whole sentence matches one closed
+template, ignoring case and trailing punctuation. The template is an optional
+article, then one of scheme, operator, numerical, weak, Leray, mild, strong,
+assistant, lemma, estimate, estimates, or approximate, then solution or
+solutions, then of or to, then an optional “the”, then the incompressible-flow
+name, then an optional equations or system. No further words are allowed.
+Proof compounds are never waived. One pattern that is not waived still fails
+the sentence, including a match inside a longer proof compound. The waived
+positions have to be exactly the matches of those two patterns.
+
+A second closed template waives only the four-token check. It never waives
+the two patterns above. The template is an optional article, then the
+incompressible-flow name, then solution or solutions, then scheme, schemes,
+operator, operators, method, or methods, then an optional “is bounded” or
+“are bounded”. No further words are allowed.
+
+Before either template is applied, a space, no separator, or any hyphen or
+dash between the two parts of that name is folded to one spelling. The dash
+forms include the non-breaking hyphen, the em dash, and the fullwidth hyphen.
 
 A claim noun within four tokens of a guarded problem name also fails, in
 either order. Punctuation and possessives are ignored when the tokens are
 counted. The nouns are proof, proofs, disproof, disproofs, solution,
-solutions, resolution, and resolved. For that nearer check, solution or
-solutions may sit next to scheme, operator, numerical, weak, Leray, mild,
-strong, assistant, lemma, estimate, estimates, approximate, or the pair
-energy inequality, and only for the incompressible-flow name. The pair
-“proof assistant” is not a claim noun.
+solutions, resolution, and resolved. That nearer check waives solution or
+solutions only when the whole sentence matches one of the two templates
+above, and only for the incompressible-flow name. The pair “proof assistant”
+is not a claim noun.
 
 Guarded problems: RH, the dotted form R.H., the spaced form R H, the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes

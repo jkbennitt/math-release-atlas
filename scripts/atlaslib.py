@@ -107,9 +107,11 @@ PINNED_AREAS = [
 # when they name the problem or the prize, with a hyphen or a space.
 # The incompressible-flow name does not count when the next word is one of the
 # qualifiers below, unless the sentence also uses wording for the Clay problem itself.
-_SEP = r"[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]"
+# Space, ASCII hyphen, hyphen, non-breaking hyphen, figure dash, en dash,
+# em dash, minus, and fullwidth hyphen. The same class separates Navier and Stokes.
+_SEP = r"[\s\-\u2010\u2011\u2012\u2013\u2014\u2212\uff0d]"
 PROBLEM_RE = re.compile(
-    r"(?P<flow>navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes)"
+    rf"(?P<flow>navier{_SEP}*stokes)"
     rf"|(?P<name>(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b|\br\s+h\b"
     rf"|clay{_SEP}+(?:millennium{_SEP}+)?(?:problem|prize)"
     rf"|millennium{_SEP}+(?:problem|prize))",
@@ -145,8 +147,8 @@ _SOLUTION_ASIDE_RE = re.compile(
     re.IGNORECASE,
 )
 # A claim noun within four tokens of a guarded problem name is also a claim,
-# in either order. Punctuation and possessives are ignored. The main-pattern
-# rescue is separate and only covers solution or solutions.
+# in either order. Punctuation and possessives are ignored. A whole-sentence
+# allowlist may waive solution or solutions. It never waives a proof compound.
 _CLAIM_NOUNS = frozenset(
     {"proof", "proofs", "disproof", "disproofs", "solution", "solutions", "resolution", "resolved"}
 )
@@ -167,24 +169,27 @@ _NOUN_QUALIFIERS = frozenset(
     }
 )
 _NOUN_PROXIMITY = 4
-# A rescue is refused if any of these appear anywhere in the sentence.
-# complete, full, final, settled, solved, proven, finished, and "is done" stay
-# in this list. smooth matches even before "data" here; that only blocks the
-# rescue, not the separate flow-name exception.
-_RESCUE_VETO_RE = re.compile(
-    rf"\b(?:regularity|smooth(?:ness)?|existence|exist|blow{_SEP}*up|"
-    rf"well{_SEP}*posed(?:ness)?|global|millennium|clay|problem|conjecture|"
-    rf"complete|full|final|settled|solved|proven|finished)\b|\bis\s+done\b",
-    re.IGNORECASE,
-)
 _QUALIFIER_BEFORE = "|".join(sorted(_NOUN_QUALIFIERS, key=len, reverse=True))
-# solution/solutions only, qualifier immediately before, object is Navier–Stokes
-# with an optional "the" and an optional equations/system.
-_NARROW_SOLUTION_RE = re.compile(
-    rf"\b(?P<qual>{_QUALIFIER_BEFORE})\s+"
-    rf"(?P<noun>solutions?)\s+(?P<prep>to|of)\s+"
-    rf"(?:the\s+)?navier{_SEP}*stokes(?:\s+(?:equations|system))?\b",
-    re.IGNORECASE,
+# Template A endings stay empty. A must-pass phrase that needs words after the
+# flow name is the only way an entry is added, and none of them do.
+_TEMPLATE_A_ENDINGS: tuple[str, ...] = ()
+_TEMPLATE_A_ENDING = (
+    "(?:\\s+(?:" + "|".join(re.escape(item) for item in _TEMPLATE_A_ENDINGS) + "))?"
+    if _TEMPLATE_A_ENDINGS
+    else ""
+)
+# Whole sentence, after the flow name is folded to "navier-stokes".
+# Optional article, qualifier, solution(s) of/to, optional "the", the name,
+# optional equations or system, and nothing else.
+_TEMPLATE_A_RE = re.compile(
+    rf"^(?:(?:a|an|the)\s+)?(?:{_QUALIFIER_BEFORE})\s+solutions?\s+(?:of|to)\s+"
+    rf"(?:the\s+)?navier-stokes(?:\s+(?:equations|system))?{_TEMPLATE_A_ENDING}$"
+)
+# Name first. This waives only the four-token check, never a main-pattern match.
+_TEMPLATE_B_RE = re.compile(
+    r"^(?:(?:a|an|the)\s+)?navier-stokes\s+solutions?\s+"
+    r"(?:schemes|scheme|operators|operator|methods|method)"
+    r"(?:\s+(?:is|are)\s+bounded)?$"
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
 # proof of/for, proof complete (also the same words inside disproof),
@@ -1559,50 +1564,45 @@ def _problem_token_spans(tokens: list[str]) -> list[tuple[int, int, str]]:
     return spans
 
 
-def _qualifier_beside_noun(tokens: list[str], index: int) -> bool:
-    if index > 0 and tokens[index - 1] in _NOUN_QUALIFIERS:
-        return True
-    if index + 1 < len(tokens) and tokens[index + 1] in _NOUN_QUALIFIERS:
-        return True
-    if index >= 2 and tokens[index - 2] == "energy" and tokens[index - 1] == "inequality":
-        return True
-    if index + 2 < len(tokens) and tokens[index + 1] == "energy" and tokens[index + 2] == "inequality":
-        return True
-    return False
-
-
 def _gap_to_span(index: int, start: int, end: int) -> int:
     if start <= index < end:
         return -1
     return start - index - 1 if index < start else index - end
 
 
-def _names_non_flow_problem(sentence: str) -> bool:
-    return any(match.group("name") for match in PROBLEM_RE.finditer(sentence))
+def _allowlist_text(sentence: str) -> str:
+    """Lowercase, drop trailing punctuation, and fold every spelling of the flow name.
+
+    ASCII hyphen, hyphen, non-breaking hyphen, figure dash, en dash, em dash,
+    minus, fullwidth hyphen, a space, and no separator at all all become
+    navier-stokes before a template is applied.
+    """
+    text = sentence_key(sentence).casefold()
+    text = text.rstrip(".,;:!?\"'")
+    text = re.sub(rf"navier{_SEP}*stokes", "navier-stokes", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
-def _rescue_veto(sentence: str) -> bool:
-    """Clay wording, problem, conjecture, or another guarded name blocks every rescue."""
-    return _RESCUE_VETO_RE.search(sentence) is not None or _names_non_flow_problem(sentence)
+def _matches_template_a(sentence: str) -> bool:
+    return _TEMPLATE_A_RE.match(_allowlist_text(sentence)) is not None
+
+
+def _matches_template_b(sentence: str) -> bool:
+    return _TEMPLATE_B_RE.match(_allowlist_text(sentence)) is not None
 
 
 def _rescued_main_spans(sentence: str) -> set[tuple[int, int]]:
-    """Spans of main proof/solution matches that meet every rescue condition.
+    """Main solution spans rescued by template A.
 
-    Only solution or solutions can be rescued, and only with a technical word
-    immediately before and Navier–Stokes as the object. A veto clears the set.
+    Template B never rescues these spans. A proof compound is never rescued.
+    The caller requires this set to equal every main match.
     """
-    if _rescue_veto(sentence):
+    if not _matches_template_a(sentence):
         return set()
     rescued: set[tuple[int, int]] = set()
-    mains = list(_SENTENCE_NOUN_RE.finditer(sentence))
-    for narrow in _NARROW_SOLUTION_RE.finditer(sentence):
-        start = narrow.start("noun")
-        end = narrow.end("prep")
-        for main in mains:
-            if main.start() == start and main.end() == end:
-                rescued.add(main.span())
-                break
+    for main in _SENTENCE_NOUN_RE.finditer(sentence):
+        if re.fullmatch(r"solutions?\s+(?:to|of)", main.group(), flags=re.IGNORECASE):
+            rescued.add(main.span())
     return rescued
 
 
@@ -1612,16 +1612,14 @@ def _other_claim_verb(sentence: str) -> bool:
 
 
 def sentence_level_claim(sentence: str) -> bool:
-    """Main's proof-of and solution-of checks, plus a narrow solution rescue.
+    """Main's proof-of and solution-of checks, plus template A.
 
-    The two patterns are unchanged. A match is rescued only when the noun is
-    solution or solutions, a technical qualifier is the immediately preceding
-    word, and the object is Navier–Stokes, with an optional "the" and an
-    optional equations or system. Proof, disproof, and any other proof compound
-    are never rescued. Clay wording, problem, or conjecture anywhere in the
-    sentence rescues nothing. If the rescued positions are not exactly the main
-    matches, one unrescued match fails the sentence, including a match inside
-    counterproof or foolproof.
+    The two patterns are unchanged. A match is rescued only when the whole
+    sentence matches template A and the match is solution or solutions followed
+    by to or of. Template B does not rescue these matches. Proof, disproof, and
+    any other proof compound are never rescued. If the rescued positions are
+    not exactly the main matches, one unrescued match fails the sentence,
+    including a match inside counterproof or foolproof.
     """
     if CLAIM_VERB_RE.search(sentence) is None or not mentions_guarded_problem(sentence):
         return False
@@ -1642,16 +1640,16 @@ def solution_aside_claim(sentence: str) -> bool:
 def proximate_claim_noun(sentence: str) -> bool:
     """True when a claim noun sits within four tokens of a guarded problem name.
 
-    solution or solutions may be waived when a technical qualifier sits
-    immediately beside the noun and the name is Navier–Stokes. proof, disproof,
-    and any other proof compound are never waived. "proof assistant" is not a
-    claim noun. Clay wording, problem, conjecture, complete, full, final,
-    settled, solved, proven, finished, or "is done" waives nothing.
+    solution or solutions may be waived only when the whole sentence matches
+    template A or template B and the name is the incompressible-flow name.
+    Template B waives this check only. proof, disproof, and any other proof
+    compound are never waived. "proof assistant" is not a claim noun.
     """
     tokens = _claim_tokens(sentence)
     spans = _problem_token_spans(tokens)
     if not spans:
         return False
+    allow_proximity = _matches_template_a(sentence) or _matches_template_b(sentence)
     for index, token in enumerate(tokens):
         if token not in _CLAIM_NOUNS:
             continue
@@ -1662,11 +1660,9 @@ def proximate_claim_noun(sentence: str) -> bool:
             if gap < 0 or gap > _NOUN_PROXIMITY:
                 continue
             rescued = (
-                not token.endswith("proof")
-                and not token.endswith("proofs")
-                and not _rescue_veto(sentence)
+                allow_proximity
                 and kind == "flow"
-                and _qualifier_beside_noun(tokens, index)
+                and token in {"solution", "solutions"}
             )
             if not rescued:
                 return True
@@ -1699,18 +1695,19 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     A space, hyphen, or dash may separate blow and up, or well and posed.
     proof or disproof followed by of, for, or complete, and solution or
     solutions followed by to or of, fail anywhere in the sentence. A match is
-    rescued only when the noun is solution or solutions, a technical qualifier
-    is the word immediately before it, and the object is Navier–Stokes, with
-    an optional "the" and an optional equations or system. Proof, disproof, and
-    any other proof compound are never rescued. regularity, smoothness, smooth,
-    existence, exist, blow-up, blowup, well-posed, well-posedness, global,
-    Millennium, Clay, problem, or conjecture anywhere in the sentence rescues
-    nothing. If the rescued positions are not exactly the main matches, the
-    sentence fails. A claim noun within four tokens of a guarded problem name
-    also fails, in either order. Punctuation and possessives are ignored.
-    scheme, operator, numerical, weak, Leray, mild, strong, assistant, lemma,
-    estimate, estimates, approximate, or the pair energy inequality may sit
-    immediately beside solution or solutions for that nearer check. alt, title, content,
+    rescued only when the whole sentence matches template A: an optional
+    article, a technical qualifier, solution or solutions, of or to, an
+    optional "the", the incompressible-flow name, and an optional equations or
+    system, with no other words. Every hyphen, dash, space, and joined spelling
+    of that name is folded first. Proof, disproof, and any other proof compound
+    are never rescued. Template B does not rescue these matches. If the rescued
+    positions are not exactly the main matches, the sentence fails. A claim
+    noun within four tokens of a guarded problem name also fails, in either
+    order. Punctuation and possessives are ignored. That nearer check waives
+    solution or solutions only when the whole sentence matches template A or
+    template B. Template B is an optional article, the flow name, solution or
+    solutions, then scheme, schemes, operator, operators, method, or methods,
+    then an optional "is bounded" or "are bounded". alt, title, content,
     aria-label, aria-description, placeholder, and data-* attributes are scanned
     with the prose, including unquoted values. Text nodes inside a data-upstream
     element are left out only when that element's text exactly equals the
