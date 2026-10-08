@@ -1,0 +1,68 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas } from "../../lib/atlas";
+import { COMMUNITY_STATUSES, communityBlurb, communityLabel, communityLabelFor } from "../../lib/lenses";
+
+const base = import.meta.env.BASE_URL;
+const changed = atlas.families.filter(
+  (family) => (family.community?.status ?? "claimed") !== "claimed",
+);
+---
+
+<Base
+  title="Community status · Math Release Atlas"
+  description="The community-status vocabulary, the evidence rule, and which families are not claimed."
+>
+  <article class="prose status-page">
+    <h1>Community status</h1>
+    <p>
+      A family stays claimed until a pull request changes it. Every status change is a
+      human-approved pull request. Jason approves each change. The weekly sync does not choose a
+      status.
+    </p>
+
+    <h2>Vocabulary</h2>
+    <ul class="status-list">
+      {
+        COMMUNITY_STATUSES.map((status) => (
+          <li>
+            <strong>{communityLabel(status)}</strong>
+            <span class="meta"> {status}</span>
+            <p>{communityBlurb(status)}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2>Evidence</h2>
+    <p>
+      Any status other than claimed needs an http or https URL, a date in YYYY-MM-DD form, and a
+      short neutral note of at most 25 words. A history entry whose status is not claimed needs
+      the same three fields. A claimed entry may omit them.
+    </p>
+
+    <h2>How a status changes</h2>
+    <p>
+      Edit the family file under <code>data/curated/</code> and open a pull request. The vocabulary
+      file is <code>data/curated/community-status.yaml</code>. Steps for that pull request are in
+      <code>CONTRIBUTING.md</code>. The weekly sync copies generated catalogue files only. It does
+      not edit curated notes.
+    </p>
+
+    <h2>Families that are not claimed</h2>
+    {
+      changed.length === 0 ? (
+        <p>Every family in this catalogue is claimed.</p>
+      ) : (
+        <ul class="status-list">
+          {changed.map((family) => (
+            <li>
+              <a href={`${base}f/${family.id}/`}>{family.id}</a>
+              <span class="meta"> · {communityLabelFor(family.community?.status)}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </article>
+</Base>

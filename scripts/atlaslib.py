@@ -36,17 +36,18 @@ LENS_ORDER = (
     "computation-hardness",
 )
 LENS_TAGS = set(LENS_ORDER)
+COMMUNITY_STATUS_FILE = CURATED_DIR / "community-status.yaml"
 COMMUNITY_STATUSES = {
     "claimed",
-    "community-confirmed",
+    "community-checking",
+    "independently-verified",
     "disputed",
-    "broken",
+    "retracted",
 }
-STATUSES_NEEDING_EVIDENCE = {
-    "community-confirmed",
-    "disputed",
-    "broken",
-}
+STATUSES_NEEDING_EVIDENCE = COMMUNITY_STATUSES - {"claimed"}
+COMMUNITY_KEYS = {"status", "evidence", "history"}
+EVIDENCE_KEYS = {"url", "date", "note"}
+HISTORY_KEYS = {"status", "date", "note", "url"}
 LEAN_STATUSES = (
     "main-result-formalized",
     "comparator-challenge-only",
@@ -59,6 +60,8 @@ SPARSE_PATHS = [
     "/README.md",
     "/lean/formalization.yaml",
     "/lean/docs/",
+    "/preprints/**/*.tex",
+    "/preprints/**/*.bib",
 ]
 
 # Counts checked against openai/math @ adc7f1241b42 (Initial commit).
@@ -112,12 +115,14 @@ PROBLEM_RE = re.compile(
 )
 FLOW_QUALIFIER_RE = re.compile(
     r"\s+(?:energy|inequalit(?:y|ies)|estimates?|bounds?|"
-    r"computations?|schemes?|solvers?|approximations?)\b",
+    r"computations?|schemes?|solvers?|approximations?|flows?)\b",
     re.IGNORECASE,
 )
 # Words that name the Clay problem itself. Any one of them disables the qualifier exception.
+# blow and up may be joined by a space, hyphen, or dash. "smooth data" does not cancel;
+# "smoothness" still does.
 FLOW_CLAY_WORDING_RE = re.compile(
-    r"\b(?:regularity|smooth(?:ness)?|blow-?up|existence|well-posed(?:ness)?)\b",
+    rf"\b(?:regularity|smoothness|smooth(?!\s+data)|blow{_SEP}*up|existence|well{_SEP}*posed(?:ness)?)\b",
     re.IGNORECASE,
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
@@ -127,7 +132,8 @@ FLOW_CLAY_WORDING_RE = re.compile(
 # solve/solves/solved/solving, crack/cracks/cracked/cracking,
 # true, holds, follows, verify/verifies/verified/verifying, a theorem,
 # show/shows/showed/shown/showing, demonstrate/demonstrates/demonstrated/demonstrating,
-# win/wins/won/winning, award/awards/awarded/awarding, correct.
+# win/wins/won/winning, award/awards/awarded/awarding, correct,
+# obtain/obtains/obtained/obtaining, done.
 CLAIM_VERB_RE = re.compile(
     r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
@@ -138,12 +144,14 @@ CLAIM_VERB_RE = re.compile(
     r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
     r"\ba\s+theorem\b|"
     r"\bshow(?:n|s|ed|ing)?\b|\bdemonstrat(?:e|es|ed|ing)\b|"
-    r"\bwins?\b|\bwon\b|\bwinning\b|\baward(?:ed|s|ing)?\b|\bcorrect\b",
+    r"\bwins?\b|\bwon\b|\bwinning\b|\baward(?:ed|s|ing)?\b|\bcorrect\b|"
+    r"\bobtain(?:s|ed|ing)?\b|\bdone\b",
     re.IGNORECASE,
 )
+OAI_CITE_RE = re.compile(r"OAI:([A-Za-z0-9][A-Za-z0-9_.+\-]*)")
 EVIDENCE_URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 # SHA-256 of data/upstream.json for PINNED_COMMIT, ignoring generated_at.
-PINNED_UPSTREAM_DIGEST = "e0807c5c429870f6caa61b140cb391da63751e4f94e9a7702667f428371474a1"
+PINNED_UPSTREAM_DIGEST = "9f34421e815eb47d11bcb4463801f35649b02656abc141e277a5ae581ed648ac"
 # SHA-256 of lowercase denylist stems. The stems are not stored in this repository.
 DENYLIST_DIGESTS = frozenset(
     {
@@ -184,9 +192,18 @@ TOKEN_RE = re.compile(r"[a-z0-9]+")
 HYPHEN_RUN_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)+")
 DENYLIST_SKIP = {".git", "node_modules", "dist", ".astro", "__pycache__", ".playwright-mcp"}
 ATTR_RE = re.compile(
-    r"""\b(?:alt|title|content|aria-label|placeholder)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))""",
+    r"""\b(?P<name>alt|title|content|aria-label|aria-description|placeholder|data-[\w-]+)\s*=\s*(?:"(?P<dq>[^"]*)"|'(?P<sq>[^']*)'|(?P<uq>[^\s"'=<>`]+))""",
     re.IGNORECASE,
 )
+# Catalogue fields copied onto the table. They repeat upstream wording and are not
+# part of the sentence check. Other data-* attributes are scanned.
+UPSTREAM_ATTR_SKIP = {
+    "data-title",
+    "data-area",
+    "data-areas",
+    "data-upstream",
+    "data-search",
+}
 # Soft hyphen and zero-width characters. Removed before the denylist and claim checks.
 INVISIBLE_RE = re.compile("[\u00ad\u200b\u200c\u200d\u2060\ufeff\u180e]")
 MONTHS = {
@@ -589,6 +606,53 @@ def read_comparators(doc_text: str) -> list[str]:
     return sorted(set(re.findall(r"ComparatorChallenges/([A-Za-z0-9_.-]+)\.lean", doc_text)))
 
 
+def attach_citations(repo: Path, commit: str, families: list[dict[str, Any]]) -> None:
+    """Record one directed edge per family pair cited via an OAI: manuscript key.
+
+    The receipt is the first .tex or .bib path in sorted order. A family citing
+    its own manuscript is not an edge. Keys that are not manuscript slugs are ignored.
+    """
+    slug_to: dict[str, str] = {}
+    for family in families:
+        for manuscript in family["manuscripts"]:
+            slug_to[manuscript["slug"]] = family["id"]
+    edges: dict[tuple[str, str], dict[str, str]] = {}
+    root = repo / "preprints"
+    if root.is_dir():
+        for path in sorted(root.rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in {".tex", ".bib"}:
+                continue
+            rel = path.relative_to(repo).as_posix()
+            parts = rel.split("/")
+            if len(parts) < 3 or parts[0] != "preprints":
+                continue
+            owner = slug_to.get(parts[1])
+            if owner is None:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for key in OAI_CITE_RE.findall(text):
+                target = slug_to.get(key)
+                if target is None or target == owner:
+                    continue
+                edges.setdefault(
+                    (owner, target),
+                    {
+                        "to": target,
+                        "via": f"OAI:{key}",
+                        "source": rel,
+                        "url": blob_url(commit, rel),
+                    },
+                )
+    by_from: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for (src, _dst), edge in edges.items():
+        by_from[src].append(edge)
+    for family in families:
+        family["citations"] = sorted(
+            by_from.get(family["id"], []),
+            key=lambda edge: (edge["to"], edge["source"]),
+        )
+
+
 def build_upstream(repo: Path) -> tuple[dict[str, Any], bool]:
     commit = git(repo, "rev-parse", "HEAD").strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -693,6 +757,7 @@ def build_upstream(repo: Path) -> tuple[dict[str, Any], bool]:
             }
         )
 
+    attach_citations(repo, commit, built)
     counts = count_families(built)
     counts["yaml_sources"] = len(source_slugs)
     counts["lean_docs"] = sum(1 for family in built if family["lean"]["doc"])
@@ -768,6 +833,124 @@ def word_count(text: str) -> int:
     return len(re.findall(r"\S+", text))
 
 
+def require_day(value: str, label: str) -> str:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise AtlasError(f"{label} must be YYYY-MM-DD")
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        raise AtlasError(f"{label} must be YYYY-MM-DD") from None
+    return value
+
+
+def require_http_url(value: str, label: str) -> str:
+    if EVIDENCE_URL_RE.fullmatch(value) is None:
+        raise AtlasError(f"{label} must be an http(s) URL")
+    return value
+
+
+def require_note(value: Any, label: str) -> str:
+    note = require_text(value, label)
+    if word_count(note) > 25:
+        raise AtlasError(f"{label} is over 25 words")
+    return note
+
+
+def parse_evidence_item(path: Path, index: int, item: Any) -> dict[str, str]:
+    label = f"{path.name} evidence {index}"
+    if not isinstance(item, dict):
+        raise AtlasError(f"{label} must be a mapping")
+    extra = set(item) - EVIDENCE_KEYS
+    if extra:
+        raise AtlasError(f"{label} has unknown fields: {sorted(extra)}")
+    return {
+        "url": require_http_url(require_text(item.get("url"), f"{label} url"), f"{label} url"),
+        "date": require_day(require_text(item.get("date"), f"{label} date"), f"{label} date"),
+        "note": require_note(item.get("note"), f"{label} note"),
+    }
+
+
+def parse_history_item(path: Path, index: int, item: Any) -> dict[str, str]:
+    label = f"{path.name} history {index}"
+    if not isinstance(item, dict):
+        raise AtlasError(f"{label} must be a mapping")
+    extra = set(item) - HISTORY_KEYS
+    if extra:
+        raise AtlasError(f"{label} has unknown fields: {sorted(extra)}")
+    status = require_text(item.get("status"), f"{label} status")
+    if status not in COMMUNITY_STATUSES:
+        raise AtlasError(f"{label} status {status} is unknown")
+    cleaned = {
+        "status": status,
+        "date": require_day(require_text(item.get("date"), f"{label} date"), f"{label} date"),
+        "note": require_note(item.get("note"), f"{label} note"),
+    }
+    url = item.get("url")
+    if status in STATUSES_NEEDING_EVIDENCE:
+        cleaned["url"] = require_http_url(require_text(url, f"{label} url"), f"{label} url")
+    elif url is not None:
+        cleaned["url"] = require_http_url(require_text(url, f"{label} url"), f"{label} url")
+    return cleaned
+
+
+def parse_community(path: Path, community: Any) -> dict[str, Any] | None:
+    if community is None:
+        return None
+    if not isinstance(community, dict):
+        raise AtlasError(f"{path.name} community must be a mapping")
+    extra = set(community) - COMMUNITY_KEYS
+    if extra:
+        raise AtlasError(f"{path.name} community has unknown fields: {sorted(extra)}")
+    status = require_text(community.get("status"), f"{path.name} community status")
+    if status not in COMMUNITY_STATUSES:
+        raise AtlasError(f"{path.name} community status {status} is unknown")
+    evidence = community.get("evidence", [])
+    if not isinstance(evidence, list):
+        raise AtlasError(f"{path.name} evidence must be a list")
+    if status in STATUSES_NEEDING_EVIDENCE and not evidence:
+        raise AtlasError(f"{path.name} status {status} needs evidence")
+    history = community.get("history", [])
+    if not isinstance(history, list):
+        raise AtlasError(f"{path.name} history must be a list")
+    return {
+        "status": status,
+        "evidence": [parse_evidence_item(path, index, item) for index, item in enumerate(evidence, start=1)],
+        "history": [parse_history_item(path, index, item) for index, item in enumerate(history, start=1)],
+    }
+
+
+def load_community_schema(path: Path) -> dict[str, Any]:
+    """The vocabulary file is the contract. Ids must match the guard exactly."""
+    if not path.is_file():
+        raise AtlasError("community status schema is missing")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise AtlasError("community status schema must be a mapping")
+    rows = payload.get("vocabulary")
+    if not isinstance(rows, list) or not rows:
+        raise AtlasError("community status schema needs a vocabulary")
+    ids: list[str] = []
+    needing: set[str] = set()
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise AtlasError(f"community status {index} must be a mapping")
+        status_id = require_text(row.get("id"), f"community status {index}")
+        evidence = require_text(row.get("evidence"), f"community status {status_id} evidence")
+        if evidence not in {"required", "optional"}:
+            raise AtlasError(f"community status {status_id} evidence must be required or optional")
+        ids.append(status_id)
+        if evidence == "required":
+            needing.add(status_id)
+    if len(ids) != len(set(ids)) or set(ids) != COMMUNITY_STATUSES:
+        raise AtlasError("community status vocabulary does not match the guard")
+    if needing != STATUSES_NEEDING_EVIDENCE:
+        raise AtlasError("community status evidence rules do not match the guard")
+    rule = require_text(payload.get("rule"), "community status rule")
+    if "Jason approves" not in rule or "human-approved" not in rule:
+        raise AtlasError("community status rule must say Jason approves each human-approved change")
+    return payload
+
+
 def validate_curated_file(path: Path, payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise AtlasError(f"{path.name} must be a mapping")
@@ -800,40 +983,7 @@ def validate_curated_file(path: Path, payload: Any) -> dict[str, Any]:
         why = require_text(item.get("why"), f"{path.name} related {index} why")
         source = require_text(item.get("source"), f"{path.name} related {index} source")
         clean_related.append({"to": target, "kind": kind, "why": why, "source": source})
-    community = payload.get("community")
-    clean_community = None
-    if community is not None:
-        if not isinstance(community, dict):
-            raise AtlasError(f"{path.name} community must be a mapping")
-        status = require_text(community.get("status"), f"{path.name} community status")
-        if status not in COMMUNITY_STATUSES:
-            raise AtlasError(f"{path.name} community status {status} is unknown")
-        evidence = community.get("evidence", [])
-        if not isinstance(evidence, list):
-            raise AtlasError(f"{path.name} evidence must be a list")
-        if status in STATUSES_NEEDING_EVIDENCE and not evidence:
-            raise AtlasError(f"{path.name} status {status} needs evidence")
-        clean_evidence = []
-        for index, item in enumerate(evidence, start=1):
-            if not isinstance(item, dict):
-                raise AtlasError(f"{path.name} evidence {index} must be a mapping")
-            url = require_text(item.get("url"), f"{path.name} evidence {index} url")
-            if EVIDENCE_URL_RE.fullmatch(url) is None:
-                raise AtlasError(f"{path.name} evidence {index} url must be an http(s) URL")
-            who = require_text(item.get("who"), f"{path.name} evidence {index} who")
-            when = require_text(item.get("date"), f"{path.name} evidence {index} date")
-            quote = require_text(item.get("quote"), f"{path.name} evidence {index} quote")
-            if word_count(quote) > 25:
-                raise AtlasError(f"{path.name} evidence {index} quote is over 25 words")
-            source = item.get("source")
-            if source is not None:
-                source = require_text(source, f"{path.name} evidence {index} source")
-            else:
-                source = url
-            clean_evidence.append(
-                {"url": url, "who": who, "date": when, "quote": quote, "source": source}
-            )
-        clean_community = {"status": status, "evidence": clean_evidence}
+    clean_community = parse_community(path, payload.get("community"))
     caution = payload.get("caution")
     clean_caution = None
     if caution is not None:
@@ -870,6 +1020,8 @@ def load_curated(directory: Path) -> dict[str, dict[str, Any]]:
         return loaded
     for path in sorted(directory.iterdir()):
         if path.suffix not in {".yaml", ".yml"}:
+            continue
+        if path.name == COMMUNITY_STATUS_FILE.name:
             continue
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))
         item = validate_curated_file(path, payload)
@@ -935,6 +1087,7 @@ def merge_data(
         merged["related"] = note["related"] if note else []
         merged["community"] = note["community"] if note else None
         merged_families.append(merged)
+    apply_citation_graph(merged_families)
     payload = {
         "schema_version": 1,
         "generated_at": upstream["generated_at"],
@@ -944,6 +1097,44 @@ def merge_data(
         "families": merged_families,
     }
     return payload
+
+
+def apply_citation_graph(families: list[dict[str, Any]]) -> None:
+    """Project upstream citation edges into cites and cited_by. Does not invent a status."""
+    incoming: dict[str, list[dict[str, str]]] = defaultdict(list)
+    known = {family["id"] for family in families}
+    for family in families:
+        raw = family.pop("citations", [])
+        if not isinstance(raw, list):
+            raise AtlasError(f"family {family['id']} citations must be a list")
+        cites: list[dict[str, str]] = []
+        for edge in raw:
+            if not isinstance(edge, dict):
+                raise AtlasError(f"family {family['id']} has a citation that is not a mapping")
+            target = edge.get("to")
+            if target not in known:
+                raise AtlasError(f"family {family['id']} cites unknown family {target}")
+            item = {
+                "to": str(edge["to"]),
+                "via": str(edge["via"]),
+                "source": str(edge["source"]),
+                "url": str(edge["url"]),
+            }
+            cites.append(item)
+            incoming[str(target)].append(
+                {
+                    "from": family["id"],
+                    "via": item["via"],
+                    "source": item["source"],
+                    "url": item["url"],
+                }
+            )
+        family["cites"] = cites
+    for family in families:
+        family["cited_by"] = sorted(
+            incoming.get(family["id"], []),
+            key=lambda edge: (edge["from"], edge["source"]),
+        )
 
 
 def assert_counts(payload: dict[str, Any]) -> None:
@@ -1075,14 +1266,26 @@ def normalize_scan_text(text: str) -> str:
     return unicodedata.normalize("NFKC", INVISIBLE_RE.sub("", text))
 
 
+def attribute_text(text: str) -> str:
+    """Authored attribute values, each as its own sentence.
+
+    data-title, data-area, and data-areas repeat the upstream catalogue and are
+    left out. data-upstream and data-search are quotation markers, not prose.
+    """
+    parts: list[str] = []
+    for match in ATTR_RE.finditer(text):
+        name = match.group("name").lower()
+        if name in UPSTREAM_ATTR_SKIP:
+            continue
+        value = match.group("dq") or match.group("sq") or match.group("uq") or ""
+        if value:
+            parts.append(value)
+    return ". ".join(parts)
+
+
 def prose_for_scan(text: str) -> str:
     text = normalize_scan_text(text)
-    attributes = " ".join(
-        piece
-        for match in ATTR_RE.finditer(text)
-        for piece in match.groups()
-        if piece
-    )
+    attributes = attribute_text(text)
     blocked = re.sub(
         r"</(p|li|h[1-6]|tr|div|blockquote|section|article|td|th|dt|dd)>",
         ".",
@@ -1116,11 +1319,14 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
 
     A negation anywhere in the sentence is not an exemption. The only exemption
     is an exact fixed caution sentence. A flow name followed by energy, an
-    inequality, an estimate, a bound, a computation, a scheme, a solver, or an
-    approximation is not the guarded problem, unless the sentence also says
-    regularity, smooth, smoothness, blow-up, blowup, existence, well-posed, or
-    well-posedness. alt, title, content, aria-label, and placeholder attributes
-    are scanned with the prose, including unquoted values.
+    inequality, an estimate, a bound, a computation, a scheme, a solver, an
+    approximation, or flow is not the guarded problem, unless the sentence also
+    says regularity, smoothness, smooth (except when the next word is data),
+    blow up, blow-up, blowup, existence, well-posed, or well-posedness. A space,
+    hyphen, or dash may separate blow and up, or well and posed. alt, title,
+    content, aria-label, aria-description, placeholder, and data-* attributes
+    are scanned with the prose, including unquoted values. Catalogue attributes
+    data-title, data-area, and data-areas are not scanned.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1222,7 +1428,7 @@ def denylist_hit(text: str) -> bool:
 
 
 def authored_files() -> list[Path]:
-    files = [ROOT / "README.md", ROOT / "NOTICE", CAUTIONS_JSON]
+    files = [ROOT / "README.md", ROOT / "NOTICE", ROOT / "CONTRIBUTING.md", CAUTIONS_JSON]
     for directory in (ROOT / "src", CURATED_DIR):
         if not directory.exists():
             continue
@@ -1292,6 +1498,16 @@ def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: s
             failures.append(f"family page {family['id']} does not show the default claimed status")
         if family["upstream_sha"] not in text:
             failures.append(f"family page {family['id']} is missing the upstream commit")
+        if "Status history" not in text:
+            failures.append(f"family page {family['id']} is missing status history")
+        if "Cites" not in text or "Cited by" not in text:
+            failures.append(f"family page {family['id']} is missing citation lists")
+        for edge in family.get("cites") or []:
+            if edge["url"] not in text or f"f/{edge['to']}/" not in text:
+                failures.append(f"family page {family['id']} is missing cite {edge['to']}")
+        for edge in family.get("cited_by") or []:
+            if edge["url"] not in text or f"f/{edge['from']}/" not in text:
+                failures.append(f"family page {family['id']} is missing cited-by {edge['from']}")
         for lens in family.get("lenses") or []:
             if lens["tag"] not in text or lens["source"] not in text:
                 failures.append(f"family page {family['id']} is missing lens {lens['tag']}")
@@ -1328,6 +1544,59 @@ def check_lens_pages(dist: Path, families: list[dict[str, Any]]) -> list[str]:
     return failures
 
 
+def citation_pairs(payload: dict[str, Any]) -> set[tuple[str, str]]:
+    pairs: set[tuple[str, str]] = set()
+    for family in payload.get("families") or []:
+        for edge in family.get("citations") or []:
+            pairs.add((family["id"], edge.get("to")))
+    return pairs
+
+
+def check_graph_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
+    page = dist / "graph" / "index.html"
+    if not page.is_file():
+        return ["missing citation graph"]
+    text = html.unescape(page.read_text(encoding="utf-8"))
+    failures: list[str] = []
+    if "our grouping, not a citation" not in text:
+        failures.append("citation graph does not label shared-topic links")
+    if "<ul" not in text:
+        failures.append("citation graph has no list fallback")
+    for family in families:
+        for edge in family.get("cites") or []:
+            if edge["url"] not in text or f"f/{family['id']}/" not in text or f"f/{edge['to']}/" not in text:
+                failures.append(f"citation graph is missing {family['id']} → {edge['to']}")
+        for item in family.get("related") or []:
+            if item.get("kind") == "shared-topic" and f"f/{item['to']}/" not in text:
+                failures.append(f"citation graph is missing shared-topic {family['id']} → {item['to']}")
+    return failures
+
+
+def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
+    page = dist / "status" / "index.html"
+    if not page.is_file():
+        return ["missing community status page"]
+    text = html.unescape(page.read_text(encoding="utf-8"))
+    failures: list[str] = []
+    for phrase in (
+        "claimed",
+        "community-checking",
+        "independently-verified",
+        "disputed",
+        "retracted",
+        "human-approved",
+        "Jason approves",
+    ):
+        if phrase not in text:
+            failures.append(f"status page is missing {phrase!r}")
+    for family in families:
+        community = family.get("community") or {}
+        status = community.get("status") or "claimed"
+        if status != "claimed" and f"f/{family['id']}/" not in text:
+            failures.append(f"status page is missing family {family['id']}")
+    return failures
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
@@ -1359,6 +1628,8 @@ def check_dist(dist: Path) -> list[str]:
         failures.append(f"table renders {len(pdfs)} manuscript links, data has {expected['manuscripts']}")
     failures.extend(check_family_pages(dist, catalog["families"], index_html))
     failures.extend(check_lens_pages(dist, catalog["families"]))
+    failures.extend(check_graph_page(dist, catalog["families"]))
+    failures.extend(check_status_page(dist, catalog["families"]))
     for family_id, text in REQUIRED_CAUTIONS.items():
         if text not in index_text:
             failures.append(f"table is missing the caution for {family_id}")
@@ -1428,6 +1699,8 @@ def diff_summary(old: dict[str, Any] | None, new: dict[str, Any], curated_ids: s
         after_slugs = {item["slug"] for item in after["manuscripts"]}
         if before_slugs != after_slugs:
             manuscript_changes.append(family_id)
+    old_edges = citation_pairs(old)
+    new_edges = citation_pairs(new)
     old_counts = old["counts"]
     new_counts = new["counts"]
 
@@ -1454,6 +1727,7 @@ def diff_summary(old: dict[str, Any] | None, new: dict[str, Any], curated_ids: s
         f"- Summary text changes: {preview(summaries)}",
         f"- Manuscript set changes: {preview(manuscript_changes)}",
         f"- Lean status changes: {preview(lean_changes)}",
+        f"- Citation edges: {len(old_edges)} → {len(new_edges)} (added {len(new_edges - old_edges)}, removed {len(old_edges - new_edges)})",
         f"- Curated families to re-check: {preview(recheck)}",
         "",
         f"README: {new['upstream']['readme_sentence']}",

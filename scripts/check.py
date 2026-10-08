@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import ast
+import inspect
 import os
 import subprocess
 import sys
@@ -12,14 +14,19 @@ from pathlib import Path
 
 import yaml
 
+import atlaslib
 from atlaslib import (
     CAUTIONS_JSON,
+    COMMUNITY_STATUSES,
+    COMMUNITY_STATUS_FILE,
     CURATED_DIR,
     FAMILIES_JSON,
     REQUIRED_CAUTIONS,
+    ROOT,
     UPSTREAM_JSON,
     AtlasError,
     assert_counts,
+    attach_citations,
     check_authored,
     check_dist,
     denylist_hit,
@@ -28,7 +35,10 @@ from atlaslib import (
     assert_upstream_digest,
     ensure_ancestor_of_origin_head,
     load_cautions,
+    load_community_schema,
     load_curated,
+    materialize_upstream,
+    merge_data,
     parse_contents,
     parse_slug_date,
     plainify,
@@ -40,6 +50,7 @@ from atlaslib import (
     validate_curated_file,
     verify_recorded_upstream,
 )
+from sync import resolve_remote_sha
 
 
 def check_source() -> list[str]:
@@ -60,16 +71,59 @@ def check_source() -> list[str]:
         failures.extend(check_authored())
         return failures
     for item in curated.values():
-        community = item["community"]
-        if community is not None and community["status"] != "claimed":
-            failures.append(
-                f"{item['id']} community status is {community['status']}; this version only records claimed"
-            )
         for lens in item["lenses"]:
             if not lens["source"].strip():
                 failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
+    failures.extend(check_status_vocabulary())
+    failures.extend(check_sync_does_not_write_status())
     failures.extend(check_authored())
     return failures
+
+
+def check_status_vocabulary() -> list[str]:
+    failures: list[str] = []
+    try:
+        load_community_schema(COMMUNITY_STATUS_FILE)
+    except AtlasError as exc:
+        failures.append(str(exc))
+    lenses = (ROOT / "src" / "lib" / "lenses.ts").read_text(encoding="utf-8")
+    for status in sorted(COMMUNITY_STATUSES):
+        if f'"{status}"' not in lenses:
+            failures.append(f"lenses.ts is missing community status {status}")
+    for retired in ("community-confirmed", "broken"):
+        if f'"{retired}"' in lenses:
+            failures.append(f"lenses.ts still names retired status {retired}")
+    return failures
+
+
+def check_sync_does_not_write_status() -> list[str]:
+    """The weekly sync may refresh the catalogue. It must not author a community status."""
+    sync = (ROOT / "scripts" / "sync.py").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "sync.yml").read_text(encoding="utf-8")
+    failures: list[str] = []
+    if "data/curated" in workflow:
+        failures.append("sync workflow touches data/curated")
+    if "git add data/upstream.json data/families.json" not in workflow:
+        failures.append("sync workflow no longer limits the commit to generated catalogue files")
+    for source, label in ((sync, "sync.py"), (workflow, "sync.yml")):
+        if "community" in source:
+            failures.append(f"{label} names community status")
+        for status in sorted(COMMUNITY_STATUSES):
+            if status in source:
+                failures.append(f"{label} names community status {status}")
+    return failures
+
+
+def _calls_named(func, name: str) -> bool:
+    tree = ast.parse(inspect.getsource(func))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        called = node.func
+        ident = called.id if isinstance(called, ast.Name) else called.attr if isinstance(called, ast.Attribute) else ""
+        if ident == name:
+            return True
+    return False
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -100,6 +154,10 @@ def ancestry_self_test() -> list[str]:
     and runs git merge-base --is-ancestor.
     """
     failures: list[str] = []
+    if not _calls_named(verify_recorded_upstream, "materialize_upstream"):
+        failures.append("upstream verifier does not call materialize_upstream")
+    if not _calls_named(materialize_upstream, "ensure_ancestor_of_origin_head"):
+        failures.append("upstream verifier does not call the ancestry check")
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         seed = root / "seed"
@@ -168,6 +226,34 @@ def ancestry_self_test() -> list[str]:
                 failures.append(f"fetch failure was not one line: {message!r}")
         else:
             failures.append("a missing remote did not fail")
+        try:
+            resolve_remote_sha(str(root / "no-such.git"), None)
+        except AtlasError as exc:
+            message = str(exc)
+            if "\n" in message or "Traceback" in message:
+                failures.append(f"ls-remote failure was not one line: {message!r}")
+        else:
+            failures.append("ls-remote against a missing remote did not fail")
+        called: list[str] = []
+        original = atlaslib.ensure_ancestor_of_origin_head
+
+        def spy(repo: Path, sha: str) -> None:
+            called.append(sha)
+            raise AtlasError("ancestry-check-called")
+
+        atlaslib.ensure_ancestor_of_origin_head = spy
+        try:
+            try:
+                materialize_upstream(str(origin), ancestor, root / "fresh")
+            except AtlasError as exc:
+                if "ancestry-check-called" not in str(exc):
+                    failures.append(f"ancestry spy raised {exc}")
+            else:
+                failures.append("materialize_upstream returned without the ancestry check")
+            if not called:
+                failures.append("upstream verifier did not call the ancestry check")
+        finally:
+            atlaslib.ensure_ancestor_of_origin_head = original
     return failures
 
 
@@ -272,6 +358,13 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "RH is a theorem.",
         "RH is correct.",
         "RH has been shown.",
+        "Navier–Stokes estimates prove blow up",
+        "Navier–Stokes estimates prove blow–up",
+        "We obtain RH",
+        "We obtained the Riemann Hypothesis.",
+        "We are obtaining RH.",
+        "Riemann hypothesis: done",
+        "Global smooth solutions of Navier-Stokes are proven.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -296,6 +389,8 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Our Navier–Stokes solver proves an energy inequality.",
         "The lemma is a theorem.",
         "We show a bound.",
+        "Navier–Stokes flows show turbulence",
+        "We prove a Navier-Stokes energy inequality for smooth data.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -383,9 +478,17 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         '<span aria-label="We show RH">x</span>',
         "<input placeholder='RH is correct'>",
         "<img alt=RH-is-solved>",
+        '<p aria-description="We obtain RH">x</p>',
+        '<span data-note="Riemann hypothesis: done">x</span>',
     ):
         if not scan_overclaims(attribute, "attribute"):
             failures.append(f"a claim in an HTML attribute was not flagged: {attribute}")
+    catalogue_attr = '<tr data-title="The Riemann Hypothesis is solved."><td>The lemma is proven.</td></tr>'
+    if scan_overclaims(catalogue_attr, "attribute"):
+        failures.append("an upstream title attribute was scanned")
+    sort_attr = '<th data-sort="title">Result</th>'
+    if scan_overclaims(sort_attr, "attribute"):
+        failures.append("a data-sort value was flagged")
     soft = chr(0x00AD)
     hidden_char = chr(0x200B)
     if not scan_overclaims(f"R{hidden_char}H is solved.", "normalized"):
@@ -474,9 +577,8 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
                             "evidence": [
                                 {
                                     "url": "notes/local.md",
-                                    "who": "A reader",
                                     "date": "2026-10-08",
-                                    "quote": "A short note.",
+                                    "note": "A short note.",
                                 }
                             ],
                         },
@@ -515,16 +617,174 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("curated negated proof", negated_curated)
     if message:
         failures.append(message)
+    def status_without_evidence() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {"status": "independently-verified", "evidence": []},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    def status_with_evidence() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {
+                            "status": "disputed",
+                            "evidence": [
+                                {
+                                    "url": "https://example.com/note",
+                                    "date": "2026-10-08",
+                                    "note": "A short neutral note about the family.",
+                                }
+                            ],
+                            "history": [
+                                {
+                                    "status": "community-checking",
+                                    "date": "2026-10-01",
+                                    "note": "An earlier short note.",
+                                    "url": "https://example.com/earlier",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    def history_without_url() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {
+                            "status": "claimed",
+                            "history": [
+                                {
+                                    "status": "retracted",
+                                    "date": "2026-10-08",
+                                    "note": "A short neutral note.",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
     message = expect_error("evidence url", bad_evidence_url)
+    if message:
+        failures.append(message)
+    message = expect_error("status without evidence", status_without_evidence)
+    if message:
+        failures.append(message)
+    message = expect_error("history without url", history_without_url)
     if message:
         failures.append(message)
     try:
         ordinary_solved()
+        status_with_evidence()
     except AtlasError as exc:
-        failures.append(f"ordinary solved sentence was rejected: {exc}")
+        failures.append(f"a valid curated note was rejected: {exc}")
+    cite_error = citation_self_test()
+    if cite_error:
+        failures.append(cite_error)
+    merge_error = merge_status_self_test()
+    if merge_error:
+        failures.append(merge_error)
     if not CURATED_DIR.is_dir():
         failures.append("curated directory is missing")
     return failures
+
+
+def citation_self_test() -> str | None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        alpha = repo / "preprints" / "alpha-paper" / "build"
+        beta = repo / "preprints" / "beta-paper" / "build"
+        alpha.mkdir(parents=True)
+        beta.mkdir(parents=True)
+        (alpha / "b.tex").write_text("See OAI:beta-paper and OAI:alpha-paper.\n", encoding="utf-8")
+        (alpha / "a.bib").write_text("OAI:beta-paper\n", encoding="utf-8")
+        families = [
+            {"id": "001", "manuscripts": [{"slug": "alpha-paper"}]},
+            {"id": "002", "manuscripts": [{"slug": "beta-paper"}]},
+        ]
+        attach_citations(repo, "a" * 40, families)
+        edges = families[0]["citations"]
+        if len(edges) != 1 or edges[0]["to"] != "002":
+            return f"citation edge was {edges}"
+        if edges[0]["source"] != "preprints/alpha-paper/build/a.bib":
+            return f"citation receipt was {edges[0]['source']}"
+        if not edges[0]["url"].endswith("/preprints/alpha-paper/build/a.bib"):
+            return f"citation url was {edges[0]['url']}"
+        if families[1]["citations"] != []:
+            return "a self-citation or reverse edge was kept"
+    return None
+
+
+def merge_status_self_test() -> str | None:
+    evidence = {
+        "url": "https://example.com/note",
+        "date": "2026-10-08",
+        "note": "A short neutral note about the family.",
+    }
+    community = {"status": "independently-verified", "evidence": [evidence], "history": []}
+    upstream = {
+        "generated_at": "2026-01-01T00:00:00+00:00",
+        "upstream": {},
+        "counts": {},
+        "areas": [],
+        "families": [
+            {
+                "id": "001",
+                "citations": [
+                    {
+                        "to": "002",
+                        "via": "OAI:beta-paper",
+                        "source": "preprints/alpha-paper/build/a.bib",
+                        "url": "https://example.com/a.bib",
+                    }
+                ],
+            },
+            {"id": "002"},
+        ],
+    }
+    curated = {
+        "001": {
+            "id": "001",
+            "lenses": [],
+            "related": [{"to": "002", "kind": "shared-topic", "why": "Same topic.", "source": "Hand grouping"}],
+            "community": community,
+            "caution": None,
+        }
+    }
+    merged = merge_data(upstream, curated, {})
+    first, second = merged["families"]
+    if first["community"] != community:
+        return "merge did not keep the curated community status"
+    if second["community"] is not None:
+        return "merge invented a community status"
+    if "citations" in first or first["cites"][0]["to"] != "002":
+        return "merge did not project cites"
+    if second["cited_by"][0]["from"] != "001" or second["cited_by"][0]["url"] != "https://example.com/a.bib":
+        return "merge did not project cited_by"
+    if first["cited_by"] != [] or second["cites"] != []:
+        return "merge added an extra citation edge"
+    return None
 
 
 def main() -> int:

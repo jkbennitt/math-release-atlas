@@ -72,10 +72,20 @@ related:
 Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
 `electronic-structure`, `quantum-information`, `gravity-qft`, and
 `computation-hardness`. Each lens and each related link needs a non-empty
-`source`. A community status of `community-confirmed`, `disputed`, or
-`broken` needs an evidence list with a url, who, date, and a quote of at
-most 25 words. `claimed` may have an empty evidence list. This version records only
-`claimed`. Curated text uses the same sentence check as the rest of the site.
+`source`. Community status ids are `claimed`, `community-checking`,
+`independently-verified`, `disputed`, and `retracted`. Any status other than
+`claimed` needs evidence: an http or https URL, a `YYYY-MM-DD` date, and a
+short neutral note of at most 25 words. `claimed` may omit evidence. The same
+three fields are required on a history entry whose status is not `claimed`.
+The vocabulary file is `data/curated/community-status.yaml`. Every status
+change is a human-approved pull request. Jason approves each change. The
+weekly sync does not write community status. See `CONTRIBUTING.md`. Curated
+text uses the same sentence check as the rest of the site.
+
+Citation edges are read from `OAI:` keys in upstream manuscript `.tex` and
+`.bib` files and stored when the catalogue is built. The merge step turns
+those edges into `cites` and `cited_by`. Each edge keeps the upstream file
+URL as its receipt. Counts on the graph page come from that merged data.
 
 When a shared-topic link is rendered, the label is “our grouping, not a
 citation.”
@@ -95,10 +105,12 @@ sentence from the fixed list (whitespace collapsed, trailing period
 ignored). A longer sentence that merely contains a caution is not exempt.
 
 The incompressible-flow name does not count when the next word is energy,
-inequality, estimate, bound, computation, scheme, solver, or approximation,
-and the sentence does not also say regularity, smooth, smoothness, blow-up,
-blowup, existence, well-posed, or well-posedness. A sentence that only
-names an energy inequality therefore still passes.
+inequality, estimate, bound, computation, scheme, solver, approximation, or
+flow, and the sentence does not also say regularity, smoothness, smooth
+(unless the next word is data), blow up, blow-up, blowup, existence,
+well-posed, or well-posedness. A space, hyphen, or dash may separate the
+words blow and up, and the words well and posed. A sentence that only names
+an energy inequality, including one for smooth data, therefore still passes.
 
 Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes
@@ -114,12 +126,14 @@ solves, solved, solving, crack, cracks, cracked, and cracking. Further claim
 words are true, holds, follows, verify, verifies, verified, verifying, show,
 shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
 demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
-correct, and the phrase “a theorem”.
+correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem”.
 
 The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML after elements marked as upstream quotations are removed.
-alt, title, meta content, aria-label, and placeholder attributes are
-included, quoted or unquoted. Curated evidence URLs must be http or https.
+alt, title, meta content, aria-label, aria-description, placeholder, and
+data-* attributes are included, quoted or unquoted. Attributes that copy the
+catalogue (`data-title`, `data-area`, `data-areas`) are not scanned. Curated
+evidence URLs must be http or https.
 Before either check, text is NFKC-normalized and soft hyphens and zero-width
 characters are removed.
 

@@ -12,7 +12,15 @@ export const LENS_TAGS = [
 
 export type LensTag = (typeof LENS_TAGS)[number];
 
-export type CommunityStatus = "claimed" | "community-confirmed" | "disputed" | "broken";
+export const COMMUNITY_STATUSES = [
+  "claimed",
+  "community-checking",
+  "independently-verified",
+  "disputed",
+  "retracted",
+] as const;
+
+export type CommunityStatus = (typeof COMMUNITY_STATUSES)[number];
 
 export function isLensTag(tag: string): tag is LensTag {
   switch (tag) {
@@ -62,9 +70,10 @@ export function lensLabelFor(tag: string): string {
 export function isCommunityStatus(status: string): status is CommunityStatus {
   switch (status) {
     case "claimed":
-    case "community-confirmed":
+    case "community-checking":
+    case "independently-verified":
     case "disputed":
-    case "broken":
+    case "retracted":
       return true;
     default:
       return false;
@@ -75,12 +84,33 @@ export function communityLabel(status: CommunityStatus): string {
   switch (status) {
     case "claimed":
       return "Claimed";
-    case "community-confirmed":
-      return "Community confirmed";
+    case "community-checking":
+      return "Community checking";
+    case "independently-verified":
+      return "Independently verified";
     case "disputed":
       return "Disputed";
-    case "broken":
-      return "Broken";
+    case "retracted":
+      return "Retracted";
+    default: {
+      const exhaustive: never = status;
+      return exhaustive;
+    }
+  }
+}
+
+export function communityBlurb(status: CommunityStatus): string {
+  switch (status) {
+    case "claimed":
+      return "Recorded as a claim. Evidence is optional.";
+    case "community-checking":
+      return "An outside check is underway. Evidence is required.";
+    case "independently-verified":
+      return "An outside check agrees with the family. Evidence is required.";
+    case "disputed":
+      return "An outside note disagrees with the family. Evidence is required.";
+    case "retracted":
+      return "The claim was withdrawn. Evidence is required.";
     default: {
       const exhaustive: never = status;
       return exhaustive;

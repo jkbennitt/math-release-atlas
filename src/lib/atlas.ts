@@ -30,10 +30,29 @@ export interface RelatedNote {
 
 export interface EvidenceNote {
   url: string;
-  who: string;
   date: string;
-  quote: string;
+  note: string;
+}
+
+export interface StatusEvent {
+  status: string;
+  date: string;
+  note: string;
+  url?: string;
+}
+
+export interface CitationOut {
+  to: string;
+  via: string;
   source: string;
+  url: string;
+}
+
+export interface CitationIn {
+  from: string;
+  via: string;
+  source: string;
+  url: string;
 }
 
 export interface Family {
@@ -54,7 +73,9 @@ export interface Family {
   caution: string | null;
   lenses: LensNote[];
   related: RelatedNote[];
-  community: { status: string; evidence: EvidenceNote[] } | null;
+  community: { status: string; evidence: EvidenceNote[]; history: StatusEvent[] } | null;
+  cites: CitationOut[];
+  cited_by: CitationIn[];
 }
 
 export interface AtlasData {

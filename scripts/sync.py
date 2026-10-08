@@ -30,6 +30,7 @@ from atlaslib import (
     merge_data,
     read_json,
     require_upstream_ancestor,
+    run_git,
     write_json,
     CAUTIONS_JSON,
 )
@@ -50,7 +51,7 @@ def set_output(name: str, value: str) -> None:
 
 
 def resolve_remote_sha(url: str, requested: str | None) -> str:
-    line = subprocess.check_output(["git", "ls-remote", url, "HEAD"], text=True)
+    line = run_git(["git", "ls-remote", url, "HEAD"], None, "could not read upstream HEAD").stdout
     parts = line.split()
     if not parts or not re.fullmatch(r"[0-9a-f]{40}", parts[0]):
         raise AtlasError(f"could not read upstream HEAD from {line!r}")
