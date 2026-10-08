@@ -3,7 +3,7 @@ name: Upstream sync
 
 on:
   schedule:
-    - cron: "0 13 * * 1"
+    - cron: "17 10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -44,6 +44,7 @@ jobs:
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           set -e
+          # Exit 0 means the recorded commit is unchanged. The publish job does not run, so no pull request is opened.
           case "$code" in
             0|2|3) ;;
             *) exit "$code" ;;
@@ -138,12 +139,30 @@ jobs:
         env:
           OLD: ${{ needs.prepare.outputs.old }}
           NEW: ${{ needs.prepare.outputs.new }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Reuse an open sync pull request's branch. Otherwise keep one standing branch.
+          heads="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json headRefName --jq '.[].headRefName')"
+          branch=""
+          while IFS= read -r head; do
+            case "$head" in
+              upstream-sync)
+                branch="upstream-sync"
+                break
+                ;;
+              upstream-sync-*)
+                if [ -z "$branch" ]; then
+                  branch="$head"
+                fi
+                ;;
+            esac
+          done <<< "$heads"
+          if [ -z "$branch" ]; then
+            branch="upstream-sync"
+          fi
           unset GITHUB_TOKEN GH_TOKEN
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          short="${NEW:0:12}"
-          branch="upstream-sync-${short}"
           git checkout -B "$branch"
           cp sync-payload/upstream.json data/upstream.json
           cp sync-payload/families.json data/families.json
@@ -152,7 +171,7 @@ jobs:
             echo "committed=false" >> "$GITHUB_OUTPUT"
             echo "No data change to commit."
           else
-            git commit -m "upstream sync ${OLD:0:12} to ${short}"
+            git commit -m "upstream sync ${OLD:0:12} to ${NEW:0:12}"
             echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
@@ -178,12 +197,14 @@ jobs:
           BRANCH: ${{ steps.commit.outputs.branch }}
           COMMITTED: ${{ steps.commit.outputs.committed }}
         run: |
+          # Edit the open sync pull request in place. This job never merges it.
           short="${NEW:0:12}"
+          title="upstream sync ${OLD:0:12}→${short}"
           number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
           if [ -n "$number" ] && [ "$number" != "null" ]; then
-            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --body-file sync-payload/pr-body.md
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file sync-payload/pr-body.md
           elif [ "$COMMITTED" = "true" ]; then
-            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "upstream sync ${OLD:0:12}→${short}" --body-file sync-payload/pr-body.md
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "$title" --body-file sync-payload/pr-body.md
           else
             echo "No commit and no open pull request."
           fi

@@ -3,7 +3,7 @@
 ## Community status
 
 Status changes must be approved by Jason (repo policy). Branch protection is off, and this
-repository does not turn it on. The weekly sync does not edit `data/curated/` and does not
+repository does not turn it on. The daily sync does not edit `data/curated/` and does not
 choose a status.
 
 Open a pull request that edits `data/curated/NNN.yaml` for that family. The allowed ids are

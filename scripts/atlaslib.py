@@ -1455,7 +1455,7 @@ def verify_recorded_upstream() -> None:
 
     The commit must be openai/math HEAD or an ancestor of it. generated_at is a
     timestamp and is ignored. The checkout is a sparse fetch of that commit, the
-    same path the weekly sync uses. A fetch or network failure is an AtlasError.
+    same path the daily sync uses. A fetch or network failure is an AtlasError.
     """
     recorded = read_json(UPSTREAM_JSON)
     commit = str(recorded.get("upstream", {}).get("commit", ""))

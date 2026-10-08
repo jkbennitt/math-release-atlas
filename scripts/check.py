@@ -141,7 +141,7 @@ def check_status_vocabulary() -> list[str]:
 
 
 def check_sync_does_not_write_status() -> list[str]:
-    """The weekly sync may refresh the catalogue. It must not author a community status."""
+    """The daily sync may refresh the catalogue. It must not author a community status."""
     sync = (ROOT / "scripts" / "sync.py").read_text(encoding="utf-8")
     workflow = (ROOT / ".github" / "workflows" / "sync.yml").read_text(encoding="utf-8")
     failures: list[str] = []
@@ -149,6 +149,39 @@ def check_sync_does_not_write_status() -> list[str]:
         failures.append("sync workflow touches data/curated")
     if "git add data/upstream.json data/families.json" not in workflow:
         failures.append("sync workflow no longer limits the commit to generated catalogue files")
+    if 'cron: "17 10 * * *"' not in workflow:
+        failures.append("sync schedule is not daily at 10:17 UTC")
+    if "0 13 * * 1" in workflow or 'cron: "0 ' in workflow:
+        failures.append("sync cron is not the daily off-peak schedule")
+    if "upstream-sync-*)" not in workflow or 'branch="upstream-sync"' not in workflow:
+        failures.append("sync does not reuse one open pull request branch")
+    if 'branch="upstream-sync-${' in workflow:
+        failures.append("sync names a new branch for each commit")
+    if "pr merge" in workflow or "auto-merge" in workflow:
+        failures.append("sync workflow merges a pull request")
+    if "needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3'" not in workflow:
+        failures.append("sync publishes when the upstream commit is unchanged")
+    if "\n  prepare:" not in workflow or "\n  publish:" not in workflow:
+        failures.append("sync workflow lost the two-job split")
+    if workflow.count("runs-on: ubuntu-latest") != 2 or "runs-on: self-hosted" in workflow:
+        failures.append("sync workflow does not stay on two GitHub-hosted runners")
+    for pin in (
+        "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+    ):
+        if pin not in workflow:
+            failures.append(f"sync workflow lost pin {pin}")
+    if workflow.count("contents: read") != 2 or workflow.count("contents: write") != 1:
+        failures.append("sync workflow changed contents permissions")
+    if workflow.count("pull-requests: write") != 1:
+        failures.append("sync workflow changed pull request permissions")
+    if 'status == "unchanged"' not in sync and "Upstream commit is unchanged." not in sync:
+        failures.append("sync.py does not exit cleanly when the commit is unchanged")
+    if "return 0" not in sync:
+        failures.append("sync.py does not exit cleanly when the commit is unchanged")
     for source, label in ((sync, "sync.py"), (workflow, "sync.yml")):
         if "community" in source:
             failures.append(f"{label} names community status")
