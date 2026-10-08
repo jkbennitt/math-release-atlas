@@ -14,20 +14,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync:
+  prepare:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+    outputs:
+      code: ${{ steps.sync.outputs.code }}
+      old: ${{ steps.sync.outputs.old }}
+      new: ${{ steps.sync.outputs.new }}
+      guard: ${{ steps.verify.outputs.guard }}
+      build: ${{ steps.verify.outputs.build }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
           cache: pip
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: npm
       - run: pip install -r requirements.txt
       - id: sync
@@ -61,7 +68,7 @@ jobs:
             echo ""
             echo "## Verification"
             echo ""
-            echo "Pull requests opened by this workflow do not start the Build or Guard workflows, so this job ran both before opening the pull request."
+            echo "Pull requests opened by this workflow do not start the Build or Guard workflows, so the read-only job ran both before the pull request was opened."
             echo ""
             if [ "$guard" -eq 0 ]; then
               echo "- Guard: passed (\`python3 scripts/check.py --self-test --source\`)."
@@ -94,35 +101,99 @@ jobs:
           fi
           echo "guard=$guard" >> "$GITHUB_OUTPUT"
           echo "build=$build" >> "$GITHUB_OUTPUT"
-      - name: Open pull request
+          exit 0
+      - name: Pack sync payload
         if: steps.sync.outputs.code == '2' || steps.sync.outputs.code == '3'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          OLD: ${{ steps.sync.outputs.old }}
-          NEW: ${{ steps.sync.outputs.new }}
         run: |
+          mkdir -p "${RUNNER_TEMP}/sync-payload"
+          cp data/upstream.json "${RUNNER_TEMP}/sync-payload/upstream.json"
+          cp data/families.json "${RUNNER_TEMP}/sync-payload/families.json"
+          cp .sync-pr-body.md "${RUNNER_TEMP}/sync-payload/pr-body.md"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: steps.sync.outputs.code == '2' || steps.sync.outputs.code == '3'
+        with:
+          name: sync-payload
+          path: ${{ runner.temp }}/sync-payload
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: prepare
+    if: needs.prepare.result == 'success' && (needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sync-payload
+          path: sync-payload
+      - name: Commit regenerated data
+        id: commit
+        env:
+          OLD: ${{ needs.prepare.outputs.old }}
+          NEW: ${{ needs.prepare.outputs.new }}
+        run: |
+          unset GITHUB_TOKEN GH_TOKEN
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           short="${NEW:0:12}"
           branch="upstream-sync-${short}"
           git checkout -B "$branch"
+          cp sync-payload/upstream.json data/upstream.json
+          cp sync-payload/families.json data/families.json
           git add data/upstream.json data/families.json
           if git diff --cached --quiet; then
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             echo "No data change to commit."
-            exit 0
-          fi
-          git commit -m "upstream sync ${OLD:0:12} to ${short}"
-          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            git push --force-with-lease -u origin "$branch"
           else
-            git push -u origin "$branch"
+            git commit -m "upstream sync ${OLD:0:12} to ${short}"
+            echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
-          if ! gh pr list --head "$branch" --state open --json number --jq 'length' | grep -qx '1'; then
-            gh pr create --base main --head "$branch" --title "upstream sync ${OLD:0:12}→${short}" --body-file .sync-pr-body.md
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+      - name: Push branch
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.commit.outputs.branch }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          spec="$(git ls-remote "$remote" "refs/heads/${BRANCH}")"
+          if [ -n "$spec" ]; then
+            sha="${spec%%$'\t'*}"
+            git push --force-with-lease="refs/heads/${BRANCH}:${sha}" "$remote" "HEAD:refs/heads/${BRANCH}"
+          else
+            git push "$remote" "HEAD:refs/heads/${BRANCH}"
+          fi
+      - name: Open or update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OLD: ${{ needs.prepare.outputs.old }}
+          NEW: ${{ needs.prepare.outputs.new }}
+          BRANCH: ${{ steps.commit.outputs.branch }}
+          COMMITTED: ${{ steps.commit.outputs.committed }}
+        run: |
+          short="${NEW:0:12}"
+          number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
+          if [ -n "$number" ] && [ "$number" != "null" ]; then
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --body-file sync-payload/pr-body.md
+          elif [ "$COMMITTED" = "true" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "upstream sync ${OLD:0:12}→${short}" --body-file sync-payload/pr-body.md
+          else
+            echo "No commit and no open pull request."
           fi
       - name: Fail on count drift or a failed check
-        if: steps.sync.outputs.code == '2' || steps.sync.outputs.code == '3'
+        if: success()
+        env:
+          CODE: ${{ needs.prepare.outputs.code }}
+          GUARD: ${{ needs.prepare.outputs.guard }}
+          BUILD: ${{ needs.prepare.outputs.build }}
         run: |
-          if [ "${{ steps.sync.outputs.code }}" != "2" ] || [ "${{ steps.verify.outputs.guard }}" != "0" ] || [ "${{ steps.verify.outputs.build }}" != "0" ]; then
+          if [ "$CODE" != "2" ] || [ "$GUARD" != "0" ] || [ "$BUILD" != "0" ]; then
             exit 1
           fi

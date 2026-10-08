@@ -39,10 +39,12 @@ exits without writing. It never edits `data/curated/`.
 `.github/workflows/sync.yml` runs every Monday at 13:00 UTC, and it can be
 started by hand with “Run workflow”. It uses a GitHub-hosted `ubuntu-latest`
 runner. It reads upstream HEAD. When the commit is unchanged, it stops. When
-the commit changed, it regenerates the data files, runs the build and the
-wording checks, and opens a pull request that records whether those checks
-passed. It does not merge that pull request. The site updates only after
-the pull request is merged and the Pages workflow runs.
+the commit changed, a read-only job regenerates the data files and runs
+the build and the wording checks. A second job does not run the install or
+any repository script. It commits that data and opens or updates a pull
+request that records whether those checks passed. It does not merge that
+pull request. The site updates only after the pull request is merged and
+the Pages workflow runs.
 
 If the parsed family and manuscript counts disagree with the count sentence
 in the upstream README, the pull request is still opened and the check fails.
@@ -90,17 +92,21 @@ in the sentence does not exempt it. The only exemption is an exact caution
 sentence from the fixed list (whitespace collapsed, trailing period
 ignored). A longer sentence that merely contains a caution is not exempt.
 
-Guarded problems: RH, the Riemann Hypothesis, Navier–Stokes (hyphen, dash,
-or space), Clay, and Millennium.
+Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
+Navier–Stokes (hyphen, dash, or space), Clay, and Millennium.
 
-Claim verbs: prove, proves, proved, proving, proof of, proofs of, resolve,
+Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
+disproved, disproving, proof of, proofs of, proof for, proofs for, establish,
+establishes, established, establishing, a solution to, solution of, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, and cracking.
 
 Published HTML and the repository text are also checked against SHA-256
-digests of a fixed set of lowercase tokens. Those tokens are not written in
-this repository. Fixed cautions for families 002, 003, 032, 102, 103, 107,
-and 376 always render.
+digests of lowercase stems. A token matches when a stem is a prefix of the
+token after digits, hyphens, and ordinary suffixes are removed, so plurals,
+adjective forms, and hyphenated compounds are covered. The stems are not
+written in this repository. Fixed cautions for families 002, 003, 032, 102,
+103, 107, and 376 always render.
 
 ## License
 

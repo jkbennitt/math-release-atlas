@@ -5,6 +5,9 @@
   "description": "Unofficial atlas of result families from the public math manuscript catalogue.",
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "merge": "python3 scripts/merge.py",
     "check": "python3 scripts/check.py --self-test --source",

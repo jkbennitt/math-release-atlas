@@ -94,29 +94,39 @@ PINNED_AREAS = [
 ]
 
 # A sentence is an overclaim when it names one of these problems and uses a claim verb.
-# RH; Riemann Hypothesis; Navier-Stokes (hyphen, dash, or space); Clay; Millennium.
+# RH and dotted R.H.; Riemann Hypothesis; Navier-Stokes (hyphen, dash, or space); Clay; Millennium.
 CLAIM_TOPIC_RE = re.compile(
-    r"\brh\b|riemann\s+hypothesis|navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes|\bclay\b|\bmillennium\b",
+    r"\brh\b|r\s*\.\s*h\s*\.|riemann\s+hypothesis|"
+    r"navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes|\bclay\b|\bmillennium\b",
     re.IGNORECASE,
 )
-# prove/proves/proved/proving, proof of, resolve/resolves/resolved/resolving,
-# settle/settles/settled/settling, solve/solves/solved/solving, crack/cracks/cracked/cracking.
+# prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving,
+# proof of/for, establish/establishes/established/establishing, a solution to, solution of,
+# resolve/resolves/resolved/resolving, settle/settles/settled/settling,
+# solve/solves/solved/solving, crack/cracks/cracked/cracking.
 CLAIM_VERB_RE = re.compile(
-    r"\bprov(?:e|es|ed|ing)\b|proofs?\s+of|\bresolv(?:e|es|ed|ing)\b|"
-    r"\bsettl(?:e|es|ed|ing)\b|\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b",
+    r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:e|es|ed|ing)\b|"
+    r"proofs?\s+(?:of|for)|\bestablish(?:es|ed|ing)?\b|"
+    r"\bsolutions?\s+(?:to|of)\b|"
+    r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
+    r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b",
     re.IGNORECASE,
 )
-# SHA-256 of lowercase denylist tokens. The tokens are not stored in this repository.
+# SHA-256 of lowercase denylist stems. The stems are not stored in this repository.
 DENYLIST_DIGESTS = frozenset(
     {
         "f5d36c673cea1d80af3d33404d506e0c3e7aeaa0b8c1a21e085fa3caa8928b3b",
+        "5edc19b4eb5c54ecfb92717b75df2d0717c13803a757d86d82408a2b7de95ada",
         "703d12e6c22e5217af3eb55d340a77ef66cb448d1a4d43c29de38c80df0ac718",
         "2172bcaf476e331c9c9f28b0d23051c43af1cef2f2e6c606265c2df9c52d0579",
         "71a1857de590aa60b6bd09083cf964ef33e21e09bd54b4c1352e414535b6021b",
         "f0ccbd04b51bbc1232b2c3b8bd95110319b199d3097e60a7abd91ec1b12ef65f",
     }
 )
-TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+DENYLIST_MIN_PREFIX = 6
+DENYLIST_SUFFIXES = ("ivity", "ing", "ers", "ion", "ors", "ive", "es", "ed", "ly", "al", "s")
+TOKEN_RE = re.compile(r"[a-z0-9]+")
+HYPHEN_RUN_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)+")
 DENYLIST_SKIP = {".git", "node_modules", "dist", ".astro", "__pycache__"}
 
 MONTHS = {
@@ -928,7 +938,9 @@ def prose_for_scan(text: str) -> str:
     blocked = re.sub(r"(?m)^(#{1,6}[ \t]+\S.*)$", lambda match: match.group(1).rstrip() + ".", blocked)
     blocked = re.sub(r"<[^>]+>", " ", blocked)
     blocked = html.unescape(blocked)
-    return blocked.replace("\n", " ")
+    plain = blocked.replace("\n", " ")
+    # Keep dotted R.H. inside one sentence. The topic pattern still matches either form.
+    return re.sub(r"\bR\s*\.\s*H\s*\.", " RH ", plain, flags=re.IGNORECASE)
 
 
 def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None) -> list[str]:
@@ -950,11 +962,35 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     return failures
 
 
-def denylist_hit(text: str) -> bool:
-    for token in TOKEN_RE.findall(text.lower()):
-        if hashlib.sha256(token.encode()).hexdigest() in DENYLIST_DIGESTS:
-            return True
+def denylist_cores(token: str) -> set[str]:
+    core = re.sub(r"^\d+|\d+$", "", re.sub(r"[^a-z0-9]", "", token))
+    found: set[str] = set()
+    pending = [core]
+    while pending:
+        current = pending.pop()
+        if len(current) < DENYLIST_MIN_PREFIX or current in found:
+            continue
+        found.add(current)
+        for suffix in DENYLIST_SUFFIXES:
+            if current.endswith(suffix) and len(current) - len(suffix) >= DENYLIST_MIN_PREFIX:
+                pending.append(current[: -len(suffix)])
+    return found
+
+
+def token_denied(token: str) -> bool:
+    for core in denylist_cores(token):
+        for length in range(DENYLIST_MIN_PREFIX, len(core) + 1):
+            digest = hashlib.sha256(core[:length].encode()).hexdigest()
+            if digest in DENYLIST_DIGESTS:
+                return True
     return False
+
+
+def denylist_hit(text: str) -> bool:
+    lowered = text.lower()
+    pieces = TOKEN_RE.findall(lowered)
+    pieces.extend(re.sub(r"[^a-z0-9]", "", span) for span in HYPHEN_RUN_RE.findall(lowered))
+    return any(token_denied(piece) for piece in pieces)
 
 
 def authored_files() -> list[Path]:

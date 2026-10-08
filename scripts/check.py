@@ -108,6 +108,18 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "SOLVED the riemann hypothesis.",
         "Navier Stokes cracked.",
         "The Riemann\nHypothesis is solved.",
+        "The Riemann Hypothesis is proven.",
+        "There is a proof for the Riemann Hypothesis.",
+        "We disprove Navier-Stokes.",
+        "This disproves the Clay problem.",
+        "The Millennium problem was disproved.",
+        "RH is established.",
+        "This establishes the Riemann Hypothesis.",
+        "A solution to the Riemann Hypothesis.",
+        "A solution of Navier-Stokes.",
+        "R.H. is solved.",
+        "The R.H. is proven.",
+        "This is not a solution of the Riemann Hypothesis.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -121,17 +133,30 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "This is not the Riemann Hypothesis.",
         "The Riemann Hypothesis remains open.",
         "The Riemann Hypothesis is unsolved.",
+        "The Riemann Hypothesis is unproven.",
+        "R.H. remains open.",
         "A linear system was solved.",
+        "The lemma is proven.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
             failures.append(f"allowed sentence was flagged: {text}")
     hidden = "".join(chr(code) for code in (102, 117, 115, 105, 111, 110))
     device = "".join(chr(code) for code in (115, 117, 112, 101, 114, 99, 111, 110, 100, 117, 99, 116, 111, 114))
-    if not denylist_hit(f"Connes {hidden}"):
-        failures.append("denylist token was not flagged")
-    if not denylist_hit(f"room-temperature {device}"):
-        failures.append("denylist token was not flagged")
+    generated = (
+        hidden,
+        hidden + "s",
+        device,
+        device + "s",
+        device[:-2] + "ing",
+        device + "2223",
+        f"{device}-2223",
+        f"tc-{device}-2223",
+        device[:5] + "-" + device[5:],
+    )
+    for sample in generated:
+        if not denylist_hit(sample):
+            failures.append("denylist token was not flagged")
     if denylist_hit("advection-diffusion equation"):
         failures.append("a neighboring token matched the denylist")
 
