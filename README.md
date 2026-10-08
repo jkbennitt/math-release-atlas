@@ -95,12 +95,15 @@ sentence from the fixed list (whitespace collapsed, trailing period
 ignored). A longer sentence that merely contains a caution is not exempt.
 
 The incompressible-flow name does not count when the next word is energy,
-inequality, estimate, bound, computation, scheme, solver, or approximation.
-A sentence that only claims an energy inequality therefore still passes.
+inequality, estimate, bound, computation, scheme, solver, or approximation,
+and the sentence does not also say regularity, smooth, smoothness, blow-up,
+blowup, existence, well-posed, or well-posedness. A sentence that only
+names an energy inequality therefore still passes.
 
 Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
-Riemann's hypothesis, Navier–Stokes (hyphen, dash, or space), the Clay
-problem, the Clay prize, the Millennium problem, and the Millennium prize.
+Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes
+(hyphen, dash, or space), the Clay problem, the Clay prize, the Millennium
+problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
 disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
@@ -108,13 +111,17 @@ proof of, proofs of, proof for, proofs for, proof complete, establish,
 establishes, established, establishing, a solution to, solution of, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, and cracking. Further claim
-words are true, holds, follows, verify, verifies, verified, verifying, and
-the phrase “now a theorem”.
+words are true, holds, follows, verify, verifies, verified, verifying, show,
+shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
+demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
+correct, and the phrase “a theorem”.
 
 The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML after elements marked as upstream quotations are removed.
-alt, title, and meta content attributes are included. Curated evidence URLs
-must be http or https.
+alt, title, meta content, aria-label, and placeholder attributes are
+included, quoted or unquoted. Curated evidence URLs must be http or https.
+Before either check, text is NFKC-normalized and soft hyphens and zero-width
+characters are removed.
 
 The digest check covers the whole repository and the built HTML with those
 quotations left in place. It matches plurals, adjective forms, and hyphenated
@@ -124,12 +131,16 @@ word is a stored math neighbor, or when a preceding neighbor is the entire
 rest of the phrase. A further word after that preceding neighbor still
 matches. The stems are not written in this repository.
 
-`data/upstream.json` is tied to the commit it records. For that pinned
-commit the build also requires a SHA-256 of the snapshot. In CI, Guard,
-Build, and the weekly sync sparse-fetch the recorded commit and fail if the
-snapshot differs. `generated_at` is ignored. `families.json` must be the
-merge of that snapshot and the curated notes. Fixed cautions for families
-002, 003, 032, 102, 103, 107, and 376 always render.
+`data/upstream.json` names a commit. Guard, Build, and the weekly sync
+require that commit to be the default-branch HEAD of openai/math or an
+ancestor of it (`git fetch --filter=blob:none origin HEAD`, then
+`git merge-base --is-ancestor`), then sparse-fetch that commit and fail if
+the snapshot differs. `generated_at` is ignored. A SHA that the host will
+serve for the repository URL, but that is not on this history, fails the
+ancestry check. While the recorded commit is the pinned one, the build also
+requires a SHA-256 of the snapshot. `families.json` must be the merge of
+that snapshot and the curated notes. Fixed cautions for families 002, 003,
+032, 102, 103, 107, and 376 always render.
 
 ## License
 

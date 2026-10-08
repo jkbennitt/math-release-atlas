@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 import tempfile
+import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -97,14 +98,16 @@ PINNED_AREAS = [
 
 # A sentence is an overclaim when the guarded problem itself is what the claim verb
 # addresses. RH and dotted R.H. are normalized before the split. Riemann's hypothesis
-# is included. Clay and Millennium count when they name the problem or the prize.
+# is included, including a hyphen in place of the space. Clay and Millennium count
+# when they name the problem or the prize, with a hyphen or a space.
 # The incompressible-flow name does not count when the next word is one of the
-# qualifiers below. Words used for the Clay problem itself stay in the claim.
+# qualifiers below, unless the sentence also uses wording for the Clay problem itself.
+_SEP = r"[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]"
 PROBLEM_RE = re.compile(
     r"(?P<flow>navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes)"
-    r"|(?P<name>(?:quasi[\s\-]+)?riemann(?:['\u2019]s)?\s+hypothesis|\brh\b"
-    r"|clay\s+(?:millennium\s+)?(?:problem|prize)"
-    r"|millennium\s+(?:problem|prize))",
+    rf"|(?P<name>(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b"
+    rf"|clay{_SEP}+(?:millennium{_SEP}+)?(?:problem|prize)"
+    rf"|millennium{_SEP}+(?:problem|prize))",
     re.IGNORECASE,
 )
 FLOW_QUALIFIER_RE = re.compile(
@@ -112,12 +115,19 @@ FLOW_QUALIFIER_RE = re.compile(
     r"computations?|schemes?|solvers?|approximations?)\b",
     re.IGNORECASE,
 )
+# Words that name the Clay problem itself. Any one of them disables the qualifier exception.
+FLOW_CLAY_WORDING_RE = re.compile(
+    r"\b(?:regularity|smooth(?:ness)?|blow-?up|existence|well-posed(?:ness)?)\b",
+    re.IGNORECASE,
+)
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
 # proof of/for, proof complete, confirm/confirms/confirmed/confirming,
 # establish/establishes/established/establishing, a solution to, solution of,
 # resolve/resolves/resolved/resolving, settle/settles/settled/settling,
 # solve/solves/solved/solving, crack/cracks/cracked/cracking,
-# true, holds, follows, verify/verifies/verified/verifying, now a theorem.
+# true, holds, follows, verify/verifies/verified/verifying, a theorem,
+# show/shows/showed/shown/showing, demonstrate/demonstrates/demonstrated/demonstrating,
+# win/wins/won/winning, award/awards/awarded/awarding, correct.
 CLAIM_VERB_RE = re.compile(
     r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
@@ -126,7 +136,9 @@ CLAIM_VERB_RE = re.compile(
     r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
     r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b|"
     r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
-    r"now\s+a\s+theorem",
+    r"\ba\s+theorem\b|"
+    r"\bshow(?:n|s|ed|ing)?\b|\bdemonstrat(?:e|es|ed|ing)\b|"
+    r"\bwins?\b|\bwon\b|\bwinning\b|\baward(?:ed|s|ing)?\b|\bcorrect\b",
     re.IGNORECASE,
 )
 EVIDENCE_URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
@@ -172,9 +184,11 @@ TOKEN_RE = re.compile(r"[a-z0-9]+")
 HYPHEN_RUN_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)+")
 DENYLIST_SKIP = {".git", "node_modules", "dist", ".astro", "__pycache__", ".playwright-mcp"}
 ATTR_RE = re.compile(
-    r"""\b(?:alt|title|content)\s*=\s*(?:"([^"]*)"|'([^']*)')""",
+    r"""\b(?:alt|title|content|aria-label|placeholder)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))""",
     re.IGNORECASE,
 )
+# Soft hyphen and zero-width characters. Removed before the denylist and claim checks.
+INVISIBLE_RE = re.compile("[\u00ad\u200b\u200c\u200d\u2060\ufeff\u180e]")
 MONTHS = {
     "January": 1,
     "February": 2,
@@ -1001,6 +1015,12 @@ def describe_snapshot_diff(recorded: dict[str, Any], rebuilt: dict[str, Any]) ->
 
 
 def assert_upstream_digest(payload: dict[str, Any]) -> None:
+    """The stored digest applies to the pinned commit.
+
+    A different commit is not accepted just because the digest check returns.
+    verify_recorded_upstream and sync.py require it to be openai/math HEAD
+    or an ancestor of that HEAD.
+    """
     commit = payload.get("upstream", {}).get("commit")
     if commit != PINNED_COMMIT:
         return
@@ -1022,17 +1042,21 @@ def assert_merged_catalogue(
 def verify_recorded_upstream() -> None:
     """Rebuild data/upstream.json from the commit it names and fail on any difference.
 
-    generated_at is a timestamp and is ignored. The checkout is a sparse fetch of
-    that commit, the same path the weekly sync uses.
+    The commit must be openai/math HEAD or an ancestor of it. generated_at is a
+    timestamp and is ignored. The checkout is a sparse fetch of that commit, the
+    same path the weekly sync uses. A fetch or network failure is an AtlasError.
     """
     recorded = read_json(UPSTREAM_JSON)
     commit = str(recorded.get("upstream", {}).get("commit", ""))
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise AtlasError("upstream.json has no commit sha")
-    with tempfile.TemporaryDirectory(prefix="atlas-upstream-") as tmp:
-        checkout = Path(tmp)
-        materialize_upstream(UPSTREAM_URL, commit, checkout)
-        rebuilt, _ = build_upstream(checkout)
+    try:
+        with tempfile.TemporaryDirectory(prefix="atlas-upstream-") as tmp:
+            checkout = Path(tmp)
+            materialize_upstream(UPSTREAM_URL, commit, checkout)
+            rebuilt, _ = build_upstream(checkout)
+    except subprocess.CalledProcessError as exc:
+        raise git_failure(exc.stderr or exc.stdout or "", "could not fetch upstream") from None
     if snapshot_for_compare(recorded) != snapshot_for_compare(rebuilt):
         detail = describe_snapshot_diff(snapshot_for_compare(recorded), snapshot_for_compare(rebuilt))
         raise AtlasError(f"upstream.json differs from commit {commit}: {detail}")
@@ -1046,7 +1070,13 @@ def allowed_caution_keys() -> set[str]:
     return {sentence_key(text) for text in REQUIRED_CAUTIONS.values()}
 
 
+def normalize_scan_text(text: str) -> str:
+    """NFKC-normalize and drop soft hyphens and zero-width characters."""
+    return unicodedata.normalize("NFKC", INVISIBLE_RE.sub("", text))
+
+
 def prose_for_scan(text: str) -> str:
+    text = normalize_scan_text(text)
     attributes = " ".join(
         piece
         for match in ATTR_RE.finditer(text)
@@ -1072,8 +1102,10 @@ def prose_for_scan(text: str) -> str:
 
 def mentions_guarded_problem(sentence: str) -> bool:
     """True when the problem itself is named, not when the name only modifies another noun."""
+    blocks_flow_exception = FLOW_CLAY_WORDING_RE.search(sentence) is not None
     for match in PROBLEM_RE.finditer(sentence):
-        if match.group("flow") and FLOW_QUALIFIER_RE.match(sentence[match.end() :]):
+        qualified = FLOW_QUALIFIER_RE.match(sentence[match.end() :]) is not None
+        if match.group("flow") and qualified and not blocks_flow_exception:
             continue
         return True
     return False
@@ -1085,8 +1117,10 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     A negation anywhere in the sentence is not an exemption. The only exemption
     is an exact fixed caution sentence. A flow name followed by energy, an
     inequality, an estimate, a bound, a computation, a scheme, a solver, or an
-    approximation is not the guarded problem. alt, title, and content attributes
-    are scanned with the prose.
+    approximation is not the guarded problem, unless the sentence also says
+    regularity, smooth, smoothness, blow-up, blowup, existence, well-posed, or
+    well-posedness. alt, title, content, aria-label, and placeholder attributes
+    are scanned with the prose, including unquoted values.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1165,7 +1199,7 @@ def token_denied(token: str) -> bool:
 
 
 def denylist_hit(text: str) -> bool:
-    lowered = text.lower()
+    lowered = normalize_scan_text(text).lower()
     pieces = TOKEN_RE.findall(lowered)
     for left, right in zip(pieces, pieces[1:]):
         if _digest(left + right) in COMPOUND_DIGESTS:
@@ -1435,11 +1469,100 @@ def diff_summary(old: dict[str, Any] | None, new: dict[str, Any], curated_ids: s
     return "\n".join(lines)
 
 
+def git_env() -> dict[str, str]:
+    return {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+
+
+def git_failure(stderr: str, fallback: str) -> AtlasError:
+    """One line from git, with no traceback."""
+    lines = [line.strip() for line in (stderr or "").splitlines() if line.strip()]
+    chosen = ""
+    for line in lines:
+        if line.lower().startswith(("fatal:", "error:")):
+            chosen = line
+            break
+    if not chosen and lines:
+        chosen = lines[-1]
+    if len(chosen) > 300:
+        chosen = chosen[:300]
+    return AtlasError(chosen or fallback)
+
+
+def run_git(args: list[str], cwd: Path | None, fallback: str) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        args,
+        cwd=cwd,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise git_failure(result.stderr or result.stdout, fallback)
+    return result
+
+
+def assert_sha_is_ancestor(repo: Path, sha: str, head: str) -> None:
+    """Fail unless sha is the commit named by head, or an ancestor of it.
+
+    A missing object is not an ancestor. head is a revision already in repo.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise AtlasError(f"{sha} is not a commit sha")
+    resolved = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{head}^{{commit}}"],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    head_sha = resolved.stdout.strip()
+    if resolved.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", head_sha):
+        raise AtlasError("could not read upstream HEAD")
+    if sha == head_sha:
+        return
+    check = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", sha, head_sha],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if check.returncode != 0:
+        raise AtlasError(f"{sha} is not an ancestor of upstream HEAD")
+
+
+def ensure_ancestor_of_origin_head(repo: Path, sha: str) -> None:
+    """Fetch origin HEAD and require sha to be that commit or an ancestor.
+
+    Uses `git fetch --filter=blob:none origin HEAD` and then
+    `git merge-base --is-ancestor`. The repository must already have origin.
+    """
+    run_git(
+        ["git", "fetch", "--filter=blob:none", "origin", "HEAD"],
+        repo,
+        "could not fetch upstream HEAD",
+    )
+    assert_sha_is_ancestor(repo, sha, "FETCH_HEAD")
+
+
+def require_upstream_ancestor(url: str, sha: str) -> None:
+    """Fail unless sha is HEAD of url or an ancestor of that HEAD."""
+    with tempfile.TemporaryDirectory(prefix="atlas-ancestor-") as tmp:
+        dest = Path(tmp) / "repo"
+        run_git(
+            ["git", "clone", "--filter=blob:none", "--no-checkout", url, str(dest)],
+            None,
+            "could not fetch upstream HEAD",
+        )
+        ensure_ancestor_of_origin_head(dest, sha)
+
+
 def materialize_upstream(url: str, sha: str, dest: Path) -> None:
-    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise AtlasError(f"{sha} is not a commit sha")
     if not (dest / ".git").exists():
         dest.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.check_call(
+        run_git(
             [
                 "git",
                 "clone",
@@ -1449,20 +1572,29 @@ def materialize_upstream(url: str, sha: str, dest: Path) -> None:
                 url,
                 str(dest),
             ],
-            env=env,
+            None,
+            "could not fetch upstream",
         )
-    fetch = subprocess.run(
+    # Check ancestry before the depth-1 fetch, which replaces FETCH_HEAD and
+    # can shallow the clone. A fork commit served by the same URL is not an ancestor.
+    ensure_ancestor_of_origin_head(dest, sha)
+    run_git(
         ["git", "fetch", "--filter=blob:none", "--depth", "1", "origin", sha],
-        cwd=dest,
-        env=env,
-        capture_output=True,
-        text=True,
+        dest,
+        "could not fetch upstream",
     )
-    if fetch.returncode != 0:
-        raise AtlasError(fetch.stderr.strip() or "git fetch failed")
-    subprocess.run(["git", "sparse-checkout", "init", "--no-cone"], cwd=dest, check=False)
-    subprocess.check_call(["git", "sparse-checkout", "set", "--no-cone", *SPARSE_PATHS], cwd=dest)
-    subprocess.check_call(["git", "checkout", "--detach", "FETCH_HEAD"], cwd=dest)
-    got = git(dest, "rev-parse", "HEAD").strip()
+    subprocess.run(
+        ["git", "sparse-checkout", "init", "--no-cone"],
+        cwd=dest,
+        env=git_env(),
+        check=False,
+    )
+    run_git(
+        ["git", "sparse-checkout", "set", "--no-cone", *SPARSE_PATHS],
+        dest,
+        "could not fetch upstream",
+    )
+    run_git(["git", "checkout", "--detach", "FETCH_HEAD"], dest, "could not fetch upstream")
+    got = run_git(["git", "rev-parse", "HEAD"], dest, "could not fetch upstream").stdout.strip()
     if got != sha:
         raise AtlasError(f"fetched {got}, expected {sha}")
