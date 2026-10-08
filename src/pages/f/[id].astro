@@ -147,7 +147,7 @@ const commit = family.upstream_sha;
         family.manuscripts.map((item) => (
           <li>
             <a data-upstream="manuscript" href={item.pdf}>
-              {item.title}
+              {item.title_withheld ? "Manuscript" : item.title}
             </a>
             <span class="meta">
               {" "}
@@ -195,14 +195,25 @@ const commit = family.upstream_sha;
     }
 
     <h2>Upstream summary</h2>
-    <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+    {
+      family.upstream_summary_withheld ? (
+        <p>The upstream summary is not shown on this page.</p>
+      ) : (
+        <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+      )
+    }
 
     <h2>Provenance</h2>
     <p>
       Upstream commit{" "}
       <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
-      ({shortSha(commit)}). Titles, summaries, subject areas, and Lean links on this page are taken
+      ({shortSha(commit)}). Titles, subject areas, and Lean links on this page are taken
       from that commit.
+      {
+        family.upstream_summary_withheld
+          ? " The upstream summary is not shown on this page."
+          : " The summary on this page is taken from that commit."
+      }
     </p>
   </article>
 </Base>

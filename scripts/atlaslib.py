@@ -132,10 +132,13 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
     re.IGNORECASE,
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
-# proof of/for, proof complete, confirm/confirms/confirmed/confirming,
-# establish/establishes/established/establishing, a solution to, solution of,
-# resolve/resolves/resolved/resolving, settle/settles/settled/settling,
+# proof, proofs, proof of/for, proof complete, complete proof,
+# confirm/confirms/confirmed/confirming,
+# establish/establishes/established/establishing, solution, solutions,
+# resolution, resolutions, resolve/resolves/resolved/resolving,
+# settle/settles/settled/settling,
 # solve/solves/solved/solving, crack/cracks/cracked/cracking,
+# finish/finishes/finished/finishing,
 # true, holds, follows, verify/verifies/verified/verifying, a theorem,
 # show/shows/showed/shown/showing, demonstrate/demonstrates/demonstrated/demonstrating,
 # win/wins/won/winning, award/awards/awarded/awarding, correct,
@@ -143,10 +146,12 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
 CLAIM_VERB_RE = re.compile(
     r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
-    r"proofs?\s+(?:of|for|complete)|\bestablish(?:es|ed|ing)?\b|"
-    r"\bsolutions?\s+(?:to|of)\b|"
-    r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
+    r"\bcomplete\s+proofs?\b|\bproofs?\b|"
+    r"\bestablish(?:es|ed|ing)?\b|"
+    r"\bsolutions?\b|"
+    r"\bresolutions?\b|\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
     r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b|"
+    r"\bfinish(?:es|ed|ing)?\b|"
     r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
     r"\ba\s+theorem\b|"
     r"\bshow(?:n|s|ed|ing)?\b|\bdemonstrat(?:e|es|ed|ing)\b|"
@@ -216,9 +221,27 @@ NOTE_HOSTILE_DIGESTS = frozenset(
         "ef995d2472a252c1fddfcac544dc596b462d25dbd4905dded35480246529b6cf",
         "0083289f36deda0724d899ac2d13042efaa70d38073e49780d2b30bce4dadca0",
         "c2820752d64e02b086fec967badc27a5e12b12ededb5a117eff29b667ec01559",
+        "f3c16f525a1b7c204fc953d6d7db7168d84ebf4902f83c3a37d113b18c28981f",
+        "a4542449353f0b0aef8deaeab784b0e946072c7a65e1f468d7dffd88da4a1901",
+        "b4648e44d84988892ec93710b15bb8f6b053054b0c40d48a04f783d0daca5ffd",
+        "19465de87beffcfac5fc83680a38d2d75c2a1049d6d5d08ced533beb930a2c39",
+        "ef875a1705a5fdac206be996f4dc1f726ea6b68861eb741c37def7277f179e37",
+        "82d928273d067d774889d5df4249aaf73c0b04c64f04d6ed001441ce87a0853c",
+        "cacc6bcf3a66ea9b2b6ede264ad98a6a91c2844efe312e2aedaca8a3931349c7",
+        "3a1b45d4778cc8a6e07420119952efa34e7ffd44ffe01d3726d501824d5f51b9",
+        "3734f204b6669b3125d0e7a551413dda2b5bec48fffdc3f9a5010f9ad0413f51",
+        "87654be893e93c6552e800afb313c7e4ea0f345c8c575211a91baa07bed5a107",
     }
 )
 NOTE_HOSTILE_PHRASE_DIGEST = "3dedd643819c6059145438295590f166326d20c812fff8971bbd627078626fd1"
+# Two-word technical phrases whose first word would otherwise match a hostile token.
+NOTE_EXEMPT_PHRASE_DIGESTS = frozenset(
+    {
+        "4f76b35955d6c947426a2f9fce18cc84c6368723c0e0d46817451e4b2280556f",
+    }
+)
+NOTE_SUFFIXES = ("ing", "ers", "ed", "ly")
+NOTE_STEM_MIN = 4
 # Soft hyphen and zero-width characters. Removed before the denylist and claim checks.
 INVISIBLE_RE = re.compile("[\u00ad\u200b\u200c\u200d\u2060\ufeff\u180e]")
 MONTHS = {
@@ -963,8 +986,8 @@ def load_community_schema(path: Path) -> dict[str, Any]:
     if needing != STATUSES_NEEDING_EVIDENCE:
         raise AtlasError("community status evidence rules do not match the guard")
     rule = require_text(payload.get("rule"), "community status rule")
-    if "Jason approves" not in rule or "human-approved" not in rule:
-        raise AtlasError("community status rule must say Jason approves each human-approved change")
+    if "must be approved by Jason (repo policy)" not in rule:
+        raise AtlasError("community status rule must state the repo policy")
     return payload
 
 
@@ -987,12 +1010,12 @@ def load_status_approvals(path: Path) -> list[dict[str, str]]:
     if not isinstance(rows, list):
         raise AtlasError("status approvals must be a list")
     cleaned: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str, str]] = set()
+    seen: set[tuple[str, str, str, str, str, str]] = set()
     for index, row in enumerate(rows, start=1):
         label = f"status approval {index}"
         if not isinstance(row, dict):
             raise AtlasError(f"{label} must be a mapping")
-        unknown = set(row) - {"id", "status", "url", "approver"}
+        unknown = set(row) - {"id", "status", "url", "date", "note", "approver"}
         if unknown:
             raise AtlasError(f"{label} has unknown fields: {sorted(unknown)}")
         family_id = require_text(row.get("id"), f"{label} id")
@@ -1002,47 +1025,62 @@ def load_status_approvals(path: Path) -> list[dict[str, str]]:
         if status not in STATUSES_NEEDING_EVIDENCE:
             raise AtlasError(f"{label} status {status} does not need an approval")
         url = require_http_url(require_text(row.get("url"), f"{label} url"), f"{label} url")
+        day = require_day(require_text(row.get("date"), f"{label} date"), f"{label} date")
+        note = require_note(row.get("note"), f"{label} note")
         approver = require_text(row.get("approver"), f"{label} approver")
         if approver != STATUS_APPROVER:
             raise AtlasError(f"{label} approver must be {STATUS_APPROVER}")
-        key = (family_id, status, url, approver)
+        key = (family_id, status, url, day, note, approver)
         if key in seen:
             raise AtlasError(f"{label} repeats an earlier entry")
         seen.add(key)
-        cleaned.append({"id": family_id, "status": status, "url": url, "approver": approver})
+        cleaned.append(
+            {
+                "id": family_id,
+                "status": status,
+                "url": url,
+                "date": day,
+                "note": note,
+                "approver": approver,
+            }
+        )
     return cleaned
 
 
 def approval_mismatches(curated: dict[str, dict[str, Any]], approvals: list[dict[str, str]]) -> list[str]:
-    """A non-claimed status passes only when id, status, URL, and approver all match."""
-    approved = {(row["id"], row["status"], row["url"], row["approver"]) for row in approvals}
-    used: set[tuple[str, str, str, str]] = set()
+    """A non-claimed status passes only when id, status, URL, date, note, and approver all match."""
+    approved = {
+        (row["id"], row["status"], row["url"], row["date"], row["note"], row["approver"]) for row in approvals
+    }
+    used: set[tuple[str, str, str, str, str, str]] = set()
     failures: list[str] = []
     for family_id, item in sorted(curated.items()):
         community = item.get("community")
         if not community:
             continue
-        refs: list[tuple[str, str]] = []
+        refs: list[tuple[str, str, str, str]] = []
         status = community.get("status")
         if status in STATUSES_NEEDING_EVIDENCE:
-            urls = [entry.get("url") for entry in community.get("evidence") or [] if isinstance(entry, dict)]
-            if not urls:
+            evidence = [entry for entry in community.get("evidence") or [] if isinstance(entry, dict)]
+            if not evidence:
                 failures.append(f"{family_id} status {status} is not on the approval allowlist")
-            refs.extend((status, url) for url in urls if isinstance(url, str))
+            for entry in evidence:
+                refs.append((status, str(entry.get("url")), str(entry.get("date")), str(entry.get("note"))))
         for event in community.get("history") or []:
             if not isinstance(event, dict):
                 continue
             event_status = event.get("status")
-            event_url = event.get("url")
-            if event_status in STATUSES_NEEDING_EVIDENCE and isinstance(event_url, str):
-                refs.append((event_status, event_url))
-        for event_status, url in refs:
-            key = (family_id, event_status, url, STATUS_APPROVER)
+            if event_status in STATUSES_NEEDING_EVIDENCE and event.get("url"):
+                refs.append(
+                    (str(event_status), str(event.get("url")), str(event.get("date")), str(event.get("note")))
+                )
+        for event_status, url, day, note in refs:
+            key = (family_id, event_status, url, day, note, STATUS_APPROVER)
             if key not in approved:
                 failures.append(f"{family_id} status {event_status} is not on the approval allowlist")
             else:
                 used.add(key)
-    for family_id, status, _url, _approver in sorted(approved - used):
+    for family_id, status, _url, _day, _note, _approver in sorted(approved - used):
         failures.append(f"unused status approval for {family_id} {status}")
     return failures
 
@@ -1182,6 +1220,17 @@ def merge_data(
         merged["lenses"] = note["lenses"] if note else []
         merged["related"] = note["related"] if note else []
         merged["community"] = note["community"] if note else None
+        summary = family.get("upstream_summary") or ""
+        if summary and scan_overclaims(summary, family["id"]):
+            merged["upstream_summary_withheld"] = True
+        manuscripts = []
+        for item in merged.get("manuscripts") or []:
+            copied = dict(item)
+            title = copied.get("title") or ""
+            if title and scan_overclaims(title, family["id"]):
+                copied["title_withheld"] = True
+            manuscripts.append(copied)
+        merged["manuscripts"] = manuscripts
         merged_families.append(merged)
     apply_citation_graph(merged_families)
     payload = {
@@ -1418,9 +1467,12 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     regularity, smoothness, smooth (except when the next word is data), blow up,
     blow-up, blowup, existence, well-posed, or well-posedness. When a claim verb
     is also present, smooth cancels that exception even if the next word is data.
-    A space, hyphen, or dash may separate blow and up, or well and posed. alt,
-    title, content, aria-label, aria-description, placeholder, and data-*
-    attributes are scanned with the prose, including unquoted values.
+    A space, hyphen, or dash may separate blow and up, or well and posed. Noun
+    forms count too: proof, solution, resolution, finish, and complete proof.
+    alt, title, content, aria-label, aria-description, placeholder, and data-*
+    attributes are scanned with the prose, including unquoted values. Text
+    inside a data-upstream element is scanned unless that element's text
+    exactly equals the family's upstream title or id.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1454,13 +1506,48 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def note_tone_failure(note: str) -> bool:
-    """True when a note contains a hostile token or the stored three-word phrase."""
-    tokens = TOKEN_RE.findall(normalize_scan_text(note).lower())
-    if any(_digest(token) in NOTE_HOSTILE_DIGESTS for token in tokens):
+def hostile_token(token: str) -> bool:
+    """Whole-word match, plus a plural or inflection of a stored stem."""
+    if _digest(token) in NOTE_HOSTILE_DIGESTS:
         return True
-    for index in range(len(tokens) - 2):
-        if _digest(" ".join(tokens[index : index + 3])) == NOTE_HOSTILE_PHRASE_DIGEST:
+    for suffix in NOTE_SUFFIXES:
+        if token.endswith(suffix) and len(token) - len(suffix) >= NOTE_STEM_MIN:
+            if _digest(token[: -len(suffix)]) in NOTE_HOSTILE_DIGESTS:
+                return True
+    if token.endswith("es") and len(token) - 2 >= NOTE_STEM_MIN:
+        stem = token[:-2]
+        if stem.endswith(("s", "x", "z", "ch", "sh")) and _digest(stem) in NOTE_HOSTILE_DIGESTS:
+            return True
+    if token.endswith("s") and not token.endswith("ss") and len(token) - 1 >= NOTE_STEM_MIN:
+        if _digest(token[:-1]) in NOTE_HOSTILE_DIGESTS:
+            return True
+    return False
+
+
+def note_tone_failure(note: str) -> bool:
+    """True when a note contains a hostile word, inflection, or the stored phrase.
+
+    A hyphenated compound is not a whole word. A stored two-word technical phrase is not either.
+    """
+    lowered = normalize_scan_text(note).lower()
+    hyphen_spans = [(match.start(), match.end()) for match in HYPHEN_RUN_RE.finditer(lowered)]
+    tokens: list[tuple[str, bool]] = []
+    for match in TOKEN_RE.finditer(lowered):
+        inside_hyphen = any(start <= match.start() and match.end() <= end for start, end in hyphen_spans)
+        tokens.append((match.group(), inside_hyphen))
+    words = [token for token, _inside in tokens]
+    exempt: set[int] = set()
+    for index in range(len(words) - 1):
+        if _digest(f"{words[index]} {words[index + 1]}") in NOTE_EXEMPT_PHRASE_DIGESTS:
+            exempt.add(index)
+            exempt.add(index + 1)
+    for index in range(len(words) - 2):
+        if _digest(" ".join(words[index : index + 3])) == NOTE_HOSTILE_PHRASE_DIGEST:
+            return True
+    for index, (token, inside_hyphen) in enumerate(tokens):
+        if inside_hyphen or index in exempt:
+            continue
+        if hostile_token(token):
             return True
     return False
 
@@ -1571,7 +1658,7 @@ def check_authored() -> list[str]:
 
 
 def strip_upstream_quotes(html_text: str) -> str:
-    """Drop elements that quote the upstream catalogue before the sentence check."""
+    """Drop elements that quote the upstream catalogue. The claim check no longer uses this."""
     without_quotes = re.sub(
         r"<(?P<tag>[a-z0-9]+)\b[^>]*\bdata-upstream\b[^>]*>.*?</(?P=tag)>",
         " ",
@@ -1677,8 +1764,30 @@ def check_graph_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
     return failures
 
 
+_UPSTREAM_ELEMENT_RE = re.compile(
+    r"<(?P<tag>[a-z0-9]+)\b(?P<attrs>[^>]*\bdata-upstream\b[^>]*)>(?P<body>.*?)</(?P=tag)>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def visible_element_text(body: str) -> str:
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", body))).strip()
+
+
+def exempt_upstream_text(html_text: str, allowed: set[str]) -> str:
+    """Blank a data-upstream element only when its text equals an allowed title or id."""
+    normalized = {re.sub(r"\s+", " ", item).strip() for item in allowed if item}
+
+    def replacer(match: re.Match[str]) -> str:
+        if visible_element_text(match.group("body")) not in normalized:
+            return match.group(0)
+        return f"<{match.group('tag')}{match.group('attrs')}></{match.group('tag')}>"
+
+    return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
+
+
 def family_scan_identity(family: dict[str, Any]) -> set[str]:
-    """Upstream title and id. A data-* value is exempt only when it equals one of these."""
+    """Upstream title and id. A rendered value is exempt only when it equals one of these."""
     allowed = {family["id"]}
     title = family.get("title")
     if isinstance(title, str) and title:
@@ -1723,7 +1832,8 @@ def exempt_index_rows(html_text: str, families: list[dict[str, Any]]) -> str:
         family = by_id.get(match.group("id"))
         if family is None:
             return match.group(0)
-        return blank_exempt_data_values(match.group(0), family_scan_identity(family))
+        allowed = family_scan_identity(family)
+        return exempt_upstream_text(blank_exempt_data_values(match.group(0), allowed), allowed)
 
     return _INDEX_ROW_RE.sub(replacer, html_text)
 
@@ -1737,10 +1847,26 @@ def prepare_built_page(path: Path, dist: Path, families: list[dict[str, Any]]) -
     if len(parts) >= 2 and parts[0] == "f" and re.fullmatch(r"\d{3}", parts[1]):
         family = by_id.get(parts[1])
         if family is not None:
-            return blank_exempt_data_values(html_text, family_scan_identity(family))
+            allowed = family_scan_identity(family)
+            return exempt_upstream_text(blank_exempt_data_values(html_text, allowed), allowed)
     if relative.as_posix() == "index.html":
         return exempt_index_rows(html_text, families)
-    return html_text
+    return exempt_upstream_by_family_link(html_text, families)
+
+
+def exempt_upstream_by_family_link(html_text: str, families: list[dict[str, Any]]) -> str:
+    """On lens pages, exempt a title only inside the link for that family."""
+    by_id = {family["id"]: family_scan_identity(family) for family in families}
+
+    def replacer(match: re.Match[str]) -> str:
+        window = html_text[max(0, match.start() - 800) : match.start()]
+        found = re.findall(r'(?:id="f-|/f/)(\d{3})', window)
+        allowed = by_id.get(found[-1], set()) if found else set()
+        if visible_element_text(match.group("body")) not in {re.sub(r"\s+", " ", item).strip() for item in allowed}:
+            return match.group(0)
+        return f"<{match.group('tag')}{match.group('attrs')}></{match.group('tag')}>"
+
+    return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
 
 
 def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
@@ -1755,8 +1881,7 @@ def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
         "independently-checked",
         "disputed",
         "retracted",
-        "human-approved",
-        "Jason approves",
+        "must be approved by Jason (repo policy)",
         "status-approvals.yaml",
         "jkbennitt",
     ):
@@ -1782,12 +1907,10 @@ def check_dist(dist: Path) -> list[str]:
     about = dist / "about" / "index.html"
     if not index.is_file() or not about.is_file():
         failures.append("built site is missing the table or about page")
-        failures.extend(scan_overclaims(strip_upstream_quotes(combined), "built site"))
+        failures.extend(scan_overclaims(combined, "built site"))
         return failures
     catalog = read_json(FAMILIES_JSON)
-    prepared = "\n".join(
-        strip_upstream_quotes(prepare_built_page(path, dist, catalog["families"])) for path in pages
-    )
+    prepared = "\n".join(prepare_built_page(path, dist, catalog["families"]) for path in pages)
     failures.extend(scan_overclaims(prepared, "built site"))
     index_html = index.read_text(encoding="utf-8")
     about_html = about.read_text(encoding="utf-8")

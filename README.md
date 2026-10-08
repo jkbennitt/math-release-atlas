@@ -77,15 +77,18 @@ Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
 `claimed` needs evidence: an http or https URL, a `YYYY-MM-DD` date, and a
 short neutral note of at most 25 words. That status is recorded only when
 `data/curated/status-approvals.yaml` has an entry with the same family id,
-status, and evidence URL, and with approver `jkbennitt`. The file starts
+status, evidence URL, date, and note, and with approver `jkbennitt`. Editing
+the note or the date after that entry is written fails Guard. The file starts
 empty. `claimed` may omit evidence. The same three evidence fields are
 required on a history entry whose status is not `claimed`, and that entry
 needs its own allowlist match. The vocabulary file is
-`data/curated/community-status.yaml`. Every status change is a human-approved
-pull request. Jason approves each change. `.github/CODEOWNERS` assigns
-`data/curated/` to @jkbennitt. The weekly sync does not write community
+`data/curated/community-status.yaml`. Every status change must be approved by
+Jason (repo policy). Branch protection is off. `.github/CODEOWNERS` names
+@jkbennitt on `data/curated/`. The weekly sync does not write community
 status. See `CONTRIBUTING.md`. Curated text uses the same sentence check as
-the rest of the site. A hostile note fails the build.
+the rest of the site. A hostile note fails the build. A whole word and its
+plurals and inflections are matched. A hyphenated compound is left alone, as
+is one stored two-word technical phrase.
 
 Citation edges are read from `OAI:` keys in upstream manuscript `.tex` and
 `.bib` files and stored when the catalogue is built. The merge step turns
@@ -126,22 +129,27 @@ problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
 disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
-proof of, proofs of, proof for, proofs for, proof complete, establish,
-establishes, established, establishing, a solution to, solution of, resolve,
+proof, proofs, proof of, proofs of, proof for, proofs for, proof complete,
+complete proof, establish, establishes, established, establishing, solution,
+solutions, a solution to, solution of, resolution, resolutions, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
-solves, solved, solving, crack, cracks, cracked, and cracking. Further claim
+solves, solved, solving, crack, cracks, cracked, cracking, finish, finishes,
+finished, and finishing. Further claim
 words are true, holds, follows, verify, verifies, verified, verifying, show,
 shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
 demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
 correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem”.
 
 The sentence check applies to authored pages, curated notes, fixed cautions,
-and built HTML after elements marked as upstream quotations are removed.
-alt, title, meta content, aria-label, aria-description, placeholder, and
-data-* attributes are included, quoted or unquoted. In built HTML, a data-*
-value is left out only when it exactly equals that family's upstream title
-or id. The citation graph has no such exemption. Curated evidence URLs must
-be http or https, with no spaces, quotes, or angle brackets.
+and built HTML, including text inside an element marked as an upstream
+quotation. That text is left out only when it exactly equals that family's
+upstream title or id. An upstream summary or manuscript title that fails the check is left out of
+the built pages. The text stays in the catalogue data, and the fixed caution
+still appears. alt, title, meta content, aria-label, aria-description,
+placeholder, and data-* attributes are included, quoted or unquoted. In built
+HTML, a data-* value is left out only when it exactly equals that family's
+upstream title or id. The citation graph has no such exemption. Curated
+evidence URLs must be http or https, with no spaces, quotes, or angle brackets.
 Before either check, text is NFKC-normalized and soft hyphens and zero-width
 characters are removed.
 

@@ -7,6 +7,7 @@ export interface Manuscript {
   date: string;
   pdf: string;
   main_result_formalized: boolean;
+  title_withheld?: boolean;
 }
 
 export interface ComparatorLink {
@@ -60,6 +61,7 @@ export interface Family {
   title: string;
   areas: string[];
   upstream_summary: string;
+  upstream_summary_withheld?: boolean;
   manuscripts: Manuscript[];
   lean: {
     status: LeanStatus;

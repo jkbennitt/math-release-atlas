@@ -11,4 +11,4 @@ vocabulary:
     evidence: required
   - id: retracted
     evidence: required
-rule: "Every status change is a human-approved pull request. Jason approves each change."
+rule: "Every status change must be approved by Jason (repo policy)."

@@ -1,4 +1,5 @@
 # Allowlist for a status other than claimed.
-# Each entry names the family id, the status, the evidence URL, and the approver.
-# This list starts empty. Jason approves each added entry.
+# Each entry names the family id, the status, the evidence URL, the date, the note, and the approver.
+# Editing the note or the date after the entry is written fails Guard.
+# This list starts empty. Status changes must be approved by Jason (repo policy).
 approvals: []

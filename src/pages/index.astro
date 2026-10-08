@@ -117,14 +117,22 @@ const lenses = lensCounts(atlas.families);
                 {family.caution && <p class="caution">{family.caution}</p>}
                 <details>
                   <summary>Upstream summary</summary>
-                  <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+                  {
+                    family.upstream_summary_withheld ? (
+                      <p>The upstream summary is not shown on this page.</p>
+                    ) : (
+                      <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+                    )
+                  }
                 </details>
                 <details>
                   <summary>Manuscripts ({family.manuscripts.length})</summary>
                   <ul class="links">
                     {family.manuscripts.map((item) => (
                       <li>
-                        <a data-upstream="manuscript" href={item.pdf}>{item.title}</a>
+                        <a data-upstream="manuscript" href={item.pdf}>
+                          {item.title_withheld ? "Manuscript" : item.title}
+                        </a>
                         <span class="meta"> · {item.date}{item.main_result_formalized ? " · main result in formalization catalogue" : ""}</span>
                       </li>
                     ))}
