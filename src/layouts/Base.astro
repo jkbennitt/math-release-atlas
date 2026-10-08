@@ -1,0 +1,52 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const here = Astro.url.pathname;
+const homeCurrent = here === base ? "page" : undefined;
+const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href={base}>
+          <strong>Math Release Atlas</strong>
+          <span>Unofficial catalogue of result families</span>
+        </a>
+        <nav aria-label="Primary">
+          <a href={base} aria-current={homeCurrent}>Table</a>
+          <a href={`${base}about/`} aria-current={aboutCurrent}>About</a>
+        </nav>
+      </div>
+    </header>
+    <main id="content" class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>Unofficial. Not affiliated with OpenAI.</p>
+        <p>
+          Upstream catalogue:
+          <a href="https://github.com/openai/math">https://github.com/openai/math</a>
+        </p>
+        <p>Atlas license: Apache-2.0. Titles and summaries on this site are derived from that catalogue.</p>
+      </div>
+    </footer>
+  </body>
+</html>

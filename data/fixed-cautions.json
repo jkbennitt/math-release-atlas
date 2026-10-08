@@ -1,0 +1,30 @@
+{
+  "002": {
+    "text": "BSD for low Selmer corank — not full BSD.",
+    "source": "Fixed atlas caution for family 002"
+  },
+  "003": {
+    "text": "Zero-free region Re s > 7/8 ('quasi-Riemann hypothesis') — not the Riemann Hypothesis.",
+    "source": "Fixed atlas caution for family 003"
+  },
+  "032": {
+    "text": "Hodge for CM abelian varieties — not the full Hodge conjecture.",
+    "source": "Fixed atlas caution for family 032"
+  },
+  "102": {
+    "text": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
+    "source": "Fixed atlas caution for family 102"
+  },
+  "103": {
+    "text": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
+    "source": "Fixed atlas caution for family 103"
+  },
+  "107": {
+    "text": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
+    "source": "Fixed atlas caution for family 107"
+  },
+  "376": {
+    "text": "Forced Navier–Stokes computation — not the Clay Millennium Navier–Stokes problem.",
+    "source": "Fixed atlas caution for family 376"
+  }
+}
