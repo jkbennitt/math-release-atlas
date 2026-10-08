@@ -36,6 +36,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: pip install -r requirements.txt
+      - run: python3 scripts/check.py --verify-upstream
       - run: npm ci
       - run: npm run build
       - run: git diff --exit-code -- data/families.json

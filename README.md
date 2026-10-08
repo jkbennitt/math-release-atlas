@@ -94,10 +94,8 @@ in the sentence does not exempt it. The only exemption is an exact caution
 sentence from the fixed list (whitespace collapsed, trailing period
 ignored). A longer sentence that merely contains a caution is not exempt.
 
-The incompressible-flow name does not count when the next word names a
-different object. Qualifiers include energy, inequality, equation, system,
-flow, regularity, estimate, bound, computation, solver, scheme,
-approximation, smoothness, blow-up, weak, strong, forced, data, and initial.
+The incompressible-flow name does not count when the next word is energy,
+inequality, estimate, bound, computation, scheme, solver, or approximation.
 A sentence that only claims an energy inequality therefore still passes.
 
 Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
@@ -109,18 +107,29 @@ disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
 proof of, proofs of, proof for, proofs for, proof complete, establish,
 establishes, established, establishing, a solution to, solution of, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
-solves, solved, solving, crack, cracks, cracked, and cracking.
+solves, solved, solving, crack, cracks, cracked, and cracking. Further claim
+words are true, holds, follows, verify, verifies, verified, verifying, and
+the phrase “now a theorem”.
 
-The same sentence check and the digest check apply to authored pages, curated
-notes, and the fixed cautions. They also apply to built HTML after elements
-marked as upstream quotations are removed. Verbatim upstream titles and
-summaries are not scanned, including the generated JSON snapshot. A digest
-match still covers plurals, adjective forms, and hyphenated compounds, plus
-two short compounds stored only as full-string digests. A length-6 stem is
-ignored when the previous word or the following word is one of the stored
-math-neighbor digests, and when a hyphenated or collapsed compound is exactly
-that stem plus the neighbor. The stems are not written in this repository.
-Fixed cautions for families 002, 003, 032, 102, 103, 107, and 376 always render.
+The sentence check applies to authored pages, curated notes, fixed cautions,
+and built HTML after elements marked as upstream quotations are removed.
+alt, title, and meta content attributes are included. Curated evidence URLs
+must be http or https.
+
+The digest check covers the whole repository and the built HTML with those
+quotations left in place. It matches plurals, adjective forms, and hyphenated
+compounds, plus short compounds stored only as full-string digests, including
+the abbreviated temperature form. A length-6 stem is ignored when the next
+word is a stored math neighbor, or when a preceding neighbor is the entire
+rest of the phrase. A further word after that preceding neighbor still
+matches. The stems are not written in this repository.
+
+`data/upstream.json` is tied to the commit it records. For that pinned
+commit the build also requires a SHA-256 of the snapshot. In CI, Guard,
+Build, and the weekly sync sparse-fetch the recorded commit and fail if the
+snapshot differs. `generated_at` is ignored. `families.json` must be the
+merge of that snapshot and the curated notes. Fixed cautions for families
+002, 003, 032, 102, 103, 107, and 376 always render.
 
 ## License
 

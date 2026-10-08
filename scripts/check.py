@@ -21,6 +21,8 @@ from atlaslib import (
     check_authored,
     check_dist,
     denylist_hit,
+    assert_merged_catalogue,
+    assert_upstream_digest,
     load_cautions,
     load_curated,
     parse_contents,
@@ -30,6 +32,7 @@ from atlaslib import (
     scan_overclaims,
     strip_upstream_quotes,
     validate_curated_file,
+    verify_recorded_upstream,
 )
 
 
@@ -38,10 +41,14 @@ def check_source() -> list[str]:
     if not UPSTREAM_JSON.is_file() or not FAMILIES_JSON.is_file():
         return ["generated data files are missing"]
     try:
-        load_cautions(CAUTIONS_JSON)
+        cautions = load_cautions(CAUTIONS_JSON)
         curated = load_curated(CURATED_DIR)
-        assert_counts(read_json(UPSTREAM_JSON))
-        assert_counts(read_json(FAMILIES_JSON))
+        upstream = read_json(UPSTREAM_JSON)
+        families = read_json(FAMILIES_JSON)
+        assert_counts(upstream)
+        assert_upstream_digest(upstream)
+        assert_counts(families)
+        assert_merged_catalogue(upstream, families, curated, cautions)
     except AtlasError as exc:
         failures.append(str(exc))
         failures.extend(check_authored())
@@ -139,6 +146,16 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The Riemann Hypothesis was disproven.",
         "RH: proof complete.",
         "RH: proof complete",
+        "We solved the Navier-Stokes equations.",
+        "Navier-Stokes smoothness is proven.",
+        "Global regularity of the Navier-Stokes equations is proven.",
+        "Navier-Stokes blow-up is settled.",
+        "The scheme proves a Navier-Stokes regularity estimate.",
+        "RH is true.",
+        "RH holds.",
+        "The Riemann Hypothesis is now a theorem.",
+        "We verify RH.",
+        "RH follows.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -158,8 +175,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The lemma is proven.",
         "We prove a Navier-Stokes energy inequality.",
         "We prove a Navier–Stokes energy inequality.",
-        "The scheme proves a Navier-Stokes regularity estimate.",
-        "We solved the Navier-Stokes equations.",
+        "The scheme proves a Navier-Stokes approximation.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -191,7 +207,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         chr(code)
         for code in (116, 101, 109, 112, 101, 114, 97, 116, 117, 114, 101)
     )
+    short = "".join(chr(code) for code in (116, 101, 109, 112))
     compact = "".join(chr(code) for code in (108, 107))
+    power = "".join(chr(code) for code in (112, 111, 119, 101, 114))
     allowed_phrases = (
         f"{stem} {after_many}",
         f"{stem} {after_one}",
@@ -207,8 +225,12 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         f"{warm}-{degree}",
         f"{warm} {degree}",
         f"{warm}{degree}",
+        f"{warm}-{short}",
+        f"{warm} {short}",
+        f"{warm}{short}",
         f"{compact}-99",
         f"{compact}99",
+        f"{before} {stem} {power}",
         stem,
     )
     for phrase in denied_phrases:
@@ -229,10 +251,18 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     authored_claim = "<p>RH: proof complete.</p>"
     if not scan_overclaims(strip_upstream_quotes(authored_claim), "page"):
         failures.append("an authored claim in HTML was not flagged")
-    if denylist_hit(strip_upstream_quotes(f'<h1 data-upstream="title">{stem}</h1><p>Hello.</p>')):
-        failures.append("a stripped upstream title was still scanned")
+    marked = f'<h1 data-upstream="title">{stem}</h1><p>Hello.</p>'
+    if not denylist_hit(marked):
+        failures.append("a denylist token inside an upstream quotation was ignored")
     if not denylist_hit(strip_upstream_quotes(f"<p>{warm}-{degree}</p>")):
         failures.append("an authored denylist compound in HTML was not flagged")
+    for attribute in (
+        f'<img alt="RH is solved">',
+        f'<a title="The Riemann Hypothesis is solved">x</a>',
+        f'<meta name="description" content="RH: proof complete">',
+    ):
+        if not scan_overclaims(attribute, "attribute"):
+            failures.append("a claim in an HTML attribute was not flagged")
 
     def missing_source() -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -288,6 +318,37 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
             )
             validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
 
+    def bad_evidence_url() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "lenses": [
+                            {
+                                "tag": "plasma-kinetic",
+                                "why": "A kinetic model.",
+                                "source": "Upstream family summary for 362.",
+                            }
+                        ],
+                        "community": {
+                            "status": "claimed",
+                            "evidence": [
+                                {
+                                    "url": "notes/local.md",
+                                    "who": "A reader",
+                                    "date": "2026-10-08",
+                                    "quote": "A short note.",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
     def ordinary_solved() -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "362.yaml"
@@ -317,6 +378,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("curated negated proof", negated_curated)
     if message:
         failures.append(message)
+    message = expect_error("evidence url", bad_evidence_url)
+    if message:
+        failures.append(message)
     try:
         ordinary_solved()
     except AtlasError as exc:
@@ -331,8 +395,13 @@ def main() -> int:
     parser.add_argument("--source", action="store_true", help="Check generated data and authored text.")
     parser.add_argument("--dist", type=Path, help="Check built HTML.")
     parser.add_argument("--self-test", action="store_true", help="Run guard fixtures.")
+    parser.add_argument(
+        "--verify-upstream",
+        action="store_true",
+        help="Sparse-fetch the commit named in upstream.json and fail if the snapshot differs.",
+    )
     args = parser.parse_args()
-    if not (args.source or args.dist or args.self_test):
+    if not (args.source or args.dist or args.self_test or args.verify_upstream):
         args.source = True
         args.self_test = True
     failures: list[str] = []
@@ -340,6 +409,11 @@ def main() -> int:
         failures.extend(self_test())
     if args.source:
         failures.extend(check_source())
+    if args.verify_upstream:
+        try:
+            verify_recorded_upstream()
+        except AtlasError as exc:
+            failures.append(str(exc))
     if args.dist:
         failures.extend(check_dist(args.dist))
     if failures:

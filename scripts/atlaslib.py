@@ -8,6 +8,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -97,8 +98,8 @@ PINNED_AREAS = [
 # A sentence is an overclaim when the guarded problem itself is what the claim verb
 # addresses. RH and dotted R.H. are normalized before the split. Riemann's hypothesis
 # is included. Clay and Millennium count when they name the problem or the prize.
-# The incompressible-flow name does not count when the next word names a different
-# object (an energy inequality, a computation, a flow, and the other qualifiers below).
+# The incompressible-flow name does not count when the next word is one of the
+# qualifiers below. Words used for the Clay problem itself stay in the claim.
 PROBLEM_RE = re.compile(
     r"(?P<flow>navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes)"
     r"|(?P<name>(?:quasi[\s\-]+)?riemann(?:['\u2019]s)?\s+hypothesis|\brh\b"
@@ -107,25 +108,30 @@ PROBLEM_RE = re.compile(
     re.IGNORECASE,
 )
 FLOW_QUALIFIER_RE = re.compile(
-    r"\s+(?:energy|inequalit(?:y|ies)|equations?|systems?|flows?|regularity|"
-    r"estimates?|bounds?|computations?|solvers?|schemes?|approximations?|"
-    r"smoothness|blow[\s\-]?up|weak|strong|forced|data|initial)\b",
+    r"\s+(?:energy|inequalit(?:y|ies)|estimates?|bounds?|"
+    r"computations?|schemes?|solvers?|approximations?)\b",
     re.IGNORECASE,
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
 # proof of/for, proof complete, confirm/confirms/confirmed/confirming,
 # establish/establishes/established/establishing, a solution to, solution of,
 # resolve/resolves/resolved/resolving, settle/settles/settled/settling,
-# solve/solves/solved/solving, crack/cracks/cracked/cracking.
+# solve/solves/solved/solving, crack/cracks/cracked/cracking,
+# true, holds, follows, verify/verifies/verified/verifying, now a theorem.
 CLAIM_VERB_RE = re.compile(
     r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
     r"proofs?\s+(?:of|for|complete)|\bestablish(?:es|ed|ing)?\b|"
     r"\bsolutions?\s+(?:to|of)\b|"
     r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
-    r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b",
+    r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b|"
+    r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
+    r"now\s+a\s+theorem",
     re.IGNORECASE,
 )
+EVIDENCE_URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
+# SHA-256 of data/upstream.json for PINNED_COMMIT, ignoring generated_at.
+PINNED_UPSTREAM_DIGEST = "e0807c5c429870f6caa61b140cb391da63751e4f94e9a7702667f428371474a1"
 # SHA-256 of lowercase denylist stems. The stems are not stored in this repository.
 DENYLIST_DIGESTS = frozenset(
     {
@@ -143,17 +149,19 @@ COMPOUND_DIGESTS = frozenset(
     {
         "31f879daf4b5f4e69ebbecd000a39cd49fbe3e6fa24b7e5f1d64ee9f8af74d91",
         "865414b13b4f62b39deb69c52e451cabcc12a8470a4ea63b1c161aa8801599c3",
+        "42acd0c18cb4977c2ea8ce0aaf3ddeca0882a02a2e02e20a69cea57116a85c7f",
     }
 )
 # The length-6 stem may sit beside a math term. Those neighbor digests are not stems.
-FUSION_STEM_DIGEST = "f5d36c673cea1d80af3d33404d506e0c3e7aeaa0b8c1a21e085fa3caa8928b3b"
-FUSION_AFTER_DIGESTS = frozenset(
+# A preceding neighbor excuses the stem only when no word follows it.
+NEIGHBOR_STEM_DIGEST = "f5d36c673cea1d80af3d33404d506e0c3e7aeaa0b8c1a21e085fa3caa8928b3b"
+NEIGHBOR_AFTER_DIGESTS = frozenset(
     {
         "a6216ea03e578f212dd604ec5d675c5274a86891bac4e87f80bea10ef511f533",
         "edb2cd3b74c999af70f0b7054990f2072dc6e10a847af6ed05954b8994b730fe",
     }
 )
-FUSION_BEFORE_DIGESTS = frozenset(
+NEIGHBOR_BEFORE_DIGESTS = frozenset(
     {
         "a2bf2be47b9cf824068bfcfacbb4594af68031393e433099ed9240cc0fd707c9",
     }
@@ -162,6 +170,11 @@ DENYLIST_MIN_PREFIX = 6
 DENYLIST_SUFFIXES = ("ivity", "ing", "ers", "ion", "ors", "ive", "es", "ed", "ly", "al", "s")
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 HYPHEN_RUN_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)+")
+DENYLIST_SKIP = {".git", "node_modules", "dist", ".astro", "__pycache__", ".playwright-mcp"}
+ATTR_RE = re.compile(
+    r"""\b(?:alt|title|content)\s*=\s*(?:"([^"]*)"|'([^']*)')""",
+    re.IGNORECASE,
+)
 MONTHS = {
     "January": 1,
     "February": 2,
@@ -791,6 +804,8 @@ def validate_curated_file(path: Path, payload: Any) -> dict[str, Any]:
             if not isinstance(item, dict):
                 raise AtlasError(f"{path.name} evidence {index} must be a mapping")
             url = require_text(item.get("url"), f"{path.name} evidence {index} url")
+            if EVIDENCE_URL_RE.fullmatch(url) is None:
+                raise AtlasError(f"{path.name} evidence {index} url must be an http(s) URL")
             who = require_text(item.get("who"), f"{path.name} evidence {index} who")
             when = require_text(item.get("date"), f"{path.name} evidence {index} date")
             quote = require_text(item.get("quote"), f"{path.name} evidence {index} quote")
@@ -952,6 +967,77 @@ def assert_counts(payload: dict[str, Any]) -> None:
             raise AtlasError("pinned formalization review status is not unchecked")
 
 
+def snapshot_for_compare(payload: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in payload.items() if key != "generated_at"}
+
+
+def snapshot_digest(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        snapshot_for_compare(payload),
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(encoded.encode()).hexdigest()
+
+
+def describe_snapshot_diff(recorded: dict[str, Any], rebuilt: dict[str, Any]) -> str:
+    notes: list[str] = []
+    for key in ("upstream", "counts", "areas"):
+        if recorded.get(key) != rebuilt.get(key):
+            notes.append(key)
+    recorded_rows = {family["id"]: family for family in recorded.get("families", [])}
+    rebuilt_rows = {family["id"]: family for family in rebuilt.get("families", [])}
+    changed = [
+        family_id
+        for family_id in sorted(set(recorded_rows) | set(rebuilt_rows))
+        if recorded_rows.get(family_id) != rebuilt_rows.get(family_id)
+    ]
+    if changed:
+        shown = ", ".join(changed[:12])
+        extra = f" (+{len(changed) - 12})" if len(changed) > 12 else ""
+        notes.append(f"families {shown}{extra}")
+    return "; ".join(notes) or "content"
+
+
+def assert_upstream_digest(payload: dict[str, Any]) -> None:
+    commit = payload.get("upstream", {}).get("commit")
+    if commit != PINNED_COMMIT:
+        return
+    if snapshot_digest(payload) != PINNED_UPSTREAM_DIGEST:
+        raise AtlasError("pinned upstream snapshot digest drifted")
+
+
+def assert_merged_catalogue(
+    upstream: dict[str, Any],
+    families: dict[str, Any],
+    curated: dict[str, dict[str, Any]],
+    cautions: dict[str, dict[str, str]],
+) -> None:
+    merged = merge_data(upstream, curated, cautions)
+    if merged != families:
+        raise AtlasError("families.json is not the merge of upstream.json and the curated notes")
+
+
+def verify_recorded_upstream() -> None:
+    """Rebuild data/upstream.json from the commit it names and fail on any difference.
+
+    generated_at is a timestamp and is ignored. The checkout is a sparse fetch of
+    that commit, the same path the weekly sync uses.
+    """
+    recorded = read_json(UPSTREAM_JSON)
+    commit = str(recorded.get("upstream", {}).get("commit", ""))
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise AtlasError("upstream.json has no commit sha")
+    with tempfile.TemporaryDirectory(prefix="atlas-upstream-") as tmp:
+        checkout = Path(tmp)
+        materialize_upstream(UPSTREAM_URL, commit, checkout)
+        rebuilt, _ = build_upstream(checkout)
+    if snapshot_for_compare(recorded) != snapshot_for_compare(rebuilt):
+        detail = describe_snapshot_diff(snapshot_for_compare(recorded), snapshot_for_compare(rebuilt))
+        raise AtlasError(f"upstream.json differs from commit {commit}: {detail}")
+
+
 def sentence_key(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().rstrip(".")
 
@@ -961,6 +1047,12 @@ def allowed_caution_keys() -> set[str]:
 
 
 def prose_for_scan(text: str) -> str:
+    attributes = " ".join(
+        piece
+        for match in ATTR_RE.finditer(text)
+        for piece in match.groups()
+        if piece
+    )
     blocked = re.sub(
         r"</(p|li|h[1-6]|tr|div|blockquote|section|article|td|th|dt|dd)>",
         ".",
@@ -972,6 +1064,8 @@ def prose_for_scan(text: str) -> str:
     blocked = re.sub(r"<[^>]+>", " ", blocked)
     blocked = html.unescape(blocked)
     plain = blocked.replace("\n", " ")
+    if attributes:
+        plain = f"{plain}. {html.unescape(attributes)}"
     # Keep dotted R.H. inside one sentence. The topic pattern still matches either form.
     return re.sub(r"\bR\s*\.\s*H\s*\.", " RH ", plain, flags=re.IGNORECASE)
 
@@ -989,9 +1083,10 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     """Flag a sentence that claims a guarded problem itself was proved, solved, or settled.
 
     A negation anywhere in the sentence is not an exemption. The only exemption
-    is an exact fixed caution sentence. A flow name followed by a qualifier
-    (energy, inequality, computation, flow, and the rest of FLOW_QUALIFIER_RE)
-    is not the guarded problem.
+    is an exact fixed caution sentence. A flow name followed by energy, an
+    inequality, an estimate, a bound, a computation, a scheme, a solver, or an
+    approximation is not the guarded problem. alt, title, and content attributes
+    are scanned with the prose.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1025,21 +1120,23 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def fusion_compound_excused(core: str) -> bool:
+def neighbor_compound_excused(core: str) -> bool:
     """A collapsed math compound whose first six letters are the stem and whose tail is a neighbor."""
     if len(core) <= DENYLIST_MIN_PREFIX:
         return False
-    if _digest(core[:DENYLIST_MIN_PREFIX]) != FUSION_STEM_DIGEST:
+    if _digest(core[:DENYLIST_MIN_PREFIX]) != NEIGHBOR_STEM_DIGEST:
         return False
-    return _digest(core[DENYLIST_MIN_PREFIX:]) in FUSION_AFTER_DIGESTS
+    return _digest(core[DENYLIST_MIN_PREFIX:]) in NEIGHBOR_AFTER_DIGESTS
 
 
-def fusion_token_excused(pieces: list[str], index: int) -> bool:
-    if _digest(pieces[index]) != FUSION_STEM_DIGEST:
+def neighbor_token_excused(pieces: list[str], index: int) -> bool:
+    if _digest(pieces[index]) != NEIGHBOR_STEM_DIGEST:
         return False
-    if index + 1 < len(pieces) and _digest(pieces[index + 1]) in FUSION_AFTER_DIGESTS:
+    following = pieces[index + 1] if index + 1 < len(pieces) else ""
+    if following and _digest(following) in NEIGHBOR_AFTER_DIGESTS:
         return True
-    if index > 0 and _digest(pieces[index - 1]) in FUSION_BEFORE_DIGESTS:
+    preceding = pieces[index - 1] if index > 0 else ""
+    if preceding and _digest(preceding) in NEIGHBOR_BEFORE_DIGESTS and not following:
         return True
     return False
 
@@ -1047,9 +1144,9 @@ def fusion_token_excused(pieces: list[str], index: int) -> bool:
 def hyphen_run_excused(parts: list[str]) -> bool:
     if len(parts) != 2:
         return False
-    if _digest(parts[0]) == FUSION_STEM_DIGEST and _digest(parts[1]) in FUSION_AFTER_DIGESTS:
+    if _digest(parts[0]) == NEIGHBOR_STEM_DIGEST and _digest(parts[1]) in NEIGHBOR_AFTER_DIGESTS:
         return True
-    if _digest(parts[1]) == FUSION_STEM_DIGEST and _digest(parts[0]) in FUSION_BEFORE_DIGESTS:
+    if _digest(parts[1]) == NEIGHBOR_STEM_DIGEST and _digest(parts[0]) in NEIGHBOR_BEFORE_DIGESTS:
         return True
     return False
 
@@ -1058,7 +1155,7 @@ def token_denied(token: str) -> bool:
     core = re.sub(r"[^a-z0-9]", "", token.lower())
     if core and _digest(core) in COMPOUND_DIGESTS:
         return True
-    if fusion_compound_excused(core):
+    if neighbor_compound_excused(core):
         return False
     for stem in denylist_cores(token):
         for length in range(DENYLIST_MIN_PREFIX, len(stem) + 1):
@@ -1083,7 +1180,7 @@ def denylist_hit(text: str) -> bool:
         if token_denied(collapsed):
             return True
     for index, piece in enumerate(pieces):
-        if fusion_token_excused(pieces, index):
+        if neighbor_token_excused(pieces, index):
             continue
         if token_denied(piece):
             return True
@@ -1101,20 +1198,35 @@ def authored_files() -> list[Path]:
     return files
 
 
+def check_denylist_tree() -> list[str]:
+    failures: list[str] = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix == ".pyc":
+            continue
+        if any(part in DENYLIST_SKIP for part in path.parts):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if denylist_hit(text):
+            failures.append(f"{path.relative_to(ROOT)} contains a denylist token")
+    return failures
+
+
 def check_authored() -> list[str]:
-    """Scan prose we wrote. Verbatim upstream titles and summaries live in the JSON snapshot and in data-upstream HTML, and are not scanned here."""
+    """Scan prose we wrote. Upstream titles and summaries are not part of the sentence check.
+
+    The digest check covers the whole tree, including the generated snapshot.
+    """
     failures: list[str] = []
     for path in authored_files():
         text = path.read_text(encoding="utf-8")
         relative = str(path.relative_to(ROOT))
         failures.extend(scan_overclaims(text, relative))
-        if denylist_hit(text):
-            failures.append(f"{relative} contains a denylist token")
+    failures.extend(check_denylist_tree())
     return failures
 
 
 def strip_upstream_quotes(html_text: str) -> str:
-    """Drop elements that quote the upstream catalogue before the claim and denylist scans."""
+    """Drop elements that quote the upstream catalogue before the sentence check."""
     without_quotes = re.sub(
         r"<(?P<tag>[a-z0-9]+)\b[^>]*\bdata-upstream\b[^>]*>.*?</(?P=tag)>",
         " ",
@@ -1188,10 +1300,9 @@ def check_dist(dist: Path) -> list[str]:
     if not pages:
         return [f"{dist} has no HTML"]
     combined = "\n".join(path.read_text(encoding="utf-8") for path in pages)
-    visible = strip_upstream_quotes(combined)
-    if denylist_hit(visible):
+    if denylist_hit(combined):
         failures.append("built site contains a denylist token")
-    failures.extend(scan_overclaims(visible, "built site"))
+    failures.extend(scan_overclaims(strip_upstream_quotes(combined), "built site"))
     index = dist / "index.html"
     about = dist / "about" / "index.html"
     if not index.is_file() or not about.is_file():
