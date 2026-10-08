@@ -1,0 +1,4 @@
+# Allowlist for a status other than claimed.
+# Each entry names the family id, the status, the evidence URL, and the approver.
+# This list starts empty. Jason approves each added entry.
+approvals: []

@@ -5,7 +5,7 @@ vocabulary:
     evidence: optional
   - id: community-checking
     evidence: required
-  - id: independently-verified
+  - id: independently-checked
     evidence: required
   - id: disputed
     evidence: required

@@ -34,9 +34,12 @@ from atlaslib import (
     assert_sha_is_ancestor,
     assert_upstream_digest,
     ensure_ancestor_of_origin_head,
+    approval_mismatches,
+    exempt_index_rows,
     load_cautions,
     load_community_schema,
     load_curated,
+    load_status_approvals,
     materialize_upstream,
     merge_data,
     parse_contents,
@@ -75,8 +78,31 @@ def check_source() -> list[str]:
             if not lens["source"].strip():
                 failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
     failures.extend(check_status_vocabulary())
+    failures.extend(check_status_approvals(curated))
+    failures.extend(check_codeowners())
     failures.extend(check_sync_does_not_write_status())
     failures.extend(check_authored())
+    return failures
+
+
+def check_status_approvals(curated: dict) -> list[str]:
+    try:
+        approvals = load_status_approvals(atlaslib.STATUS_APPROVALS_FILE)
+    except AtlasError as exc:
+        return [str(exc)]
+    return approval_mismatches(curated, approvals)
+
+
+def check_codeowners() -> list[str]:
+    path = ROOT / ".github" / "CODEOWNERS"
+    if not path.is_file():
+        return ["CODEOWNERS is missing"]
+    text = path.read_text(encoding="utf-8")
+    failures: list[str] = []
+    if "data/curated/**" not in text or "@jkbennitt" not in text:
+        failures.append("CODEOWNERS does not assign data/curated to @jkbennitt")
+    if "data/curated/status-approvals.yaml" not in text:
+        failures.append("CODEOWNERS does not assign the status allowlist")
     return failures
 
 
@@ -365,6 +391,15 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "We are obtaining RH.",
         "Riemann hypothesis: done",
         "Global smooth solutions of Navier-Stokes are proven.",
+        "We solved Navier–Stokes flows.",
+        "Navier–Stokes flows are solved.",
+        "This settles Navier–Stokes flows.",
+        "We prove Navier–Stokes flows exist globally.",
+        "We crack Navier–Stokes flows.",
+        "Navier–Stokes flows: proof complete.",
+        "Navier–Stokes energy bounds for smooth data are proven and solve the problem.",
+        "Navier–Stokes flows show turbulence",
+        "We prove a Navier-Stokes energy inequality for smooth data.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -389,8 +424,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Our Navier–Stokes solver proves an energy inequality.",
         "The lemma is a theorem.",
         "We show a bound.",
-        "Navier–Stokes flows show turbulence",
-        "We prove a Navier-Stokes energy inequality for smooth data.",
+        "Navier–Stokes energy inequality for smooth data.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -484,8 +518,18 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         if not scan_overclaims(attribute, "attribute"):
             failures.append(f"a claim in an HTML attribute was not flagged: {attribute}")
     catalogue_attr = '<tr data-title="The Riemann Hypothesis is solved."><td>The lemma is proven.</td></tr>'
-    if scan_overclaims(catalogue_attr, "attribute"):
-        failures.append("an upstream title attribute was scanned")
+    if not scan_overclaims(catalogue_attr, "attribute"):
+        failures.append("a claim in a data-title attribute was not flagged")
+    graph_attr = '<svg data-title="The Riemann Hypothesis is proven."></svg>'
+    if not scan_overclaims(graph_attr, "graph"):
+        failures.append("a graph data-title claim was not flagged")
+    exact_title = "The Riemann Hypothesis is proven."
+    own_row = f'<tr id="f-001" data-title="{exact_title}"><td>The lemma is proven.</td></tr>'
+    if scan_overclaims(exempt_index_rows(own_row, [{"id": "001", "title": exact_title}]), "row"):
+        failures.append("an exact upstream title on its own row was flagged")
+    forged_row = f'<tr id="f-002" data-title="{exact_title}"><td>The lemma is proven.</td></tr>'
+    if not scan_overclaims(exempt_index_rows(forged_row, [{"id": "002", "title": "A different title"}]), "row"):
+        failures.append("a forged data-title on another row was not flagged")
     sort_attr = '<th data-sort="title">Result</th>'
     if scan_overclaims(sort_attr, "attribute"):
         failures.append("a data-sort value was flagged")
@@ -624,7 +668,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
                 yaml.safe_dump(
                     {
                         "id": "362",
-                        "community": {"status": "independently-verified", "evidence": []},
+                        "community": {"status": "independently-checked", "evidence": []},
                     }
                 ),
                 encoding="utf-8",
@@ -691,9 +735,64 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("status without evidence", status_without_evidence)
     if message:
         failures.append(message)
+    def hostile_note() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {
+                            "status": "claimed",
+                            "evidence": [
+                                {
+                                    "url": "https://example.com/note",
+                                    "date": "2026-10-08",
+                                    "note": "This paper is garbage and the authors are frauds.",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    def quoted_evidence_url() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {
+                            "status": "claimed",
+                            "evidence": [
+                                {
+                                    "url": 'https://example.com/a"b',
+                                    "date": "2026-10-08",
+                                    "note": "A short note.",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
     message = expect_error("history without url", history_without_url)
     if message:
         failures.append(message)
+    message = expect_error("hostile note", hostile_note)
+    if message:
+        failures.append(message)
+    message = expect_error("quoted evidence url", quoted_evidence_url)
+    if message:
+        failures.append(message)
+    approval_error = approval_self_test()
+    if approval_error:
+        failures.append(approval_error)
     try:
         ordinary_solved()
         status_with_evidence()
@@ -736,13 +835,52 @@ def citation_self_test() -> str | None:
     return None
 
 
+def approval_self_test() -> str | None:
+    community = {
+        "status": "disputed",
+        "evidence": [
+            {
+                "url": "https://example.com/note",
+                "date": "2026-10-08",
+                "note": "A short neutral note about the family.",
+            }
+        ],
+        "history": [],
+    }
+    curated = {"362": {"id": "362", "community": community}}
+    if not approval_mismatches(curated, []):
+        return "a disputed status without an allowlist entry was accepted"
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "status-approvals.yaml"
+        path.write_text(
+            yaml.safe_dump(
+                {
+                    "approvals": [
+                        {
+                            "id": "362",
+                            "status": "disputed",
+                            "url": "https://example.com/note",
+                            "approver": "jkbennitt",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        approvals = load_status_approvals(path)
+    mismatches = approval_mismatches(curated, approvals)
+    if mismatches:
+        return f"a matching status approval was rejected: {mismatches[0]}"
+    return None
+
+
 def merge_status_self_test() -> str | None:
     evidence = {
         "url": "https://example.com/note",
         "date": "2026-10-08",
         "note": "A short neutral note about the family.",
     }
-    community = {"status": "independently-verified", "evidence": [evidence], "history": []}
+    community = {"status": "independently-checked", "evidence": [evidence], "history": []}
     upstream = {
         "generated_at": "2026-01-01T00:00:00+00:00",
         "upstream": {},

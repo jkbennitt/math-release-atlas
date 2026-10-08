@@ -82,16 +82,49 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
         <svg
           class="graph-map"
           viewBox={`0 0 ${size} ${size}`}
-          role="img"
-          aria-label="Map of the citation edges listed below."
+          aria-labelledby="citation-map-title"
         >
+          <title id="citation-map-title">Map of the citation edges listed below.</title>
+          <defs>
+            <marker
+              id="cite-arrow"
+              viewBox="0 0 8 8"
+              refX="8"
+              refY="4"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" class="cite-arrow" />
+            </marker>
+            <marker
+              id="topic-arrow"
+              viewBox="0 0 8 8"
+              refX="8"
+              refY="4"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" class="topic-arrow" />
+            </marker>
+          </defs>
           {shared.map((edge) => {
             const from = at.get(edge.from);
             const to = at.get(edge.to);
             if (!from || !to) {
               return null;
             }
-            return <line class="topic" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />;
+            return (
+              <line
+                class="topic"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                marker-end="url(#topic-arrow)"
+              />
+            );
           })}
           {citations.map((edge) => {
             const from = at.get(edge.from);
@@ -99,7 +132,16 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             if (!from || !to) {
               return null;
             }
-            return <line class="cite" x1={from.x} y1={from.y} x2={to.x} y2={to.y} />;
+            return (
+              <line
+                class="cite"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                marker-end="url(#cite-arrow)"
+              />
+            );
           })}
           {nodes.map((node) => (
             <a href={`${base}f/${node.id}/`}>

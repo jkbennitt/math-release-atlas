@@ -48,6 +48,13 @@ const changed = atlas.families.filter(
       <code>CONTRIBUTING.md</code>. The weekly sync copies generated catalogue files only. It does
       not edit curated notes.
     </p>
+    <p>
+      A status other than claimed passes Guard only when
+      <code>data/curated/status-approvals.yaml</code> has a matching entry. The entry lists the
+      family id, the status, the evidence URL, and the approver jkbennitt. The allowlist starts
+      empty. <code>CODEOWNERS</code> assigns <code>data/curated/</code> and that file to
+      @jkbennitt. Jason approves each change.
+    </p>
 
     <h2>Families that are not claimed</h2>
     {
