@@ -36,17 +36,24 @@ Omit `--checkout` to sparse-fetch upstream HEAD. The fetch does not download
 the PDF tree. If that commit already matches `data/upstream.json`, the script
 exits without writing. It never edits `data/curated/`.
 
-## Weekly sync
+## Daily sync
 
-`.github/workflows/sync.yml` runs every Monday at 13:00 UTC, and it can be
+`.github/workflows/sync.yml` runs every day at 10:17 UTC, and it can be
 started by hand with “Run workflow”. It uses a GitHub-hosted `ubuntu-latest`
-runner. It reads upstream HEAD. When the commit is unchanged, it stops. When
-the commit changed, a read-only job regenerates the data files and runs
-the build and the wording checks. A second job does not run the install or
-any repository script. It commits that data and opens or updates a pull
-request that records whether those checks passed. It does not merge that
-pull request. The site updates only after the pull request is merged and
-the Pages workflow runs.
+runner. It reads upstream HEAD. When that commit matches the one recorded
+in the catalogue, the job exits and does not open a pull request. When the
+commit changed, a read-only job regenerates the data files and runs the
+build and the wording checks. A second job does not run the install. It
+commits that data. The pull-request filter and the branch plan in that job
+run with the token removed from the environment. If one sync pull request from the
+Actions app is already open on this repository, it updates that pull request
+by number. A pull request from another repository is ignored. Two matching
+pull requests stop the job. A human commit on the sync branch is left in
+place, and the job opens a separate branch instead of replacing it. A commit
+already on main does not count as an edit of the sync branch. A missing
+comparison ref stops the job instead of updating the open pull request. It never
+merges that pull request. The site updates only after the pull request is
+merged and the Pages workflow runs.
 
 If the parsed family and manuscript counts disagree with the count sentence
 in the upstream README, the pull request is still opened and the check fails.
@@ -84,7 +91,7 @@ required on a history entry whose status is not `claimed`, and that entry
 needs its own allowlist match. The vocabulary file is
 `data/curated/community-status.yaml`. Every status change must be approved by
 Jason (repo policy). Branch protection is off. `.github/CODEOWNERS` names
-@jkbennitt on `data/curated/`. The weekly sync does not write community
+@jkbennitt on `data/curated/`. The daily sync does not write community
 status. See `CONTRIBUTING.md`. Curated text uses the same sentence check as
 the rest of the site. A hostile note fails the build. A whole word and its
 plurals and inflections are matched. A hyphenated compound fails when a part
@@ -199,7 +206,7 @@ word is a stored math neighbor, or when a preceding neighbor is the entire
 rest of the phrase. A further word after that preceding neighbor still
 matches. The stems are not written in this repository.
 
-`data/upstream.json` names a commit. Guard, Build, and the weekly sync
+`data/upstream.json` names a commit. Guard, Build, and the daily sync
 require that commit to be the default-branch HEAD of openai/math or an
 ancestor of it (`git fetch --filter=blob:none origin HEAD`, then
 `git merge-base --is-ancestor`), then sparse-fetch that commit and fail if

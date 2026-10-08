@@ -3,7 +3,7 @@ name: Upstream sync
 
 on:
   schedule:
-    - cron: "0 13 * * 1"
+    - cron: "17 10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -44,6 +44,7 @@ jobs:
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           set -e
+          # Exit 0 means the recorded commit is unchanged. The publish job does not run, so no pull request is opened.
           case "$code" in
             0|2|3) ;;
             *) exit "$code" ;;
@@ -129,6 +130,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: sync-payload
@@ -138,13 +140,35 @@ jobs:
         env:
           OLD: ${{ needs.prepare.outputs.old }}
           NEW: ${{ needs.prepare.outputs.new }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # One Actions pull request on this repository, chosen by number. A fork cannot name the branch.
+          selected="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,isCrossRepository,author,headRefName | env -u GH_TOKEN -u GITHUB_TOKEN jq -e -f scripts/sync_pr_select.jq)"
+          count="$(jq 'length' <<<"$selected")"
+          number=""
+          if [ "$count" -eq 1 ]; then
+            number="$(jq -r '.[0].number' <<<"$selected")"
+            candidate="$(jq -r '.[0].headRefName' <<<"$selected")"
+            case "$candidate" in
+              upstream-sync|upstream-sync-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
+                branch="$candidate"
+                ;;
+              *)
+                echo "Refusing an unexpected sync branch name." >&2
+                exit 1
+                ;;
+            esac
+          elif [ "$count" -eq 0 ]; then
+            branch="upstream-sync"
+          else
+            echo "More than one sync pull request." >&2
+            exit 1
+          fi
           unset GITHUB_TOKEN GH_TOKEN
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          short="${NEW:0:12}"
-          branch="upstream-sync-${short}"
           git checkout -B "$branch"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
           cp sync-payload/upstream.json data/upstream.json
           cp sync-payload/families.json data/families.json
           git add data/upstream.json data/families.json
@@ -152,38 +176,81 @@ jobs:
             echo "committed=false" >> "$GITHUB_OUTPUT"
             echo "No data change to commit."
           else
-            git commit -m "upstream sync ${OLD:0:12} to ${short}"
+            git commit -m "upstream sync ${OLD:0:12} to ${NEW:0:12}"
             echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
       - name: Push branch
+        id: push
         if: steps.commit.outputs.committed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.commit.outputs.branch }}
+          NUMBER: ${{ steps.commit.outputs.number }}
+          NEW: ${{ needs.prepare.outputs.new }}
         run: |
           remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          spec="$(git ls-remote "$remote" "refs/heads/${BRANCH}")"
+          branch="$BRANCH"
+          number="$NUMBER"
+          spec="$(git ls-remote "$remote" "refs/heads/${branch}")"
           if [ -n "$spec" ]; then
-            sha="${spec%%$'\t'*}"
-            git push --force-with-lease="refs/heads/${BRANCH}:${sha}" "$remote" "HEAD:refs/heads/${BRANCH}"
+            # A new generated_at must not replace a human commit on this branch.
+            # Fetch full main so commits already on main are not unique to this branch.
+            git fetch --no-tags "$remote" "+refs/heads/main:refs/remotes/origin/main" "refs/heads/${branch}:refs/heads/sync-existing"
+            plan="$(env -u GH_TOKEN -u GITHUB_TOKEN bash scripts/sync_push_plan.sh "$branch" "$number" "$NEW")"
+            mode="$(printf '%s\n' "$plan" | sed -n 's/^mode=//p')"
+            if [ "$mode" = fresh ]; then
+              echo "Leaving ${branch} in place because it has a human commit." >&2
+              fresh="upstream-sync-${NEW:0:12}"
+              if [ "$fresh" != "$(printf '%s\n' "$plan" | sed -n 's/^branch=//p')" ]; then
+                echo "Refusing an unexpected fresh branch name." >&2
+                exit 1
+              fi
+              if git ls-remote "$remote" "refs/heads/${fresh}" | grep -q .; then
+                echo "Refusing to overwrite existing ${fresh}." >&2
+                exit 1
+              fi
+              git checkout -B "$fresh"
+              git push "$remote" "HEAD:refs/heads/${fresh}"
+              branch="$fresh"
+              number=""
+            elif [ "$mode" = reuse ]; then
+              sha="${spec%%$'\t'*}"
+              git push --force-with-lease="refs/heads/${branch}:${sha}" "$remote" "HEAD:refs/heads/${branch}"
+            else
+              echo "Sync branch plan failed." >&2
+              exit 1
+            fi
           else
-            git push "$remote" "HEAD:refs/heads/${BRANCH}"
+            git push "$remote" "HEAD:refs/heads/${branch}"
           fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
       - name: Open or update pull request
         env:
           GH_TOKEN: ${{ github.token }}
           OLD: ${{ needs.prepare.outputs.old }}
           NEW: ${{ needs.prepare.outputs.new }}
-          BRANCH: ${{ steps.commit.outputs.branch }}
+          PUSH_BRANCH: ${{ steps.push.outputs.branch }}
+          PUSH_NUMBER: ${{ steps.push.outputs.number }}
+          COMMIT_BRANCH: ${{ steps.commit.outputs.branch }}
+          COMMIT_NUMBER: ${{ steps.commit.outputs.number }}
           COMMITTED: ${{ steps.commit.outputs.committed }}
         run: |
+          # Edit the selected pull request by number. This job never merges it.
           short="${NEW:0:12}"
-          number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
+          title="upstream sync ${OLD:0:12}→${short}"
+          if [ "$COMMITTED" = "true" ]; then
+            branch="$PUSH_BRANCH"
+            number="$PUSH_NUMBER"
+          else
+            branch="$COMMIT_BRANCH"
+            number="$COMMIT_NUMBER"
+          fi
           if [ -n "$number" ] && [ "$number" != "null" ]; then
-            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --body-file sync-payload/pr-body.md
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file sync-payload/pr-body.md
           elif [ "$COMMITTED" = "true" ]; then
-            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "upstream sync ${OLD:0:12}→${short}" --body-file sync-payload/pr-body.md
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "$title" --body-file sync-payload/pr-body.md
           else
             echo "No commit and no open pull request."
           fi

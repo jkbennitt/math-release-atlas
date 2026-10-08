@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import inspect
+import json
 import os
 import subprocess
 import sys
@@ -141,7 +142,7 @@ def check_status_vocabulary() -> list[str]:
 
 
 def check_sync_does_not_write_status() -> list[str]:
-    """The weekly sync may refresh the catalogue. It must not author a community status."""
+    """The daily sync may refresh the catalogue. It must not author a community status."""
     sync = (ROOT / "scripts" / "sync.py").read_text(encoding="utf-8")
     workflow = (ROOT / ".github" / "workflows" / "sync.yml").read_text(encoding="utf-8")
     failures: list[str] = []
@@ -149,6 +150,56 @@ def check_sync_does_not_write_status() -> list[str]:
         failures.append("sync workflow touches data/curated")
     if "git add data/upstream.json data/families.json" not in workflow:
         failures.append("sync workflow no longer limits the commit to generated catalogue files")
+    if 'cron: "17 10 * * *"' not in workflow:
+        failures.append("sync schedule is not daily at 10:17 UTC")
+    if "0 13 * * 1" in workflow or 'cron: "0 ' in workflow:
+        failures.append("sync cron is not the daily off-peak schedule")
+    if "scripts/sync_pr_select.jq" not in workflow:
+        failures.append("sync workflow does not use the pull request filter")
+    if "pr list --head" in workflow:
+        failures.append("sync workflow selects a pull request by branch name")
+    if 'gh pr edit "$number"' not in workflow:
+        failures.append("sync workflow does not edit a pull request by number")
+    if "human commit" not in workflow or "upstream-sync-${NEW:0:12}" not in workflow:
+        failures.append("sync workflow overwrites a human commit")
+    if "--force-with-lease" not in workflow:
+        failures.append("sync workflow lost its lease check for a bot branch")
+    failures.extend(check_sync_pr_selection())
+    advanced = check_sync_reuses_bot_pr_when_main_advances()
+    if advanced:
+        failures.append(advanced)
+    missing_ref = check_sync_plan_fails_when_ref_missing()
+    if missing_ref:
+        failures.append(missing_ref)
+    if "env -u GH_TOKEN -u GITHUB_TOKEN jq -e -f scripts/sync_pr_select.jq" not in workflow:
+        failures.append("sync filter runs with the publish token set")
+    if "env -u GH_TOKEN -u GITHUB_TOKEN bash scripts/sync_push_plan.sh" not in workflow:
+        failures.append("sync push plan runs with the publish token set")
+    if "pr merge" in workflow or "auto-merge" in workflow:
+        failures.append("sync workflow merges a pull request")
+    if "needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3'" not in workflow:
+        failures.append("sync publishes when the upstream commit is unchanged")
+    if "\n  prepare:" not in workflow or "\n  publish:" not in workflow:
+        failures.append("sync workflow lost the two-job split")
+    if workflow.count("runs-on: ubuntu-latest") != 2 or "runs-on: self-hosted" in workflow:
+        failures.append("sync workflow does not stay on two GitHub-hosted runners")
+    for pin in (
+        "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+    ):
+        if pin not in workflow:
+            failures.append(f"sync workflow lost pin {pin}")
+    if workflow.count("contents: read") != 2 or workflow.count("contents: write") != 1:
+        failures.append("sync workflow changed contents permissions")
+    if workflow.count("pull-requests: write") != 1:
+        failures.append("sync workflow changed pull request permissions")
+    if 'status == "unchanged"' not in sync and "Upstream commit is unchanged." not in sync:
+        failures.append("sync.py does not exit cleanly when the commit is unchanged")
+    if "return 0" not in sync:
+        failures.append("sync.py does not exit cleanly when the commit is unchanged")
     for source, label in ((sync, "sync.py"), (workflow, "sync.yml")):
         if "community" in source:
             failures.append(f"{label} names community status")
@@ -156,6 +207,247 @@ def check_sync_does_not_write_status() -> list[str]:
             if status in source:
                 failures.append(f"{label} names community status {status}")
     return failures
+
+
+def check_sync_pr_selection() -> list[str]:
+    """The sync pull request filter ignores forks and human branches."""
+    jq_path = ROOT / "scripts" / "sync_pr_select.jq"
+    fixture_path = ROOT / "scripts" / "testdata" / "sync-prs.json"
+    if not jq_path.is_file() or not fixture_path.is_file():
+        return ["sync pull request filter is missing"]
+    jq_text = jq_path.read_text(encoding="utf-8")
+    failures: list[str] = []
+    for required in ("isCrossRepository", "app/github-actions", "github-actions[bot]", "upstream-sync"):
+        if required not in jq_text:
+            failures.append(f"sync pull request filter is missing {required}")
+    if "error(" not in jq_text:
+        failures.append("sync pull request filter does not fail when more than one match exists")
+    selected = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path), str(fixture_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if selected.returncode != 0:
+        failures.append("sync pull request filter rejected the bot pull request")
+        return failures
+    try:
+        chosen = json.loads(selected.stdout)
+    except json.JSONDecodeError:
+        failures.append("sync pull request filter did not return JSON")
+        return failures
+    if chosen != [{"number": 42, "headRefName": "upstream-sync"}]:
+        failures.append("sync pull request filter kept a fork or a human branch")
+    app_only = [
+        {
+            "number": 7,
+            "isCrossRepository": False,
+            "author": {"login": "app/github-actions", "is_bot": True},
+            "headRefName": "upstream-sync-0123456789ab",
+        }
+    ]
+    app_run = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path)],
+        input=json.dumps(app_only),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if app_run.returncode != 0 or json.loads(app_run.stdout) != [
+        {"number": 7, "headRefName": "upstream-sync-0123456789ab"}
+    ]:
+        failures.append("sync pull request filter rejected the Actions app")
+    doubled = json.loads(fixture_path.read_text(encoding="utf-8"))
+    doubled.append(
+        {
+            "number": 43,
+            "isCrossRepository": False,
+            "author": {"login": "github-actions[bot]", "is_bot": True},
+            "headRefName": "upstream-sync-abcdefabcdef",
+        }
+    )
+    crowded = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path)],
+        input=json.dumps(doubled),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if crowded.returncode == 0:
+        failures.append("sync pull request filter allowed more than one match")
+    return failures
+
+
+def check_sync_reuses_bot_pr_when_main_advances() -> str | None:
+    """Main moving forward must not look like a human edit of the open bot pull request."""
+    bot = "github-actions[bot]"
+    bot_email = "41898282+github-actions[bot]@users.noreply.github.com"
+    script = ROOT / "scripts" / "sync_push_plan.sh"
+    if not script.is_file():
+        return "sync push plan is missing"
+    plan_text = script.read_text(encoding="utf-8")
+    if "origin/main..sync-existing" not in plan_text:
+        return "sync push plan does not compare against origin/main"
+    workflow = (ROOT / ".github" / "workflows" / "sync.yml").read_text(encoding="utf-8")
+    if "fetch-depth: 0" not in workflow or "scripts/sync_push_plan.sh" not in workflow:
+        return "sync publish checkout does not fetch full history"
+    if "refs/heads/main:refs/remotes/origin/main" not in workflow:
+        return "sync publish job does not fetch origin/main"
+
+    def commit(repo: Path, name: str, email: str, message: str, body: str) -> None:
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": name,
+            "GIT_AUTHOR_EMAIL": email,
+            "GIT_COMMITTER_NAME": name,
+            "GIT_COMMITTER_EMAIL": email,
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+        (repo / "f").write_text(body, encoding="utf-8")
+        subprocess.run(["git", "add", "f"], cwd=repo, env=env, check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", message], cwd=repo, env=env, check=True, capture_output=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        origin = Path(tmp) / "origin"
+        shallow = Path(tmp) / "shallow"
+        origin.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(origin)], check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "main A", "a\n")
+        subprocess.run(["git", "branch", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        commit(origin, bot, bot_email, "bot B", "b\n")
+        subprocess.run(["git", "checkout", "main"], cwd=origin, check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "main C", "c\n")
+        subprocess.run(
+            ["git", "clone", "--no-local", "--depth", "1", "--branch", "main", str(origin), str(shallow)],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "fetch", "--no-tags", "origin", "upstream-sync:sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+        )
+        shallow_log = subprocess.run(
+            ["git", "log", "--format=%s", "HEAD..sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if "main A" not in shallow_log.stdout.splitlines():
+            return "shallow history did not reproduce the false human commit"
+        subprocess.run(["git", "fetch", "--unshallow", "origin"], cwd=shallow, check=True, capture_output=True)
+        reuse = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "upstream-sync",
+                "42",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            ],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if reuse.stdout != "mode=reuse\nbranch=upstream-sync\nnumber=42\n":
+            return f"sync plan did not reuse the bot pull request: {reuse.stdout!r}"
+        subprocess.run(["git", "checkout", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "human D", "d\n")
+        subprocess.run(
+            ["git", "fetch", "--no-tags", "origin", "+upstream-sync:sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+        )
+        fresh = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "upstream-sync",
+                "42",
+                "0123456789abcdef0123456789abcdef01234567",
+            ],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if fresh.stdout != "mode=fresh\nbranch=upstream-sync-0123456789ab\nnumber=\n":
+            return f"sync plan reused a branch with a human commit: {fresh.stdout!r}"
+    return None
+
+
+def check_sync_plan_fails_when_ref_missing() -> str | None:
+    """A missing origin/main or sync-existing ref must not fall through to reuse."""
+    script = ROOT / "scripts" / "sync_push_plan.sh"
+    plan_text = script.read_text(encoding="utf-8")
+    if plan_text.count("git rev-parse --verify") < 2:
+        return "sync push plan does not verify origin/main and sync-existing"
+    if "< <(git log" in plan_text:
+        return "sync push plan still ignores a failed git log"
+    sha = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+
+    def run(repo: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["bash", str(script), "upstream-sync", "42", sha],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def commit_file(repo: Path) -> None:
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "Ada",
+            "GIT_AUTHOR_EMAIL": "ada@example.com",
+            "GIT_COMMITTER_NAME": "Ada",
+            "GIT_COMMITTER_EMAIL": "ada@example.com",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+        (repo / "f").write_text("a\n", encoding="utf-8")
+        subprocess.run(["git", "add", "f"], cwd=repo, env=env, check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "seed"], cwd=repo, env=env, check=True, capture_output=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        empty = Path(tmp) / "empty"
+        empty.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(empty)], check=True, capture_output=True)
+        missing_both = run(empty)
+        if missing_both.returncode == 0 or "mode=reuse" in missing_both.stdout:
+            return "sync push plan reused a branch with no origin/main"
+
+        only_main = Path(tmp) / "only-main"
+        only_main.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(only_main)], check=True, capture_output=True)
+        commit_file(only_main)
+        subprocess.run(
+            ["git", "update-ref", "refs/remotes/origin/main", "HEAD"],
+            cwd=only_main,
+            check=True,
+            capture_output=True,
+        )
+        missing_sync = run(only_main)
+        if missing_sync.returncode == 0 or "mode=reuse" in missing_sync.stdout:
+            return "sync push plan reused a branch when sync-existing was missing"
+
+        only_sync = Path(tmp) / "only-sync"
+        only_sync.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(only_sync)], check=True, capture_output=True)
+        commit_file(only_sync)
+        subprocess.run(
+            ["git", "branch", "sync-existing"],
+            cwd=only_sync,
+            check=True,
+            capture_output=True,
+        )
+        missing_main = run(only_sync)
+        if missing_main.returncode == 0 or "mode=reuse" in missing_main.stdout:
+            return "sync push plan reused a branch when origin/main was missing"
+    return None
 
 
 def _calls_named(func, name: str) -> bool:
