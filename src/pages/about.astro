@@ -20,7 +20,9 @@ const commit = atlas.upstream.commit;
     <p>
       The upstream collection groups manuscripts into families. This site turns that catalogue into
       a table: subject, manuscript dates, PDF links, and whether Lean records a formalized main
-      result, only a Comparator challenge, or neither. The commit pinned in the data is
+      result, only a Comparator challenge, or neither. Each row links to a family page. Lens pages
+      list the families under each hand-written tag. A family with no tag still shows community
+      status claimed. The commit pinned in the data is
       <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
     </p>
 
@@ -38,22 +40,22 @@ const commit = atlas.upstream.commit;
     <h2>Cautions that always appear</h2>
     <p>These notes belong to the atlas. They are not upstream claims.</p>
     <ul>
-      <li><a href={`${base}#f-002`}>002</a>. BSD for low Selmer corank — not full BSD.</li>
+      <li><a href={`${base}f/002/`}>002</a>. BSD for low Selmer corank — not full BSD.</li>
       <li>
-        <a href={`${base}#f-003`}>003</a>. Zero-free region Re s &gt; 7/8 ('quasi-Riemann hypothesis')
+        <a href={`${base}f/003/`}>003</a>. Zero-free region Re s &gt; 7/8 ('quasi-Riemann hypothesis')
         — not the Riemann Hypothesis.
       </li>
       <li>
-        <a href={`${base}#f-032`}>032</a>. Hodge for CM abelian varieties — not the full Hodge
+        <a href={`${base}f/032/`}>032</a>. Hodge for CM abelian varieties — not the full Hodge
         conjecture.
       </li>
       <li>
-        <a href={`${base}#f-102`}>102</a>, <a href={`${base}#f-103`}>103</a>, and
-        <a href={`${base}#f-107`}>107</a>. Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims
+        <a href={`${base}f/102/`}>102</a>, <a href={`${base}f/103/`}>103</a>, and
+        <a href={`${base}f/107/`}>107</a>. Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims
         until checked.
       </li>
       <li>
-        <a href={`${base}#f-376`}>376</a>. Forced Navier–Stokes computation — not the Clay Millennium
+        <a href={`${base}f/376/`}>376</a>. Forced Navier–Stokes computation — not the Clay Millennium
         Navier–Stokes problem.
       </li>
     </ul>

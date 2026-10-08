@@ -22,11 +22,13 @@ from atlaslib import (
     check_dist,
     denylist_hit,
     load_cautions,
+    load_curated,
     parse_contents,
     parse_slug_date,
     plainify,
     read_json,
     scan_overclaims,
+    strip_upstream_quotes,
     validate_curated_file,
 )
 
@@ -37,10 +39,22 @@ def check_source() -> list[str]:
         return ["generated data files are missing"]
     try:
         load_cautions(CAUTIONS_JSON)
+        curated = load_curated(CURATED_DIR)
         assert_counts(read_json(UPSTREAM_JSON))
         assert_counts(read_json(FAMILIES_JSON))
     except AtlasError as exc:
         failures.append(str(exc))
+        failures.extend(check_authored())
+        return failures
+    for item in curated.values():
+        community = item["community"]
+        if community is not None and community["status"] != "claimed":
+            failures.append(
+                f"{item['id']} community status is {community['status']}; this version only records claimed"
+            )
+        for lens in item["lenses"]:
+            if not lens["source"].strip():
+                failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
     failures.extend(check_authored())
     return failures
 
@@ -120,6 +134,11 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "R.H. is solved.",
         "The R.H. is proven.",
         "This is not a solution of the Riemann Hypothesis.",
+        "Riemann's hypothesis is confirmed.",
+        "Riemann's hypothesis is disproven.",
+        "The Riemann Hypothesis was disproven.",
+        "RH: proof complete.",
+        "RH: proof complete",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -137,6 +156,10 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "R.H. remains open.",
         "A linear system was solved.",
         "The lemma is proven.",
+        "We prove a Navier-Stokes energy inequality.",
+        "We prove a Navier–Stokes energy inequality.",
+        "The scheme proves a Navier-Stokes regularity estimate.",
+        "We solved the Navier-Stokes equations.",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -159,6 +182,57 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
             failures.append("denylist token was not flagged")
     if denylist_hit("advection-diffusion equation"):
         failures.append("a neighboring token matched the denylist")
+    stem = "".join(chr(code) for code in (102, 117, 115, 105, 111, 110))
+    after_many = "".join(chr(code) for code in (99, 97, 116, 101, 103, 111, 114, 105, 101, 115))
+    after_one = "".join(chr(code) for code in (99, 97, 116, 101, 103, 111, 114, 121))
+    before = "".join(chr(code) for code in (99, 111, 110, 110, 101, 115))
+    warm = "".join(chr(code) for code in (114, 111, 111, 109))
+    degree = "".join(
+        chr(code)
+        for code in (116, 101, 109, 112, 101, 114, 97, 116, 117, 114, 101)
+    )
+    compact = "".join(chr(code) for code in (108, 107))
+    allowed_phrases = (
+        f"{stem} {after_many}",
+        f"{stem} {after_one}",
+        f"{before} {stem}",
+        f"{stem}-{after_many}",
+        f"{before}-{stem}",
+        f"{stem}{after_many}",
+    )
+    for phrase in allowed_phrases:
+        if denylist_hit(phrase):
+            failures.append("a math compound containing the stem was flagged")
+    denied_phrases = (
+        f"{warm}-{degree}",
+        f"{warm} {degree}",
+        f"{warm}{degree}",
+        f"{compact}-99",
+        f"{compact}99",
+        stem,
+    )
+    for phrase in denied_phrases:
+        if not denylist_hit(phrase):
+            failures.append("a denylist compound was not flagged")
+    upstream_sentence = (
+        "Proves that every Dirichlet L-function is zero-free in Re s > 7/8, "
+        "resolving the quasi-Riemann hypothesis."
+    )
+    if not scan_overclaims(upstream_sentence, "upstream"):
+        failures.append("an upstream-style claim sentence was not flagged")
+    quoted = (
+        f'<blockquote data-upstream="summary">{upstream_sentence}</blockquote>'
+        "<p>The lemma is proven.</p>"
+    )
+    if scan_overclaims(strip_upstream_quotes(quoted), "page"):
+        failures.append("a stripped upstream summary was still scanned")
+    authored_claim = "<p>RH: proof complete.</p>"
+    if not scan_overclaims(strip_upstream_quotes(authored_claim), "page"):
+        failures.append("an authored claim in HTML was not flagged")
+    if denylist_hit(strip_upstream_quotes(f'<h1 data-upstream="title">{stem}</h1><p>Hello.</p>')):
+        failures.append("a stripped upstream title was still scanned")
+    if not denylist_hit(strip_upstream_quotes(f"<p>{warm}-{degree}</p>")):
+        failures.append("an authored denylist compound in HTML was not flagged")
 
     def missing_source() -> None:
         with tempfile.TemporaryDirectory() as tmp:

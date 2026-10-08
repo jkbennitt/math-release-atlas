@@ -40,9 +40,10 @@ export function mountTable(): void {
   const tbody = table?.querySelector("tbody");
   const search = document.querySelector<HTMLInputElement>("#family-search");
   const area = document.querySelector<HTMLSelectElement>("#area-filter");
+  const lens = document.querySelector<HTMLSelectElement>("#lens-filter");
   const lean = document.querySelector<HTMLSelectElement>("#lean-filter");
   const shown = document.querySelector<HTMLElement>("#shown-count");
-  if (!table || !tbody || !search || !area || !lean || !shown) {
+  if (!table || !tbody || !search || !area || !lens || !lean || !shown) {
     return;
   }
 
@@ -52,14 +53,17 @@ export function mountTable(): void {
   const apply = () => {
     const query = search.value.trim().toLowerCase();
     const areaValue = area.value;
+    const lensValue = lens.value;
     const leanValue = lean.value;
     let visible = 0;
     for (const row of tbody.querySelectorAll<HTMLTableRowElement>("tr")) {
       const areas = (row.dataset.areas ?? "").split("|");
+      const lenses = (row.dataset.lenses ?? "").split("|").filter((item) => item !== "");
       const matchesQuery = query === "" || (row.textContent ?? "").toLowerCase().includes(query);
       const matchesArea = areaValue === "" || areas.includes(areaValue);
+      const matchesLens = lensValue === "" || lenses.includes(lensValue);
       const matchesLean = leanValue === "" || row.dataset.lean === leanValue;
-      const keep = matchesQuery && matchesArea && matchesLean;
+      const keep = matchesQuery && matchesArea && matchesLens && matchesLean;
       row.hidden = !keep;
       if (keep) {
         visible += 1;
@@ -99,11 +103,13 @@ export function mountTable(): void {
 
   search.addEventListener("input", apply);
   area.addEventListener("change", apply);
+  lens.addEventListener("change", apply);
   lean.addEventListener("change", apply);
   const reset = document.querySelector<HTMLButtonElement>("#filter-reset");
   reset?.addEventListener("click", () => {
     search.value = "";
     area.value = "";
+    lens.value = "";
     lean.value = "";
     apply();
   });

@@ -5,9 +5,11 @@ github.com/openai/math. Not affiliated with OpenAI.
 
 The site is a table of every family at a pinned upstream commit: subject,
 manuscripts, dates, and Lean status, with links back to the upstream PDFs.
-A Lean badge means the upstream catalogue lists a formalized main result or
-only a Comparator challenge. Upstream marks that review status unchecked.
-A Lean check is not peer review and not a laboratory result.
+Each row links to a family page. Lens pages group the families that have a
+hand-written tag. A family with no curated note still shows community status
+claimed. A Lean badge means the upstream catalogue lists a formalized main
+result or only a Comparator challenge. Upstream marks that review status
+unchecked. A Lean check is not peer review and not a laboratory result.
 
 ## Run locally
 
@@ -72,8 +74,8 @@ Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
 `computation-hardness`. Each lens and each related link needs a non-empty
 `source`. A community status of `community-confirmed`, `disputed`, or
 `broken` needs an evidence list with a url, who, date, and a quote of at
-most 25 words. `claimed` may have an empty evidence list. Curated text uses
-the same sentence check as the rest of the site.
+most 25 words. `claimed` may have an empty evidence list. This version records only
+`claimed`. Curated text uses the same sentence check as the rest of the site.
 
 When a shared-topic link is rendered, the label is “our grouping, not a
 citation.”
@@ -85,28 +87,40 @@ commit `adc7f1241b42` it also requires 372 families, 722 manuscripts, and the
 Lean split 127 formalized main results / 108 comparator-only / 137 with no
 Lean formalization.
 
-A sentence fails the build when it names a guarded problem and also uses a
-claim verb. The problems and the verbs are listed separately below, because
+A sentence fails the build when a guarded problem itself is what a claim verb
+addresses. The problems and the verbs are listed separately below, because
 putting both in one sentence is what the check rejects. A negation anywhere
 in the sentence does not exempt it. The only exemption is an exact caution
 sentence from the fixed list (whitespace collapsed, trailing period
 ignored). A longer sentence that merely contains a caution is not exempt.
 
+The incompressible-flow name does not count when the next word names a
+different object. Qualifiers include energy, inequality, equation, system,
+flow, regularity, estimate, bound, computation, solver, scheme,
+approximation, smoothness, blow-up, weak, strong, forced, data, and initial.
+A sentence that only claims an energy inequality therefore still passes.
+
 Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
-Navier–Stokes (hyphen, dash, or space), Clay, and Millennium.
+Riemann's hypothesis, Navier–Stokes (hyphen, dash, or space), the Clay
+problem, the Clay prize, the Millennium problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
-disproved, disproving, proof of, proofs of, proof for, proofs for, establish,
+disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
+proof of, proofs of, proof for, proofs for, proof complete, establish,
 establishes, established, establishing, a solution to, solution of, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, and cracking.
 
-Published HTML and the repository text are also checked against SHA-256
-digests of lowercase stems. A token matches when a stem is a prefix of the
-token after digits, hyphens, and ordinary suffixes are removed, so plurals,
-adjective forms, and hyphenated compounds are covered. The stems are not
-written in this repository. Fixed cautions for families 002, 003, 032, 102,
-103, 107, and 376 always render.
+The same sentence check and the digest check apply to authored pages, curated
+notes, and the fixed cautions. They also apply to built HTML after elements
+marked as upstream quotations are removed. Verbatim upstream titles and
+summaries are not scanned, including the generated JSON snapshot. A digest
+match still covers plurals, adjective forms, and hyphenated compounds, plus
+two short compounds stored only as full-string digests. A length-6 stem is
+ignored when the previous word or the following word is one of the stored
+math-neighbor digests, and when a hyphenated or collapsed compound is exactly
+that stem plus the neighbor. The stems are not written in this repository.
+Fixed cautions for families 002, 003, 032, 102, 103, 107, and 376 always render.
 
 ## License
 

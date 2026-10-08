@@ -3803,9 +3803,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats triangular-lattice minimizers of long-range Coulomb and Riesz energies.",
+          "source": "Upstream family 090 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "091",
@@ -4388,9 +4397,18 @@
       },
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats the Unique Games Conjecture and optimal approximation thresholds.",
+          "source": "Upstream family 102 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "103",
@@ -4418,9 +4436,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats derandomization of bounded-error logarithmic-space computation.",
+          "source": "Upstream family 103 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "104",
@@ -4619,9 +4646,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": "Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims until checked.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats the matrix-multiplication exponent.",
+          "source": "Upstream family 107 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "108",
@@ -5081,9 +5117,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats hardness and semidefinite gaps for Uniform Sparsest Cut.",
+          "source": "Upstream family 117 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "118",
@@ -5422,9 +5467,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats semidefinite extension complexity of the perfect matching polytope.",
+          "source": "Upstream family 126 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "127",
@@ -5969,9 +6023,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats query complexity of sampling log-concave densities.",
+          "source": "Upstream family 139 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "140",
@@ -8975,9 +9038,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats planar-map limits identified with Liouville quantum gravity spheres.",
+          "source": "Upstream family 211 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "212",
@@ -9075,9 +9147,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats critical bond percolation on quasi-transitive graphs.",
+          "source": "Upstream family 213 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "214",
@@ -9116,9 +9197,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats nonuniqueness of percolation on nonamenable quasi-transitive graphs.",
+          "source": "Upstream family 214 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "215",
@@ -9182,9 +9272,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the continuum limit of the two-dimensional O(3) model and O(4) mass asymptotics.",
+          "source": "Upstream family 215 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "216",
@@ -9247,9 +9346,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats critical XY correlations and Berezinskii–Kosterlitz–Thouless scaling.",
+          "source": "Upstream family 216 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "217",
@@ -9284,9 +9392,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats low-temperature fluctuations of the Sherrington–Kirkpatrick log partition function.",
+          "source": "Upstream family 217 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "218",
@@ -9355,9 +9472,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats conformal limits of weakly interacting and random-bond Ising models.",
+          "source": "Upstream family 218 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "219",
@@ -9392,9 +9518,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats bulk eigenvalue statistics of regular graphs with weak Anderson disorder.",
+          "source": "Upstream family 219 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "220",
@@ -9494,9 +9629,18 @@
       },
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the Mézard–Parisi formula for diluted spin glasses.",
+          "source": "Upstream family 221 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "222",
@@ -9561,9 +9705,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats perceptron free energies and jamming exponents.",
+          "source": "Upstream family 222 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "223",
@@ -9626,9 +9779,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats critical random-cluster interfaces, including Ising and Fortuin–Kasteleyn loops.",
+          "source": "Upstream family 223 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "224",
@@ -9670,9 +9832,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats critical and near-critical Poisson–Voronoi percolation.",
+          "source": "Upstream family 224 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "225",
@@ -9700,9 +9871,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats height-field limits in the balanced six-vertex regime.",
+          "source": "Upstream family 225 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "226",
@@ -9839,9 +10019,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats critical Sherrington–Kirkpatrick autocorrelation and dynamics across the temperature transition.",
+          "source": "Upstream family 227 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "228",
@@ -9896,9 +10085,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats continuum phase transitions for classical particles with radial pair potentials.",
+          "source": "Upstream family 228 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "229",
@@ -10079,9 +10277,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats Gaussian fields and interfaces for triangular-lattice Lipschitz heights.",
+          "source": "Upstream family 232 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "233",
@@ -10109,9 +10316,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the joint critical Ashkin–Teller current and height limit.",
+          "source": "Upstream family 233 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "234",
@@ -10145,9 +10361,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the pressure of orthogonally invariant Ising spin glasses.",
+          "source": "Upstream family 234 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "235",
@@ -10217,9 +10442,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats limiting thresholds and variance for random k-SAT.",
+          "source": "Upstream family 235 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "236",
@@ -10255,9 +10489,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the factor-of-IID threshold for free Ising spins on trees.",
+          "source": "Upstream family 236 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "237",
@@ -11562,9 +11805,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats spacetime Penrose inequalities for asymptotically flat initial data.",
+          "source": "Upstream family 260 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "261",
@@ -11605,9 +11857,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats localization and delocalization in the lattice Anderson model.",
+          "source": "Upstream family 261 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "262",
@@ -11657,9 +11918,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "electronic-structure",
+          "why": "The family treats sharp Lieb–Thirring inequalities for finite-matrix potentials.",
+          "source": "Upstream family 262 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "263",
@@ -11714,9 +11984,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "electronic-structure",
+          "why": "The family treats how many electrons a Coulomb molecule can bind.",
+          "source": "Upstream family 263 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "264",
@@ -11758,9 +12037,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats strong cosmic censorship near two-ended Kerr data.",
+          "source": "Upstream family 264 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "265",
@@ -11795,9 +12083,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats entropy area laws and tensor-network approximations for gapped two-dimensional systems.",
+          "source": "Upstream family 265 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "266",
@@ -11843,9 +12140,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats the maximum number of mutually unbiased bases in dimension six.",
+          "source": "Upstream family 266 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "267",
@@ -11907,9 +12213,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats positive-temperature Bose–Einstein condensation for the hard-sphere gas.",
+          "source": "Upstream family 267 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "268",
@@ -11944,9 +12259,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the spectral gap of the spin-one antiferromagnetic Heisenberg chain.",
+          "source": "Upstream family 268 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "269",
@@ -12004,9 +12328,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats the Laughlin spectral gap at filling one-third and its stability under scalar disorder.",
+          "source": "Upstream family 269 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "270",
@@ -12041,9 +12374,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats threshold and positive-energy bound states of the BFSS matrix model.",
+          "source": "Upstream family 270 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "271",
@@ -12102,9 +12444,18 @@
       },
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats Bloch's law for quantum Heisenberg ferromagnets.",
+          "source": "Upstream family 271 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "272",
@@ -12143,9 +12494,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats an entangled state with no distillable secret key under the stated protocols.",
+          "source": "Upstream family 272 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "273",
@@ -12179,9 +12539,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats the entropy photon-number inequality for bosonic beam splitters.",
+          "source": "Upstream family 273 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "274",
@@ -12231,9 +12600,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats whether constant-depth quantum circuits with Toffoli gates can compute parity.",
+          "source": "Upstream family 274 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "275",
@@ -12274,9 +12652,23 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "electronic-structure",
+          "why": "The family treats approximation of continuum Coulomb electronic energy.",
+          "source": "Upstream family 275 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        },
+        {
+          "tag": "computation-hardness",
+          "why": "The family treats QMA-hardness of approximating continuum Coulomb energy.",
+          "source": "Upstream family 275 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "276",
@@ -12312,9 +12704,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats the classical capacity of generalized amplitude-damping channels.",
+          "source": "Upstream family 276 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "277",
@@ -12350,9 +12751,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats threshold repetition for entangled two-player games.",
+          "source": "Upstream family 277 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "278",
@@ -12380,9 +12790,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "electronic-structure",
+          "why": "The family treats a three-electron Coulomb molecule whose ground-state density has no Kohn–Sham ensemble representation by one local potential.",
+          "source": "Upstream family 278 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "279",
@@ -12416,9 +12835,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats exact quantum factoring over a fixed finite gate set.",
+          "source": "Upstream family 279 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "280",
@@ -12452,9 +12880,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats unitary vertex operator algebras and the conformal nets they generate.",
+          "source": "Upstream family 280 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "281",
@@ -12500,9 +12937,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats QAOA on the Sherrington–Kirkpatrick model in the thermodynamic-first limit.",
+          "source": "Upstream family 281 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "282",
@@ -12530,9 +12976,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats the passage from scale symmetry to local conformal symmetry in four-dimensional quantum field theory.",
+          "source": "Upstream family 282 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "283",
@@ -12560,9 +13015,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats unitary synthesis from a Boolean oracle.",
+          "source": "Upstream family 283 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "284",
@@ -12590,9 +13054,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "quantum-information",
+          "why": "The family treats the quartic separation between randomized and quantum query complexity.",
+          "source": "Upstream family 284 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "285",
@@ -15161,9 +15634,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "gravity-qft",
+          "why": "The family treats Einstein four-manifolds with nonnegative sectional curvature.",
+          "source": "Upstream family 348 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "349",
@@ -15736,9 +16218,18 @@
       },
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "plasma-kinetic",
+          "why": "The family treats large-data global smoothness for the relativistic Vlasov–Maxwell system.",
+          "source": "Upstream family 362 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "363",
@@ -15779,9 +16270,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "fluids-continuum",
+          "why": "The family treats nonuniqueness for entropy solutions of the hard-sphere Boltzmann equation.",
+          "source": "Upstream family 363 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "364",
@@ -15816,9 +16316,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "fluids-continuum",
+          "why": "The family treats kinetic limits from Newtonian particle systems to the Boltzmann equation.",
+          "source": "Upstream family 364 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "365",
@@ -16153,9 +16662,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "electronic-structure",
+          "why": "The family treats nonattainment for a three-marginal Coulomb transport problem.",
+          "source": "Upstream family 373 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "374",
@@ -16219,9 +16737,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "condensed-matter",
+          "why": "The family treats one-dimensional symmetry for phase-interface solutions of the Allen–Cahn equation in dimension eight.",
+          "source": "Upstream family 375 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "376",
@@ -16336,9 +16863,18 @@
       "reasoning_trace": null,
       "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
       "caution": "Forced Navier–Stokes computation — not the Clay Millennium Navier–Stokes problem.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "fluids-continuum",
+          "why": "The family treats universal computation by forced incompressible flows on a fixed domain.",
+          "source": "Upstream family 376 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+        }
+      ],
       "related": [],
-      "community": null
+      "community": {
+        "status": "claimed",
+        "evidence": []
+      }
     },
     {
       "id": "377",
