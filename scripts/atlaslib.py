@@ -107,10 +107,12 @@ PINNED_AREAS = [
 # when they name the problem or the prize, with a hyphen or a space.
 # The incompressible-flow name does not count when the next word is one of the
 # qualifiers below, unless the sentence also uses wording for the Clay problem itself.
-_SEP = r"[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]"
+# Space, ASCII hyphen, hyphen, non-breaking hyphen, figure dash, en dash,
+# em dash, minus, and fullwidth hyphen. The same class separates Navier and Stokes.
+_SEP = r"[\s\-\u2010\u2011\u2012\u2013\u2014\u2212\uff0d]"
 PROBLEM_RE = re.compile(
-    r"(?P<flow>navier[\s\-\u2010\u2011\u2012\u2013\u2014\u2212]*stokes)"
-    rf"|(?P<name>(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b"
+    rf"(?P<flow>navier{_SEP}*stokes)"
+    rf"|(?P<name>(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b|\br\s+h\b"
     rf"|clay{_SEP}+(?:millennium{_SEP}+)?(?:problem|prize)"
     rf"|millennium{_SEP}+(?:problem|prize))",
     re.IGNORECASE,
@@ -131,11 +133,71 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
     rf"\b(?:regularity|smooth(?:ness)?|blow{_SEP}*up|existence|well{_SEP}*posed(?:ness)?)\b",
     re.IGNORECASE,
 )
+# Main's sentence-level noun checks, unchanged. There is no word boundary
+# before "proof", so "disproof of" matches. These fire anywhere in a sentence
+# that names a guarded problem. The proximity rule is an additional check.
+_SENTENCE_NOUN_RE = re.compile(
+    r"proofs?\s+(?:of|for|complete)|\bsolutions?\s+(?:to|of)\b",
+    re.IGNORECASE,
+)
+# A comma-separated aside between solution and to/of, as in
+# "solution, long sought by many, to". This is not one of main's checks.
+_SOLUTION_ASIDE_RE = re.compile(
+    r"\bsolutions?\s*,[^.]{0,80},\s*(?:to|of)\b",
+    re.IGNORECASE,
+)
+# A claim noun within four tokens of a guarded problem name is also a claim,
+# in either order. Punctuation and possessives are ignored. A whole-sentence
+# allowlist may waive solution or solutions. It never waives a proof compound.
+_CLAIM_NOUNS = frozenset(
+    {"proof", "proofs", "disproof", "disproofs", "solution", "solutions", "resolution", "resolved"}
+)
+_NOUN_QUALIFIERS = frozenset(
+    {
+        "scheme",
+        "operator",
+        "numerical",
+        "weak",
+        "leray",
+        "mild",
+        "strong",
+        "assistant",
+        "lemma",
+        "estimate",
+        "estimates",
+        "approximate",
+    }
+)
+_NOUN_PROXIMITY = 4
+_QUALIFIER_BEFORE = "|".join(sorted(_NOUN_QUALIFIERS, key=len, reverse=True))
+# Template A endings stay empty. A must-pass phrase that needs words after the
+# flow name is the only way an entry is added, and none of them do.
+_TEMPLATE_A_ENDINGS: tuple[str, ...] = ()
+_TEMPLATE_A_ENDING = (
+    "(?:\\s+(?:" + "|".join(re.escape(item) for item in _TEMPLATE_A_ENDINGS) + "))?"
+    if _TEMPLATE_A_ENDINGS
+    else ""
+)
+# Whole sentence, after the flow name is folded to "navier-stokes".
+# Optional article, qualifier, solution(s) of/to, optional "the", the name,
+# optional equations or system, and nothing else.
+_TEMPLATE_A_RE = re.compile(
+    rf"^(?:(?:a|an|the)\s+)?(?:{_QUALIFIER_BEFORE})\s+solutions?\s+(?:of|to)\s+"
+    rf"(?:the\s+)?navier-stokes(?:\s+(?:equations|system))?{_TEMPLATE_A_ENDING}$"
+)
+# Name first. This waives only the four-token check, never a main-pattern match.
+_TEMPLATE_B_RE = re.compile(
+    r"^(?:(?:a|an|the)\s+)?navier-stokes\s+solutions?\s+"
+    r"(?:schemes|scheme|operators|operator|methods|method)"
+    r"(?:\s+(?:is|are)\s+bounded)?$"
+)
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
-# proof of/for, proof complete, confirm/confirms/confirmed/confirming,
+# proof of/for, proof complete (also the same words inside disproof),
+# confirm/confirms/confirmed/confirming,
 # establish/establishes/established/establishing, a solution to, solution of,
 # resolve/resolves/resolved/resolving, settle/settles/settled/settling,
 # solve/solves/solved/solving, crack/cracks/cracked/cracking,
+# finish/finishes/finished/finishing,
 # true, holds, follows, verify/verifies/verified/verifying, a theorem,
 # show/shows/showed/shown/showing, demonstrate/demonstrates/demonstrated/demonstrating,
 # win/wins/won/winning, award/awards/awarded/awarding, correct,
@@ -143,10 +205,11 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
 CLAIM_VERB_RE = re.compile(
     r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
-    r"proofs?\s+(?:of|for|complete)|\bestablish(?:es|ed|ing)?\b|"
-    r"\bsolutions?\s+(?:to|of)\b|"
+    + _SENTENCE_NOUN_RE.pattern
+    + r"|\bestablish(?:es|ed|ing)?\b|"
     r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
     r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b|"
+    r"\bfinish(?:es|ed|ing)?\b|"
     r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
     r"\ba\s+theorem\b|"
     r"\bshow(?:n|s|ed|ing)?\b|\bdemonstrat(?:e|es|ed|ing)\b|"
@@ -216,9 +279,49 @@ NOTE_HOSTILE_DIGESTS = frozenset(
         "ef995d2472a252c1fddfcac544dc596b462d25dbd4905dded35480246529b6cf",
         "0083289f36deda0724d899ac2d13042efaa70d38073e49780d2b30bce4dadca0",
         "c2820752d64e02b086fec967badc27a5e12b12ededb5a117eff29b667ec01559",
+        "f3c16f525a1b7c204fc953d6d7db7168d84ebf4902f83c3a37d113b18c28981f",
+        "a4542449353f0b0aef8deaeab784b0e946072c7a65e1f468d7dffd88da4a1901",
+        "b4648e44d84988892ec93710b15bb8f6b053054b0c40d48a04f783d0daca5ffd",
+        "19465de87beffcfac5fc83680a38d2d75c2a1049d6d5d08ced533beb930a2c39",
+        "ef875a1705a5fdac206be996f4dc1f726ea6b68861eb741c37def7277f179e37",
+        "82d928273d067d774889d5df4249aaf73c0b04c64f04d6ed001441ce87a0853c",
+        "cacc6bcf3a66ea9b2b6ede264ad98a6a91c2844efe312e2aedaca8a3931349c7",
+        "3a1b45d4778cc8a6e07420119952efa34e7ffd44ffe01d3726d501824d5f51b9",
+        "3734f204b6669b3125d0e7a551413dda2b5bec48fffdc3f9a5010f9ad0413f51",
+        "87654be893e93c6552e800afb313c7e4ea0f345c8c575211a91baa07bed5a107",
+        "b028fac88cf83c2a2f0e4f04e02cbf823c8d2179f92c41d813df95e5ee152adf",
+        "f514ae60147922b97e8d1bed3e4bb3b108366876cc77fff92b0ee181fd16d9cc",
+        "2d48a24e8e8bd908b53d8ab81e7ca6320d50e5ce3260d522b549d4b02a8b308f",
+        "6cf2bed0023c84a655f6aeba6f404f6674b03c061e5297462262ec5f07804e4b",
+        "d9b4323e416218d2514eca2acd82410ed976d4815bd7cf798208e28408f3213d",
     }
 )
 NOTE_HOSTILE_PHRASE_DIGEST = "3dedd643819c6059145438295590f166326d20c812fff8971bbd627078626fd1"
+# Whole tokens the inflection rule would otherwise split into a hostile stem.
+NOTE_ALLOW_TOKEN_DIGESTS = frozenset(
+    {
+        "2737596a7a48877e6afaa9719940a6d0c548e875b8ee72cbe389f1fcc0d442c7",
+    }
+)
+# Two-word technical phrases whose first word would otherwise match a hostile token.
+NOTE_EXEMPT_PHRASE_DIGESTS = frozenset(
+    {
+        "4f76b35955d6c947426a2f9fce18cc84c6368723c0e0d46817451e4b2280556f",
+        "fd753b0edd3df7d9657bf426696cf94b640c37c50953a2213685586829ae8b4f",
+        "99f60348c017becd964023ead3d29334482b6278c8379b5905f34fabb033c247",
+    }
+)
+# Hyphenated technical compounds. Any other hyphenated compound is checked.
+NOTE_EXEMPT_HYPHEN_DIGESTS = frozenset(
+    {
+        "b0515c3530385ed70aab8811467b5cd73ad2007389384959e3d232f8a1fabf60",
+        "418f827bfd243359b42239c005cc21ab487cbee409904f9b61644b799ade00b1",
+        "aa45363e9c06f52ac87b1a7a461015183cf2879806ddf8abed403d39b16ee77b",
+        "c74b0d8465d47e3d11949fb1fbf9a5aa7868f09ad418b1d8d3cdd4c436622965",
+    }
+)
+NOTE_SUFFIXES = ("ing", "ers", "ed", "ly")
+NOTE_STEM_MIN = 4
 # Soft hyphen and zero-width characters. Removed before the denylist and claim checks.
 INVISIBLE_RE = re.compile("[\u00ad\u200b\u200c\u200d\u2060\ufeff\u180e]")
 MONTHS = {
@@ -963,8 +1066,8 @@ def load_community_schema(path: Path) -> dict[str, Any]:
     if needing != STATUSES_NEEDING_EVIDENCE:
         raise AtlasError("community status evidence rules do not match the guard")
     rule = require_text(payload.get("rule"), "community status rule")
-    if "Jason approves" not in rule or "human-approved" not in rule:
-        raise AtlasError("community status rule must say Jason approves each human-approved change")
+    if "must be approved by Jason (repo policy)" not in rule:
+        raise AtlasError("community status rule must state the repo policy")
     return payload
 
 
@@ -987,12 +1090,12 @@ def load_status_approvals(path: Path) -> list[dict[str, str]]:
     if not isinstance(rows, list):
         raise AtlasError("status approvals must be a list")
     cleaned: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str, str]] = set()
+    seen: set[tuple[str, str, str, str, str, str]] = set()
     for index, row in enumerate(rows, start=1):
         label = f"status approval {index}"
         if not isinstance(row, dict):
             raise AtlasError(f"{label} must be a mapping")
-        unknown = set(row) - {"id", "status", "url", "approver"}
+        unknown = set(row) - {"id", "status", "url", "date", "note", "approver"}
         if unknown:
             raise AtlasError(f"{label} has unknown fields: {sorted(unknown)}")
         family_id = require_text(row.get("id"), f"{label} id")
@@ -1002,47 +1105,62 @@ def load_status_approvals(path: Path) -> list[dict[str, str]]:
         if status not in STATUSES_NEEDING_EVIDENCE:
             raise AtlasError(f"{label} status {status} does not need an approval")
         url = require_http_url(require_text(row.get("url"), f"{label} url"), f"{label} url")
+        day = require_day(require_text(row.get("date"), f"{label} date"), f"{label} date")
+        note = require_note(row.get("note"), f"{label} note")
         approver = require_text(row.get("approver"), f"{label} approver")
         if approver != STATUS_APPROVER:
             raise AtlasError(f"{label} approver must be {STATUS_APPROVER}")
-        key = (family_id, status, url, approver)
+        key = (family_id, status, url, day, note, approver)
         if key in seen:
             raise AtlasError(f"{label} repeats an earlier entry")
         seen.add(key)
-        cleaned.append({"id": family_id, "status": status, "url": url, "approver": approver})
+        cleaned.append(
+            {
+                "id": family_id,
+                "status": status,
+                "url": url,
+                "date": day,
+                "note": note,
+                "approver": approver,
+            }
+        )
     return cleaned
 
 
 def approval_mismatches(curated: dict[str, dict[str, Any]], approvals: list[dict[str, str]]) -> list[str]:
-    """A non-claimed status passes only when id, status, URL, and approver all match."""
-    approved = {(row["id"], row["status"], row["url"], row["approver"]) for row in approvals}
-    used: set[tuple[str, str, str, str]] = set()
+    """A non-claimed status passes only when id, status, URL, date, note, and approver all match."""
+    approved = {
+        (row["id"], row["status"], row["url"], row["date"], row["note"], row["approver"]) for row in approvals
+    }
+    used: set[tuple[str, str, str, str, str, str]] = set()
     failures: list[str] = []
     for family_id, item in sorted(curated.items()):
         community = item.get("community")
         if not community:
             continue
-        refs: list[tuple[str, str]] = []
+        refs: list[tuple[str, str, str, str]] = []
         status = community.get("status")
         if status in STATUSES_NEEDING_EVIDENCE:
-            urls = [entry.get("url") for entry in community.get("evidence") or [] if isinstance(entry, dict)]
-            if not urls:
+            evidence = [entry for entry in community.get("evidence") or [] if isinstance(entry, dict)]
+            if not evidence:
                 failures.append(f"{family_id} status {status} is not on the approval allowlist")
-            refs.extend((status, url) for url in urls if isinstance(url, str))
+            for entry in evidence:
+                refs.append((status, str(entry.get("url")), str(entry.get("date")), str(entry.get("note"))))
         for event in community.get("history") or []:
             if not isinstance(event, dict):
                 continue
             event_status = event.get("status")
-            event_url = event.get("url")
-            if event_status in STATUSES_NEEDING_EVIDENCE and isinstance(event_url, str):
-                refs.append((event_status, event_url))
-        for event_status, url in refs:
-            key = (family_id, event_status, url, STATUS_APPROVER)
+            if event_status in STATUSES_NEEDING_EVIDENCE and event.get("url"):
+                refs.append(
+                    (str(event_status), str(event.get("url")), str(event.get("date")), str(event.get("note")))
+                )
+        for event_status, url, day, note in refs:
+            key = (family_id, event_status, url, day, note, STATUS_APPROVER)
             if key not in approved:
                 failures.append(f"{family_id} status {event_status} is not on the approval allowlist")
             else:
                 used.add(key)
-    for family_id, status, _url, _approver in sorted(approved - used):
+    for family_id, status, _url, _day, _note, _approver in sorted(approved - used):
         failures.append(f"unused status approval for {family_id} {status}")
     return failures
 
@@ -1098,7 +1216,13 @@ def validate_curated_file(path: Path, payload: Any) -> dict[str, Any]:
         },
         ensure_ascii=False,
     )
-    overclaims = scan_overclaims(authored, path.name)
+    # json.dumps escapes a newline, so scan the why and caution strings raw too.
+    prose_parts = [authored]
+    prose_parts.extend(item["why"] for item in clean_lenses)
+    prose_parts.extend(item["why"] for item in clean_related)
+    if clean_caution is not None:
+        prose_parts.append(clean_caution["text"])
+    overclaims = scan_overclaims("\n".join(prose_parts), path.name)
     if overclaims:
         raise AtlasError(overclaims[0])
     return {
@@ -1378,6 +1502,7 @@ def attribute_text(text: str) -> str:
 
 def prose_for_scan(text: str) -> str:
     text = normalize_scan_text(text)
+    comments = " ".join(re.findall(r"<!--(.*?)-->", text, flags=re.DOTALL))
     attributes = attribute_text(text)
     blocked = re.sub(
         r"</(p|li|h[1-6]|tr|div|blockquote|section|article|td|th|dt|dd)>",
@@ -1392,13 +1517,162 @@ def prose_for_scan(text: str) -> str:
     plain = blocked.replace("\n", " ")
     if attributes:
         plain = f"{plain}. {html.unescape(attributes)}"
+    if comments:
+        plain = f"{plain}. {html.unescape(comments)}"
     # Keep dotted R.H. inside one sentence. The topic pattern still matches either form.
     return re.sub(r"\bR\s*\.\s*H\s*\.", " RH ", plain, flags=re.IGNORECASE)
 
 
+def _claim_tokens(text: str) -> list[str]:
+    """Lowercase tokens with punctuation and possessives removed."""
+    lowered = text.lower().replace("\u2019", "'")
+    lowered = re.sub(r"(?<=[a-z])'s\b", "", lowered)
+    return [token for token in re.split(r"[^a-z0-9]+", lowered) if token]
+
+
+def _problem_token_spans(tokens: list[str]) -> list[tuple[int, int, str]]:
+    """Half-open spans of guarded names. The third item is "flow" or "name".
+
+    "flow" is Navier–Stokes, including the unseparated form. "name" is RH,
+    the spaced form R H, the Riemann Hypothesis, Clay, or Millennium.
+    """
+    spans: list[tuple[int, int, str]] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token == "riemann" and index + 1 < len(tokens) and tokens[index + 1] == "hypothesis":
+            spans.append((index, index + 2, "name"))
+            index += 2
+            continue
+        if token == "r" and index + 1 < len(tokens) and tokens[index + 1] == "h":
+            spans.append((index, index + 2, "name"))
+            index += 2
+            continue
+        if token == "navier" and index + 1 < len(tokens) and tokens[index + 1] == "stokes":
+            spans.append((index, index + 2, "flow"))
+            index += 2
+            continue
+        if token == "navierstokes":
+            spans.append((index, index + 1, "flow"))
+            index += 1
+            continue
+        if token in {"rh", "clay", "millennium"}:
+            spans.append((index, index + 1, "name"))
+            index += 1
+            continue
+        index += 1
+    return spans
+
+
+def _gap_to_span(index: int, start: int, end: int) -> int:
+    if start <= index < end:
+        return -1
+    return start - index - 1 if index < start else index - end
+
+
+def _allowlist_text(sentence: str) -> str:
+    """Lowercase, drop trailing punctuation, and fold every spelling of the flow name.
+
+    ASCII hyphen, hyphen, non-breaking hyphen, figure dash, en dash, em dash,
+    minus, fullwidth hyphen, a space, and no separator at all all become
+    navier-stokes before a template is applied.
+    """
+    text = sentence_key(sentence).casefold()
+    text = text.rstrip(".,;:!?\"'")
+    text = re.sub(rf"navier{_SEP}*stokes", "navier-stokes", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _matches_template_a(sentence: str) -> bool:
+    return _TEMPLATE_A_RE.match(_allowlist_text(sentence)) is not None
+
+
+def _matches_template_b(sentence: str) -> bool:
+    return _TEMPLATE_B_RE.match(_allowlist_text(sentence)) is not None
+
+
+def _rescued_main_spans(sentence: str) -> set[tuple[int, int]]:
+    """Main solution spans rescued by template A.
+
+    Template B never rescues these spans. A proof compound is never rescued.
+    The caller requires this set to equal every main match.
+    """
+    if not _matches_template_a(sentence):
+        return set()
+    rescued: set[tuple[int, int]] = set()
+    for main in _SENTENCE_NOUN_RE.finditer(sentence):
+        if re.fullmatch(r"solutions?\s+(?:to|of)", main.group(), flags=re.IGNORECASE):
+            rescued.add(main.span())
+    return rescued
+
+
+def _other_claim_verb(sentence: str) -> bool:
+    """True when a claim remains after main's two noun patterns are removed."""
+    return CLAIM_VERB_RE.search(_SENTENCE_NOUN_RE.sub(" ", sentence)) is not None
+
+
+def sentence_level_claim(sentence: str) -> bool:
+    """Main's proof-of and solution-of checks, plus template A.
+
+    The two patterns are unchanged. A match is rescued only when the whole
+    sentence matches template A and the match is solution or solutions followed
+    by to or of. Template B does not rescue these matches. Proof, disproof, and
+    any other proof compound are never rescued. If the rescued positions are
+    not exactly the main matches, one unrescued match fails the sentence,
+    including a match inside counterproof or foolproof.
+    """
+    if CLAIM_VERB_RE.search(sentence) is None or not mentions_guarded_problem(sentence):
+        return False
+    if _other_claim_verb(sentence):
+        return True
+    matches = list(_SENTENCE_NOUN_RE.finditer(sentence))
+    if not matches:
+        return False
+    rescued = _rescued_main_spans(sentence)
+    return len(rescued) != len(matches) or {match.span() for match in matches} != rescued
+
+
+def solution_aside_claim(sentence: str) -> bool:
+    """A comma-separated aside before to/of is not the technical-solution rescue."""
+    return _SOLUTION_ASIDE_RE.search(sentence) is not None and mentions_guarded_problem(sentence)
+
+
+def proximate_claim_noun(sentence: str) -> bool:
+    """True when a claim noun sits within four tokens of a guarded problem name.
+
+    solution or solutions may be waived only when the whole sentence matches
+    template A or template B and the name is the incompressible-flow name.
+    Template B waives this check only. proof, disproof, and any other proof
+    compound are never waived. "proof assistant" is not a claim noun.
+    """
+    tokens = _claim_tokens(sentence)
+    spans = _problem_token_spans(tokens)
+    if not spans:
+        return False
+    allow_proximity = _matches_template_a(sentence) or _matches_template_b(sentence)
+    for index, token in enumerate(tokens):
+        if token not in _CLAIM_NOUNS:
+            continue
+        if token in {"proof", "proofs"} and index + 1 < len(tokens) and tokens[index + 1] == "assistant":
+            continue
+        for start, end, kind in spans:
+            gap = _gap_to_span(index, start, end)
+            if gap < 0 or gap > _NOUN_PROXIMITY:
+                continue
+            rescued = (
+                allow_proximity
+                and kind == "flow"
+                and token in {"solution", "solutions"}
+            )
+            if not rescued:
+                return True
+    return False
+
+
 def mentions_guarded_problem(sentence: str) -> bool:
     """True when the problem itself is named, not when the name only modifies another noun."""
-    clay = FLOW_CLAY_WORDING_WITH_CLAIM_RE if CLAIM_VERB_RE.search(sentence) else FLOW_CLAY_WORDING_RE
+    has_claim = CLAIM_VERB_RE.search(sentence) is not None
+    clay = FLOW_CLAY_WORDING_WITH_CLAIM_RE if has_claim else FLOW_CLAY_WORDING_RE
     blocks_flow_exception = clay.search(sentence) is not None
     for match in PROBLEM_RE.finditer(sentence):
         qualified = FLOW_QUALIFIER_RE.match(sentence[match.end() :]) is not None
@@ -1418,9 +1692,28 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     regularity, smoothness, smooth (except when the next word is data), blow up,
     blow-up, blowup, existence, well-posed, or well-posedness. When a claim verb
     is also present, smooth cancels that exception even if the next word is data.
-    A space, hyphen, or dash may separate blow and up, or well and posed. alt,
-    title, content, aria-label, aria-description, placeholder, and data-*
-    attributes are scanned with the prose, including unquoted values.
+    A space, hyphen, or dash may separate blow and up, or well and posed.
+    proof or disproof followed by of, for, or complete, and solution or
+    solutions followed by to or of, fail anywhere in the sentence. A match is
+    rescued only when the whole sentence matches template A: an optional
+    article, a technical qualifier, solution or solutions, of or to, an
+    optional "the", the incompressible-flow name, and an optional equations or
+    system, with no other words. Every hyphen, dash, space, and joined spelling
+    of that name is folded first. Proof, disproof, and any other proof compound
+    are never rescued. Template B does not rescue these matches. If the rescued
+    positions are not exactly the main matches, the sentence fails. A claim
+    noun within four tokens of a guarded problem name also fails, in either
+    order. Punctuation and possessives are ignored. That nearer check waives
+    solution or solutions only when the whole sentence matches template A or
+    template B. Template B is an optional article, the flow name, solution or
+    solutions, then scheme, schemes, operator, operators, method, or methods,
+    then an optional "is bounded" or "are bounded". alt, title, content,
+    aria-label, aria-description, placeholder, and data-* attributes are scanned
+    with the prose, including unquoted values. Text nodes inside a data-upstream
+    element are left out only when that element's text exactly equals the
+    family's upstream title, id, summary, or manuscript title. Attributes on
+    that element and its descendants are still scanned. HTML comments are
+    scanned as well, including comments left inside an exempt element.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1430,7 +1723,7 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
         key = sentence_key(chunk)
         if not key or key in allowed:
             continue
-        if mentions_guarded_problem(key) and CLAIM_VERB_RE.search(key):
+        if sentence_level_claim(key) or proximate_claim_noun(key) or solution_aside_claim(key):
             failures.append(f"{label}: {key[:180]}")
     return failures
 
@@ -1454,13 +1747,66 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def note_tone_failure(note: str) -> bool:
-    """True when a note contains a hostile token or the stored three-word phrase."""
-    tokens = TOKEN_RE.findall(normalize_scan_text(note).lower())
-    if any(_digest(token) in NOTE_HOSTILE_DIGESTS for token in tokens):
+def hostile_token(token: str) -> bool:
+    """Whole-word match, plus a plural or inflection of a stored stem."""
+    if _digest(token) in NOTE_ALLOW_TOKEN_DIGESTS:
+        return False
+    if _digest(token) in NOTE_HOSTILE_DIGESTS:
         return True
-    for index in range(len(tokens) - 2):
-        if _digest(" ".join(tokens[index : index + 3])) == NOTE_HOSTILE_PHRASE_DIGEST:
+    for suffix in NOTE_SUFFIXES:
+        if token.endswith(suffix) and len(token) - len(suffix) >= NOTE_STEM_MIN:
+            if _digest(token[: -len(suffix)]) in NOTE_HOSTILE_DIGESTS:
+                return True
+    if token.endswith("es") and len(token) - 2 >= NOTE_STEM_MIN:
+        stem = token[:-2]
+        if stem.endswith(("s", "x", "z", "ch", "sh")) and _digest(stem) in NOTE_HOSTILE_DIGESTS:
+            return True
+    if token.endswith("s") and not token.endswith("ss") and len(token) - 1 >= NOTE_STEM_MIN:
+        if _digest(token[:-1]) in NOTE_HOSTILE_DIGESTS:
+            return True
+    return False
+
+
+def note_tone_failure(note: str) -> bool:
+    """True when a note contains a hostile word, inflection, or the stored phrase.
+
+    A stored hyphenated technical compound is left alone. Any other hyphenated
+    compound fails when a part is hostile or the joined parts are hostile.
+    Adjacent words that join into a hostile word fail too. A stored two-word
+    technical phrase is left alone. A stored whole token is left alone when the
+    inflection rule would split it into a hostile stem.
+    """
+    lowered = normalize_scan_text(note).lower()
+    exempt_spans: list[tuple[int, int]] = []
+    for match in HYPHEN_RUN_RE.finditer(lowered):
+        if _digest(match.group()) in NOTE_EXEMPT_HYPHEN_DIGESTS:
+            exempt_spans.append((match.start(), match.end()))
+            continue
+        parts = match.group().split("-")
+        if any(hostile_token(part) for part in parts) or hostile_token("".join(parts)):
+            return True
+    tokens: list[tuple[str, bool]] = []
+    for match in TOKEN_RE.finditer(lowered):
+        inside_exempt = any(start <= match.start() and match.end() <= end for start, end in exempt_spans)
+        tokens.append((match.group(), inside_exempt))
+    words = [token for token, _inside in tokens]
+    exempt: set[int] = set()
+    for index in range(len(words) - 1):
+        if _digest(f"{words[index]} {words[index + 1]}") in NOTE_EXEMPT_PHRASE_DIGESTS:
+            exempt.add(index)
+            exempt.add(index + 1)
+    for index in range(len(words) - 2):
+        if _digest(" ".join(words[index : index + 3])) == NOTE_HOSTILE_PHRASE_DIGEST:
+            return True
+    for index in range(len(words) - 1):
+        if index in exempt or index + 1 in exempt or tokens[index][1] or tokens[index + 1][1]:
+            continue
+        if hostile_token(words[index] + words[index + 1]):
+            return True
+    for index, (token, inside_exempt) in enumerate(tokens):
+        if inside_exempt or index in exempt:
+            continue
+        if hostile_token(token):
             return True
     return False
 
@@ -1571,7 +1917,7 @@ def check_authored() -> list[str]:
 
 
 def strip_upstream_quotes(html_text: str) -> str:
-    """Drop elements that quote the upstream catalogue before the sentence check."""
+    """Drop elements that quote the upstream catalogue. The claim check no longer uses this."""
     without_quotes = re.sub(
         r"<(?P<tag>[a-z0-9]+)\b[^>]*\bdata-upstream\b[^>]*>.*?</(?P=tag)>",
         " ",
@@ -1583,6 +1929,7 @@ def strip_upstream_quotes(html_text: str) -> str:
 
 def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: str) -> list[str]:
     failures: list[str] = []
+    index_text = html.unescape(index_html)
     for family in families:
         if f"f/{family['id']}/" not in index_html:
             failures.append(f"table does not link to family {family['id']}")
@@ -1619,9 +1966,16 @@ def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: s
         caution = family.get("caution")
         if caution and caution not in text:
             failures.append(f"family page {family['id']} is missing its caution")
+        summary = family.get("upstream_summary") or ""
+        if summary and summary not in text:
+            failures.append(f"family page {family['id']} is missing its upstream summary")
+        if summary and summary not in index_text:
+            failures.append(f"table is missing the upstream summary for {family['id']}")
         for item in family["manuscripts"]:
-            if item["pdf"] not in text or item["date"] not in text:
+            if item["pdf"] not in text or item["date"] not in text or item["title"] not in text:
                 failures.append(f"family page {family['id']} is missing manuscript {item['slug']}")
+            if item["title"] not in index_text:
+                failures.append(f"table is missing manuscript title for {family['id']}")
     return failures
 
 
@@ -1677,12 +2031,54 @@ def check_graph_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
     return failures
 
 
+_UPSTREAM_ELEMENT_RE = re.compile(
+    r"<(?P<tag>[a-z0-9]+)\b(?P<attrs>[^>]*\bdata-upstream\b[^>]*)>(?P<body>.*?)</(?P=tag)>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def visible_element_text(body: str) -> str:
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", body))).strip()
+
+
+def blank_text_nodes(body: str) -> str:
+    """Drop text nodes and keep every tag, including attributes on descendants."""
+    return "".join(part for part in re.split(r"(<[^>]*>)", body) if part.startswith("<"))
+
+
+def exempt_upstream_text(html_text: str, allowed: set[str]) -> str:
+    """Blank text nodes of a data-upstream element whose text equals an allowed string.
+
+    Attributes on that element and on elements inside it stay in the scan.
+    """
+    normalized = {re.sub(r"\s+", " ", item).strip() for item in allowed if item}
+
+    def replacer(match: re.Match[str]) -> str:
+        if visible_element_text(match.group("body")) not in normalized:
+            return match.group(0)
+        return (
+            f"<{match.group('tag')}{match.group('attrs')}>"
+            f"{blank_text_nodes(match.group('body'))}"
+            f"</{match.group('tag')}>"
+        )
+
+    return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
+
+
 def family_scan_identity(family: dict[str, Any]) -> set[str]:
-    """Upstream title and id. A data-* value is exempt only when it equals one of these."""
+    """Upstream title, id, summary, and manuscript titles.
+
+    A rendered data-upstream value is exempt only when it equals one of these.
+    Text that does not match stays on the page and fails the check.
+    """
     allowed = {family["id"]}
-    title = family.get("title")
-    if isinstance(title, str) and title:
-        allowed.add(title)
+    for value in (family.get("title"), family.get("upstream_summary")):
+        if isinstance(value, str) and value:
+            allowed.add(value)
+    for item in family.get("manuscripts") or []:
+        manuscript_title = item.get("title") if isinstance(item, dict) else None
+        if isinstance(manuscript_title, str) and manuscript_title:
+            allowed.add(manuscript_title)
     return allowed
 
 
@@ -1723,7 +2119,8 @@ def exempt_index_rows(html_text: str, families: list[dict[str, Any]]) -> str:
         family = by_id.get(match.group("id"))
         if family is None:
             return match.group(0)
-        return blank_exempt_data_values(match.group(0), family_scan_identity(family))
+        allowed = family_scan_identity(family)
+        return exempt_upstream_text(blank_exempt_data_values(match.group(0), allowed), allowed)
 
     return _INDEX_ROW_RE.sub(replacer, html_text)
 
@@ -1737,10 +2134,30 @@ def prepare_built_page(path: Path, dist: Path, families: list[dict[str, Any]]) -
     if len(parts) >= 2 and parts[0] == "f" and re.fullmatch(r"\d{3}", parts[1]):
         family = by_id.get(parts[1])
         if family is not None:
-            return blank_exempt_data_values(html_text, family_scan_identity(family))
+            allowed = family_scan_identity(family)
+            return exempt_upstream_text(blank_exempt_data_values(html_text, allowed), allowed)
     if relative.as_posix() == "index.html":
         return exempt_index_rows(html_text, families)
-    return html_text
+    return exempt_upstream_by_family_link(html_text, families)
+
+
+def exempt_upstream_by_family_link(html_text: str, families: list[dict[str, Any]]) -> str:
+    """On lens pages, exempt a title only inside the link for that family."""
+    by_id = {family["id"]: family_scan_identity(family) for family in families}
+
+    def replacer(match: re.Match[str]) -> str:
+        window = html_text[max(0, match.start() - 800) : match.start()]
+        found = re.findall(r'(?:id="f-|/f/)(\d{3})', window)
+        allowed = by_id.get(found[-1], set()) if found else set()
+        if visible_element_text(match.group("body")) not in {re.sub(r"\s+", " ", item).strip() for item in allowed}:
+            return match.group(0)
+        return (
+            f"<{match.group('tag')}{match.group('attrs')}>"
+            f"{blank_text_nodes(match.group('body'))}"
+            f"</{match.group('tag')}>"
+        )
+
+    return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
 
 
 def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
@@ -1755,8 +2172,7 @@ def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
         "independently-checked",
         "disputed",
         "retracted",
-        "human-approved",
-        "Jason approves",
+        "must be approved by Jason (repo policy)",
         "status-approvals.yaml",
         "jkbennitt",
     ):
@@ -1778,16 +2194,16 @@ def check_dist(dist: Path) -> list[str]:
     combined = "\n".join(path.read_text(encoding="utf-8") for path in pages)
     if denylist_hit(combined):
         failures.append("built site contains a denylist token")
+    if "not shown on this page" in html.unescape(combined):
+        failures.append("built site hides upstream text")
     index = dist / "index.html"
     about = dist / "about" / "index.html"
     if not index.is_file() or not about.is_file():
         failures.append("built site is missing the table or about page")
-        failures.extend(scan_overclaims(strip_upstream_quotes(combined), "built site"))
+        failures.extend(scan_overclaims(combined, "built site"))
         return failures
     catalog = read_json(FAMILIES_JSON)
-    prepared = "\n".join(
-        strip_upstream_quotes(prepare_built_page(path, dist, catalog["families"])) for path in pages
-    )
+    prepared = "\n".join(prepare_built_page(path, dist, catalog["families"]) for path in pages)
     failures.extend(scan_overclaims(prepared, "built site"))
     index_html = index.read_text(encoding="utf-8")
     about_html = about.read_text(encoding="utf-8")

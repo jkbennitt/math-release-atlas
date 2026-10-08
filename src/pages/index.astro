@@ -124,7 +124,9 @@ const lenses = lensCounts(atlas.families);
                   <ul class="links">
                     {family.manuscripts.map((item) => (
                       <li>
-                        <a data-upstream="manuscript" href={item.pdf}>{item.title}</a>
+                        <a data-upstream="manuscript" href={item.pdf}>
+                          {item.title}
+                        </a>
                         <span class="meta"> · {item.date}{item.main_result_formalized ? " · main result in formalization catalogue" : ""}</span>
                       </li>
                     ))}

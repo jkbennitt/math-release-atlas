@@ -16,9 +16,8 @@ const changed = atlas.families.filter(
   <article class="prose status-page">
     <h1>Community status</h1>
     <p>
-      A family stays claimed until a pull request changes it. Every status change is a
-      human-approved pull request. Jason approves each change. The weekly sync does not choose a
-      status.
+      A family stays claimed until a pull request changes it. Every status change must be
+      approved by Jason (repo policy). The weekly sync does not choose a status.
     </p>
 
     <h2>Vocabulary</h2>
@@ -51,9 +50,9 @@ const changed = atlas.families.filter(
     <p>
       A status other than claimed passes Guard only when
       <code>data/curated/status-approvals.yaml</code> has a matching entry. The entry lists the
-      family id, the status, the evidence URL, and the approver jkbennitt. The allowlist starts
-      empty. <code>CODEOWNERS</code> assigns <code>data/curated/</code> and that file to
-      @jkbennitt. Jason approves each change.
+      family id, the status, the evidence URL, the date, the note, and the approver jkbennitt.
+      Editing the note or the date after that entry is written fails Guard. The allowlist starts
+      empty. <code>CODEOWNERS</code> names @jkbennitt on <code>data/curated/</code>.
     </p>
 
     <h2>Families that are not claimed</h2>

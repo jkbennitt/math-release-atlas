@@ -77,15 +77,21 @@ Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
 `claimed` needs evidence: an http or https URL, a `YYYY-MM-DD` date, and a
 short neutral note of at most 25 words. That status is recorded only when
 `data/curated/status-approvals.yaml` has an entry with the same family id,
-status, and evidence URL, and with approver `jkbennitt`. The file starts
+status, evidence URL, date, and note, and with approver `jkbennitt`. Editing
+the note or the date after that entry is written fails Guard. The file starts
 empty. `claimed` may omit evidence. The same three evidence fields are
 required on a history entry whose status is not `claimed`, and that entry
 needs its own allowlist match. The vocabulary file is
-`data/curated/community-status.yaml`. Every status change is a human-approved
-pull request. Jason approves each change. `.github/CODEOWNERS` assigns
-`data/curated/` to @jkbennitt. The weekly sync does not write community
+`data/curated/community-status.yaml`. Every status change must be approved by
+Jason (repo policy). Branch protection is off. `.github/CODEOWNERS` names
+@jkbennitt on `data/curated/`. The weekly sync does not write community
 status. See `CONTRIBUTING.md`. Curated text uses the same sentence check as
-the rest of the site. A hostile note fails the build.
+the rest of the site. A hostile note fails the build. A whole word and its
+plurals and inflections are matched. A hyphenated compound fails when a part
+is hostile or the parts join into a hostile word, and so does a split pair of
+words. A stored hyphenated technical compound is left alone, as is a stored
+two-word technical phrase. A stored whole token is left alone when the
+inflection rule would split it into a hostile stem.
 
 Citation edges are read from `OAI:` keys in upstream manuscript `.tex` and
 `.bib` files and stored when the catalogue is built. The merge step turns
@@ -119,29 +125,69 @@ separate the words blow and up, and the words well and posed. A sentence
 that only names an energy inequality for smooth data, and has no claim verb,
 still passes.
 
-Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
+Two patterns fail anywhere in a sentence that names a guarded problem, with
+no distance limit. They are proof or disproof followed by of, for, or
+complete, and solution or solutions followed by to or of. A comma-separated
+aside between solution and to or of fails the same way. A match inside a
+longer proof compound still counts.
+
+The solution pattern is waived only when the whole sentence matches one closed
+template, ignoring case and trailing punctuation. The template is an optional
+article, then one of scheme, operator, numerical, weak, Leray, mild, strong,
+assistant, lemma, estimate, estimates, or approximate, then solution or
+solutions, then of or to, then an optional “the”, then the incompressible-flow
+name, then an optional equations or system. No further words are allowed.
+Proof compounds are never waived. One pattern that is not waived still fails
+the sentence, including a match inside a longer proof compound. The waived
+positions have to be exactly the matches of those two patterns.
+
+A second closed template waives only the four-token check. It never waives
+the two patterns above. The template is an optional article, then the
+incompressible-flow name, then solution or solutions, then scheme, schemes,
+operator, operators, method, or methods, then an optional “is bounded” or
+“are bounded”. No further words are allowed.
+
+Before either template is applied, a space, no separator, or any hyphen or
+dash between the two parts of that name is folded to one spelling. The dash
+forms include the non-breaking hyphen, the em dash, and the fullwidth hyphen.
+
+A claim noun within four tokens of a guarded problem name also fails, in
+either order. Punctuation and possessives are ignored when the tokens are
+counted. The nouns are proof, proofs, disproof, disproofs, solution,
+solutions, resolution, and resolved. That nearer check waives solution or
+solutions only when the whole sentence matches one of the two templates
+above, and only for the incompressible-flow name. The pair “proof assistant”
+is not a claim noun.
+
+Guarded problems: RH, the dotted form R.H., the spaced form R H, the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes
-(hyphen, dash, or space), the Clay problem, the Clay prize, the Millennium
+(hyphen, dash, space, or no separator), the Clay problem, the Clay prize, the Millennium
 problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
-disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
-proof of, proofs of, proof for, proofs for, proof complete, establish,
-establishes, established, establishing, a solution to, solution of, resolve,
+disproved, disproving, disproven, proof of, proof for, proof complete,
+disproof of, solution to, solution of, confirm, confirms, confirmed, confirming,
+establish, establishes, established, establishing, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
-solves, solved, solving, crack, cracks, cracked, and cracking. Further claim
+solves, solved, solving, crack, cracks, cracked, cracking, finish, finishes,
+finished, and finishing. Further claim
 words are true, holds, follows, verify, verifies, verified, verifying, show,
 shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
 demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
 correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem”.
 
 The sentence check applies to authored pages, curated notes, fixed cautions,
-and built HTML after elements marked as upstream quotations are removed.
-alt, title, meta content, aria-label, aria-description, placeholder, and
-data-* attributes are included, quoted or unquoted. In built HTML, a data-*
-value is left out only when it exactly equals that family's upstream title
-or id. The citation graph has no such exemption. Curated evidence URLs must
-be http or https, with no spaces, quotes, or angle brackets.
+and built HTML, including text inside an element marked as an upstream
+quotation. That text is left out of the check only when it exactly equals
+that family's upstream title, id, summary, or manuscript title. Only the text
+nodes are left out. Attributes on that element and on elements inside it are
+still checked. HTML comments inside that element are still checked. The page still shows it. Text that does not match fails the
+check. alt, title, meta content,
+aria-label, aria-description, placeholder, and data-* attributes are included,
+quoted or unquoted. In built HTML, a data-* value is left out only when it
+exactly equals one of those same strings. The citation graph has no such
+exemption. Curated
+evidence URLs must be http or https, with no spaces, quotes, or angle brackets.
 Before either check, text is NFKC-normalized and soft hyphens and zero-width
 characters are removed.
 

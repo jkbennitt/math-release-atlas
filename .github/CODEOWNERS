@@ -1,3 +1,2 @@
-# Curated notes and the status allowlist need Jason's review.
+# Names the owner for curated notes and the status allowlist.
 data/curated/** @jkbennitt
-data/curated/status-approvals.yaml @jkbennitt

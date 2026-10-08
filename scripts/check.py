@@ -30,6 +30,7 @@ from atlaslib import (
     check_authored,
     check_dist,
     denylist_hit,
+    exempt_upstream_text,
     assert_merged_catalogue,
     assert_sha_is_ancestor,
     assert_upstream_digest,
@@ -81,7 +82,26 @@ def check_source() -> list[str]:
     failures.extend(check_status_approvals(curated))
     failures.extend(check_codeowners())
     failures.extend(check_sync_does_not_write_status())
+    failures.extend(check_upstream_text_is_shown())
     failures.extend(check_authored())
+    return failures
+
+
+def check_upstream_text_is_shown() -> list[str]:
+    """Upstream summaries and manuscript titles stay on the page."""
+    failures: list[str] = []
+    for relative in (
+        "src/pages/f/[id].astro",
+        "src/pages/index.astro",
+        "src/lib/atlas.ts",
+    ):
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        if "withheld" in text or "not shown on this page" in text:
+            failures.append(f"{relative} hides upstream text")
+    if "withheld" in (ROOT / "scripts" / "atlaslib.py").read_text(encoding="utf-8"):
+        failures.append("scripts/atlaslib.py hides upstream text")
+    if "withheld" in FAMILIES_JSON.read_text(encoding="utf-8"):
+        failures.append("families.json hides upstream text")
     return failures
 
 
@@ -101,8 +121,6 @@ def check_codeowners() -> list[str]:
     failures: list[str] = []
     if "data/curated/**" not in text or "@jkbennitt" not in text:
         failures.append("CODEOWNERS does not assign data/curated to @jkbennitt")
-    if "data/curated/status-approvals.yaml" not in text:
-        failures.append("CODEOWNERS does not assign the status allowlist")
     return failures
 
 
@@ -332,7 +350,8 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         extended = REQUIRED_CAUTIONS[family_id].rstrip(".") + " and it is solved."
         if not scan_overclaims(extended, "caution"):
             failures.append(f"extended caution was not flagged: {extended}")
-    flagged = [
+    # Phrases the sentence check rejected on main at 32c16fa2. Nothing here may pass.
+    main_flagged = (
         "The Riemann Hypothesis is solved.",
         "The Riemann Hypothesis is not solved.",
         "This is not a proof of the Riemann Hypothesis.",
@@ -400,7 +419,84 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Navier–Stokes energy bounds for smooth data are proven and solve the problem.",
         "Navier–Stokes flows show turbulence",
         "We prove a Navier-Stokes energy inequality for smooth data.",
+    )
+    flagged = [
+        *main_flagged,
+        "A resolution of RH.",
+        "Navier–Stokes: the proof.",
+        "Navier–Stokes solution.",
+        "We finish the Millennium problem.",
+        "complete proof of RH",
+        "RH: a complete proof.",
+        "Navier–Stokes: a complete proof.",
+        "A complete proof of the Millennium problem.",
+        "A complete proof of the Clay problem.",
+        "Navier–Stokes estimates: complete proof.",
+        "Navier–Stokes solution: complete",
+        "a full solution to RH",
+        "the RH proof is complete",
+        "RH proof.",
+        "Proof: RH.",
+        "Solution to RH.",
+        "Solutions to RH.",
+        "RH's proof.",
+        "Our solution to RH.",
+        "Complete solution of Navier–Stokes.",
+        "Navier–Stokes solution is complete.",
+        "Navier–Stokes global regularity: solution.",
+        "A proof of the long-open conjecture known as the Riemann Hypothesis.",
+        "A numerical proof of RH.",
+        "Weak solution of the Riemann hypothesis.",
+        "A disproof of RH.",
+        "The lemma proof of RH.",
+        "An approximate solution of the Clay problem.",
+        "Strong solution of the Millennium problem.",
+        "A solution to NavierStokes.",
+        "RH disproof.",
+        "RH disproofs.",
+        "RH: proof scheme.",
+        "proof of the R H",
+        "A solution, long sought by many, to Navier–Stokes.",
+        "NavierStokes solution",
+        "A numerical proof of Navier–Stokes global regularity.",
+        "Weak solutions of Navier–Stokes exist globally and are smooth.",
+        "Weak solutions of Navier–Stokes: global regularity and smoothness.",
+        "A numerical solution of Navier–Stokes gives a counterproof of blow-up.",
+        "Numerical solution of the Navier–Stokes existence and smoothness problem.",
+        "A weak solution of Navier–Stokes well-posedness.",
+        "A numerical disproof of Navier–Stokes.",
+        "Navier–Stokes numerical proof of the conjecture.",
+        "Numerical solution of the Navier–Stokes problem.",
+        "Numerical solution of Navier–Stokes is foolproof of the calculation.",
     ]
+    review_ns = "Navier\u2013Stokes"
+    review_flagged = [
+        f"Weak solutions of {review_ns} are globally regular.",
+        f"A weak solution of {review_ns} exists for all time.",
+        f"Weak solutions of {review_ns} never develop singularities.",
+        f"A weak solution of the {review_ns} question.",
+        f"A Leray solution of {review_ns} exists globally.",
+        f"Weak solutions of {review_ns} stay regular forever.",
+        f"Weak solutions of {review_ns} have no singularities.",
+        f"Weak solutions of {review_ns} are singularity-free.",
+        f"Weak solutions of {review_ns} do not break down.",
+        f"Weak solutions of {review_ns} are analytic for all time.",
+        f"Weak solutions of {review_ns} persist for all time.",
+        f"A weak solution of the {review_ns} challenge.",
+        f"A weak solution of the {review_ns} prize.",
+        f"A weak solution of the {review_ns} puzzle.",
+        f"A weak solution of the {review_ns} riddle.",
+        f"A weak solution of the {review_ns} open question.",
+    ]
+    review_flagged.extend(
+        phrase.replace("\u2013", separator)
+        for phrase in list(review_flagged)
+        for separator in ("\u2011", "\u2014", "", "\uff0d")
+    )
+    flagged.extend(review_flagged)
+    for text in main_flagged:
+        if not scan_overclaims(text, "main"):
+            failures.append(f"main phrase was not flagged: {text}")
     for text in flagged:
         if not scan_overclaims(text, "sample"):
             failures.append(f"overclaim was not flagged: {text}")
@@ -425,10 +521,52 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The lemma is a theorem.",
         "We show a bound.",
         "Navier–Stokes energy inequality for smooth data.",
+        "Navier–Stokes energy inequality",
+        "A complete proof of the lemma.",
+        "A resolution of the linear system.",
+        "A Navier–Stokes solution scheme",
+        "numerical solution of Navier–Stokes",
+        "The Navier–Stokes solution operator is bounded",
+        "Weak solutions of Navier–Stokes",
+        "Leray solutions of the Navier–Stokes equations",
+        "A proof assistant checked the RH-type estimate.",
+        "Proof of the lemma uses the Navier–Stokes energy inequality.",
+        "mild solutions of Navier–Stokes",
+        "strong solution of the Navier-Stokes equations",
+        "approximate solution of Navier–Stokes",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
             failures.append(f"allowed sentence was flagged: {text}")
+    if len(main_flagged) != 67:
+        failures.append(f"main phrase list has {len(main_flagged)} entries")
+    if len(allowed) != 28:
+        failures.append(f"must-pass phrase list has {len(allowed)} entries")
+
+    def why_overclaim(text: str) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "lenses": [
+                            {
+                                "tag": "plasma-kinetic",
+                                "why": text,
+                                "source": "A neutral source string for the regression.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    for text in flagged:
+        message = expect_error(f"why overclaim {text}", lambda text=text: why_overclaim(text))
+        if message:
+            failures.append(message)
     hidden = "".join(chr(code) for code in (102, 117, 115, 105, 111, 110))
     device = "".join(chr(code) for code in (115, 117, 112, 101, 114, 99, 111, 110, 100, 117, 99, 116, 111, 114))
     generated = (
@@ -495,8 +633,61 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         f'<blockquote data-upstream="summary">{upstream_sentence}</blockquote>'
         "<p>The lemma is proven.</p>"
     )
-    if scan_overclaims(strip_upstream_quotes(quoted), "page"):
-        failures.append("a stripped upstream summary was still scanned")
+    if not scan_overclaims(quoted, "page"):
+        failures.append("an upstream quotation that is not a title was not flagged")
+    # Rendered result of a template expression {"RH is " + "pro" + "ven."}.
+    rendered_claim = '<p data-upstream="summary">RH is proven.</p>'
+    if not scan_overclaims(rendered_claim, "template"):
+        failures.append("a template-built claim inside an upstream element was not flagged")
+    if not scan_overclaims(exempt_upstream_text(rendered_claim, {"The Riemann Hypothesis", "001"}), "template"):
+        failures.append("a template-built claim was treated as an upstream title")
+    exact_title = '<h1 data-upstream="title">RH is proven.</h1>'
+    if scan_overclaims(exempt_upstream_text(exact_title, {"RH is proven.", "001"}), "template"):
+        failures.append("an exact upstream title was flagged")
+    exact_summary = (
+        "Proves that every Dirichlet L-function is zero-free in Re s > 7/8, "
+        "resolving the quasi-Riemann hypothesis."
+    )
+    summary_html = f'<blockquote data-upstream="summary">{exact_summary}</blockquote>'
+    if scan_overclaims(exempt_upstream_text(summary_html, {exact_summary, "003"}), "template"):
+        failures.append("an exact upstream summary was flagged")
+    wrapped_img = (
+        f'<blockquote data-upstream="summary"><img alt="RH is proven.">{exact_summary}</blockquote>'
+    )
+    exempted_img = exempt_upstream_text(wrapped_img, {exact_summary, "003"})
+    if 'alt="RH is proven."' not in exempted_img or "Dirichlet" in exempted_img:
+        failures.append("exemption blanked an image alt or left summary text")
+    if not scan_overclaims(exempted_img, "template"):
+        failures.append("an image alt inside an exempt summary was not flagged")
+    wrapped_span = (
+        '<blockquote data-upstream="summary">'
+        f'<span title="RH is proven.">{exact_summary}</span></blockquote>'
+    )
+    exempted_span = exempt_upstream_text(wrapped_span, {exact_summary, "003"})
+    if 'title="RH is proven."' not in exempted_span or "Dirichlet" in exempted_span:
+        failures.append("exemption blanked a descendant title or left summary text")
+    if not scan_overclaims(exempted_span, "template"):
+        failures.append("a title attribute inside an exempt summary was not flagged")
+    titled_summary = (
+        f'<blockquote data-upstream="summary" title="RH is proven.">{exact_summary}</blockquote>'
+    )
+    exempted_title = exempt_upstream_text(titled_summary, {exact_summary, "003"})
+    if 'title="RH is proven."' not in exempted_title or "Dirichlet" in exempted_title:
+        failures.append("exemption blanked a title on the summary element or left summary text")
+    if not scan_overclaims(exempted_title, "template"):
+        failures.append("a title on an exempt summary element was not flagged")
+    commented_summary = (
+        f'<blockquote data-upstream="summary">{exact_summary}<!-- RH is proven. --></blockquote>'
+    )
+    exempted_comment = exempt_upstream_text(commented_summary, {exact_summary, "003"})
+    if "<!-- RH is proven. -->" not in exempted_comment or "Dirichlet" in exempted_comment:
+        failures.append("exemption dropped an HTML comment or left summary text")
+    if not scan_overclaims(exempted_comment, "template"):
+        failures.append("an HTML comment inside an exempt summary was not flagged")
+    manuscript_title = "The Quasi-Riemann Hypothesis (alternate 11/12 proof)"
+    manuscript_html = f'<a data-upstream="manuscript">{manuscript_title}</a>'
+    if scan_overclaims(exempt_upstream_text(manuscript_html, {manuscript_title, "003"}), "template"):
+        failures.append("an exact manuscript title was flagged")
     authored_claim = "<p>RH: proof complete.</p>"
     if not scan_overclaims(strip_upstream_quotes(authored_claim), "page"):
         failures.append("an authored claim in HTML was not flagged")
@@ -784,6 +975,76 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("history without url", history_without_url)
     if message:
         failures.append(message)
+    def curated_note(note: str) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "community": {
+                            "status": "claimed",
+                            "evidence": [
+                                {
+                                    "url": "https://example.com/note",
+                                    "date": "2026-10-08",
+                                    "note": note,
+                                }
+                            ],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    hostile_notes = (
+        "The authors are liars.",
+        "The argument is bogus.",
+        "This is a crackpot note.",
+        "The text was plagiarized.",
+        "The note alleges plagiarism.",
+        "The draft is junk.",
+        "The speaker is a quack.",
+        "The speaker is a charlatan.",
+        "The authors cheat.",
+        "The authors cheated.",
+        "The note is dishonest.",
+        "The claim is a sham.",
+        "The note calls it junk-science.",
+        "The note calls it sham-proof.",
+        "The note calls it garbage-tier.",
+        "The note calls it crack-pot.",
+        "The note says crack pot.",
+        "The author is a fraudster.",
+        "The argument is fraudulent.",
+        "The note shows dishonesty.",
+        "The author is plagiarizing.",
+        "The draft is junky.",
+    )
+    for sample in hostile_notes:
+        message = expect_error(f"hostile note {sample}", lambda sample=sample: curated_note(sample))
+        if message:
+            failures.append(message)
+    for sample in (
+        "garbage collection",
+        "fraud-detection",
+        "fake-free",
+        "scheme",
+        "shampoo",
+        "junction",
+        "cheatsheet",
+        "quackery",
+        "cheat-sheet",
+        "plagiarism-check",
+        "junkers",
+        "fraud detection",
+        "sham pooled",
+    ):
+        try:
+            curated_note(f"The method uses {sample}.")
+        except AtlasError as exc:
+            failures.append(f"a technical compound was rejected: {sample}: {exc}")
     message = expect_error("hostile note", hostile_note)
     if message:
         failures.append(message)
@@ -836,41 +1097,52 @@ def citation_self_test() -> str | None:
 
 
 def approval_self_test() -> str | None:
-    community = {
-        "status": "disputed",
-        "evidence": [
-            {
-                "url": "https://example.com/note",
-                "date": "2026-10-08",
-                "note": "A short neutral note about the family.",
-            }
-        ],
-        "history": [],
-    }
+    note = "A short neutral note about the family."
+    day = "2026-10-08"
+    evidence = {"url": "https://example.com/note", "date": day, "note": note}
+    community = {"status": "disputed", "evidence": [evidence], "history": []}
     curated = {"362": {"id": "362", "community": community}}
     if not approval_mismatches(curated, []):
         return "a disputed status without an allowlist entry was accepted"
+    entry = {
+        "id": "362",
+        "status": "disputed",
+        "url": "https://example.com/note",
+        "date": day,
+        "note": note,
+        "approver": "jkbennitt",
+    }
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "status-approvals.yaml"
-        path.write_text(
-            yaml.safe_dump(
-                {
-                    "approvals": [
-                        {
-                            "id": "362",
-                            "status": "disputed",
-                            "url": "https://example.com/note",
-                            "approver": "jkbennitt",
-                        }
-                    ]
-                }
-            ),
-            encoding="utf-8",
-        )
+        path.write_text(yaml.safe_dump({"approvals": [entry]}), encoding="utf-8")
         approvals = load_status_approvals(path)
     mismatches = approval_mismatches(curated, approvals)
     if mismatches:
         return f"a matching status approval was rejected: {mismatches[0]}"
+    edited_note = {
+        "362": {
+            "id": "362",
+            "community": {
+                "status": "disputed",
+                "evidence": [{**evidence, "note": "A short neutral note about the family, revised."}],
+                "history": [],
+            },
+        }
+    }
+    if not approval_mismatches(edited_note, approvals):
+        return "an edited note still matched the allowlist"
+    edited_date = {
+        "362": {
+            "id": "362",
+            "community": {
+                "status": "disputed",
+                "evidence": [{**evidence, "date": "2026-10-09"}],
+                "history": [],
+            },
+        }
+    }
+    if not approval_mismatches(edited_date, approvals):
+        return "an edited date still matched the allowlist"
     return None
 
 
