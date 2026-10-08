@@ -143,7 +143,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # One Actions pull request on this repository, chosen by number. A fork cannot name the branch.
-          selected="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,isCrossRepository,author,headRefName | jq -e -f scripts/sync_pr_select.jq)"
+          selected="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,isCrossRepository,author,headRefName | env -u GH_TOKEN -u GITHUB_TOKEN jq -e -f scripts/sync_pr_select.jq)"
           count="$(jq 'length' <<<"$selected")"
           number=""
           if [ "$count" -eq 1 ]; then
@@ -197,7 +197,7 @@ jobs:
             # A new generated_at must not replace a human commit on this branch.
             # Fetch full main so commits already on main are not unique to this branch.
             git fetch --no-tags "$remote" "+refs/heads/main:refs/remotes/origin/main" "refs/heads/${branch}:refs/heads/sync-existing"
-            plan="$(bash scripts/sync_push_plan.sh "$branch" "$number" "$NEW")"
+            plan="$(env -u GH_TOKEN -u GITHUB_TOKEN bash scripts/sync_push_plan.sh "$branch" "$number" "$NEW")"
             mode="$(printf '%s\n' "$plan" | sed -n 's/^mode=//p')"
             if [ "$mode" = fresh ]; then
               echo "Leaving ${branch} in place because it has a human commit." >&2

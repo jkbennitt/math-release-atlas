@@ -43,13 +43,15 @@ started by hand with “Run workflow”. It uses a GitHub-hosted `ubuntu-latest`
 runner. It reads upstream HEAD. When that commit matches the one recorded
 in the catalogue, the job exits and does not open a pull request. When the
 commit changed, a read-only job regenerates the data files and runs the
-build and the wording checks. A second job does not run the install or any
-repository script. It commits that data. If one sync pull request from the
+build and the wording checks. A second job does not run the install. It
+commits that data. The pull-request filter and the branch plan in that job
+run with the token removed from the environment. If one sync pull request from the
 Actions app is already open on this repository, it updates that pull request
 by number. A pull request from another repository is ignored. Two matching
 pull requests stop the job. A human commit on the sync branch is left in
 place, and the job opens a separate branch instead of replacing it. A commit
-already on main does not count as an edit of the sync branch. It never
+already on main does not count as an edit of the sync branch. A missing
+comparison ref stops the job instead of updating the open pull request. It never
 merges that pull request. The site updates only after the pull request is
 merged and the Pages workflow runs.
 

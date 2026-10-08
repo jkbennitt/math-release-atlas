@@ -168,6 +168,13 @@ def check_sync_does_not_write_status() -> list[str]:
     advanced = check_sync_reuses_bot_pr_when_main_advances()
     if advanced:
         failures.append(advanced)
+    missing_ref = check_sync_plan_fails_when_ref_missing()
+    if missing_ref:
+        failures.append(missing_ref)
+    if "env -u GH_TOKEN -u GITHUB_TOKEN jq -e -f scripts/sync_pr_select.jq" not in workflow:
+        failures.append("sync filter runs with the publish token set")
+    if "env -u GH_TOKEN -u GITHUB_TOKEN bash scripts/sync_push_plan.sh" not in workflow:
+        failures.append("sync push plan runs with the publish token set")
     if "pr merge" in workflow or "auto-merge" in workflow:
         failures.append("sync workflow merges a pull request")
     if "needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3'" not in workflow:
@@ -370,6 +377,76 @@ def check_sync_reuses_bot_pr_when_main_advances() -> str | None:
         )
         if fresh.stdout != "mode=fresh\nbranch=upstream-sync-0123456789ab\nnumber=\n":
             return f"sync plan reused a branch with a human commit: {fresh.stdout!r}"
+    return None
+
+
+def check_sync_plan_fails_when_ref_missing() -> str | None:
+    """A missing origin/main or sync-existing ref must not fall through to reuse."""
+    script = ROOT / "scripts" / "sync_push_plan.sh"
+    plan_text = script.read_text(encoding="utf-8")
+    if plan_text.count("git rev-parse --verify") < 2:
+        return "sync push plan does not verify origin/main and sync-existing"
+    if "< <(git log" in plan_text:
+        return "sync push plan still ignores a failed git log"
+    sha = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+
+    def run(repo: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["bash", str(script), "upstream-sync", "42", sha],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def commit_file(repo: Path) -> None:
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "Ada",
+            "GIT_AUTHOR_EMAIL": "ada@example.com",
+            "GIT_COMMITTER_NAME": "Ada",
+            "GIT_COMMITTER_EMAIL": "ada@example.com",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+        (repo / "f").write_text("a\n", encoding="utf-8")
+        subprocess.run(["git", "add", "f"], cwd=repo, env=env, check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "seed"], cwd=repo, env=env, check=True, capture_output=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        empty = Path(tmp) / "empty"
+        empty.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(empty)], check=True, capture_output=True)
+        missing_both = run(empty)
+        if missing_both.returncode == 0 or "mode=reuse" in missing_both.stdout:
+            return "sync push plan reused a branch with no origin/main"
+
+        only_main = Path(tmp) / "only-main"
+        only_main.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(only_main)], check=True, capture_output=True)
+        commit_file(only_main)
+        subprocess.run(
+            ["git", "update-ref", "refs/remotes/origin/main", "HEAD"],
+            cwd=only_main,
+            check=True,
+            capture_output=True,
+        )
+        missing_sync = run(only_main)
+        if missing_sync.returncode == 0 or "mode=reuse" in missing_sync.stdout:
+            return "sync push plan reused a branch when sync-existing was missing"
+
+        only_sync = Path(tmp) / "only-sync"
+        only_sync.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(only_sync)], check=True, capture_output=True)
+        commit_file(only_sync)
+        subprocess.run(
+            ["git", "branch", "sync-existing"],
+            cwd=only_sync,
+            check=True,
+            capture_output=True,
+        )
+        missing_main = run(only_sync)
+        if missing_main.returncode == 0 or "mode=reuse" in missing_main.stdout:
+            return "sync push plan reused a branch when origin/main was missing"
     return None
 
 

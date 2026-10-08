@@ -1,6 +1,7 @@
 #!/bin/bash
 # Decide whether to update the open bot sync branch or open a fresh one.
 # Commits already on origin/main are not edits of the sync branch.
+# A missing ref fails the script. It must not fall through to reuse.
 # Usage: sync_push_plan.sh <open-branch> <pr-number> <new-sha>
 set -euo pipefail
 
@@ -12,6 +13,11 @@ if [ "${#new_sha}" -lt 12 ]; then
   exit 1
 fi
 
+git rev-parse --verify origin/main >/dev/null
+git rev-parse --verify sync-existing >/dev/null
+# Assignment, not process substitution, so a failed log aborts under set -e.
+log="$(git log --format='%an%x09%ae%x09%cn%x09%ce' origin/main..sync-existing)"
+
 human=false
 while IFS=$'\t' read -r name email committer committer_email; do
   [ -z "${name}" ] && continue
@@ -22,7 +28,7 @@ while IFS=$'\t' read -r name email committer committer_email; do
     human=true
     break
   fi
-done < <(git log --format='%an%x09%ae%x09%cn%x09%ce' origin/main..sync-existing)
+done <<< "$log"
 
 if [ "$human" = true ]; then
   printf 'mode=fresh\nbranch=upstream-sync-%s\nnumber=\n' "${new_sha:0:12}"
