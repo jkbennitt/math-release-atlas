@@ -350,7 +350,8 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         extended = REQUIRED_CAUTIONS[family_id].rstrip(".") + " and it is solved."
         if not scan_overclaims(extended, "caution"):
             failures.append(f"extended caution was not flagged: {extended}")
-    flagged = [
+    # Phrases the sentence check rejected on main at 32c16fa2. Nothing here may pass.
+    main_flagged = (
         "The Riemann Hypothesis is solved.",
         "The Riemann Hypothesis is not solved.",
         "This is not a proof of the Riemann Hypothesis.",
@@ -418,6 +419,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Navier–Stokes energy bounds for smooth data are proven and solve the problem.",
         "Navier–Stokes flows show turbulence",
         "We prove a Navier-Stokes energy inequality for smooth data.",
+    )
+    flagged = [
+        *main_flagged,
         "A resolution of RH.",
         "Navier–Stokes: the proof.",
         "Navier–Stokes solution.",
@@ -428,7 +432,22 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "A complete proof of the Millennium problem.",
         "A complete proof of the Clay problem.",
         "Navier–Stokes estimates: complete proof.",
+        "Navier–Stokes solution: complete",
+        "a full solution to RH",
+        "the RH proof is complete",
+        "RH proof.",
+        "Proof: RH.",
+        "Solution to RH.",
+        "Solutions to RH.",
+        "RH's proof.",
+        "Our solution to RH.",
+        "Complete solution of Navier–Stokes.",
+        "Navier–Stokes solution is complete.",
+        "Navier–Stokes global regularity: solution.",
     ]
+    for text in main_flagged:
+        if not scan_overclaims(text, "main"):
+            failures.append(f"main phrase was not flagged: {text}")
     for text in flagged:
         if not scan_overclaims(text, "sample"):
             failures.append(f"overclaim was not flagged: {text}")
@@ -461,10 +480,42 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The Navier–Stokes solution operator is bounded",
         "Weak solutions of Navier–Stokes",
         "Leray solutions of the Navier–Stokes equations",
+        "A proof assistant checked the RH-type estimate.",
+        "Proof of the lemma uses the Navier–Stokes energy inequality.",
+        "mild solutions of Navier–Stokes",
+        "strong solution of the Navier-Stokes equations",
+        "approximate solution of Navier–Stokes",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
             failures.append(f"allowed sentence was flagged: {text}")
+    if len(main_flagged) != 67:
+        failures.append(f"main phrase list has {len(main_flagged)} entries")
+
+    def why_overclaim(text: str) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "362.yaml"
+            path.write_text(
+                yaml.safe_dump(
+                    {
+                        "id": "362",
+                        "lenses": [
+                            {
+                                "tag": "plasma-kinetic",
+                                "why": text,
+                                "source": "A neutral source string for the regression.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            validate_curated_file(path, yaml.safe_load(path.read_text(encoding="utf-8")))
+
+    for text in flagged:
+        message = expect_error(f"why overclaim {text}", lambda text=text: why_overclaim(text))
+        if message:
+            failures.append(message)
     hidden = "".join(chr(code) for code in (102, 117, 115, 105, 111, 110))
     device = "".join(chr(code) for code in (115, 117, 112, 101, 114, 99, 111, 110, 100, 117, 99, 116, 111, 114))
     generated = (
@@ -549,6 +600,31 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     summary_html = f'<blockquote data-upstream="summary">{exact_summary}</blockquote>'
     if scan_overclaims(exempt_upstream_text(summary_html, {exact_summary, "003"}), "template"):
         failures.append("an exact upstream summary was flagged")
+    wrapped_img = (
+        f'<blockquote data-upstream="summary"><img alt="RH is proven.">{exact_summary}</blockquote>'
+    )
+    exempted_img = exempt_upstream_text(wrapped_img, {exact_summary, "003"})
+    if 'alt="RH is proven."' not in exempted_img or "Dirichlet" in exempted_img:
+        failures.append("exemption blanked an image alt or left summary text")
+    if not scan_overclaims(exempted_img, "template"):
+        failures.append("an image alt inside an exempt summary was not flagged")
+    wrapped_span = (
+        '<blockquote data-upstream="summary">'
+        f'<span title="RH is proven.">{exact_summary}</span></blockquote>'
+    )
+    exempted_span = exempt_upstream_text(wrapped_span, {exact_summary, "003"})
+    if 'title="RH is proven."' not in exempted_span or "Dirichlet" in exempted_span:
+        failures.append("exemption blanked a descendant title or left summary text")
+    if not scan_overclaims(exempted_span, "template"):
+        failures.append("a title attribute inside an exempt summary was not flagged")
+    titled_summary = (
+        f'<blockquote data-upstream="summary" title="RH is proven.">{exact_summary}</blockquote>'
+    )
+    exempted_title = exempt_upstream_text(titled_summary, {exact_summary, "003"})
+    if 'title="RH is proven."' not in exempted_title or "Dirichlet" in exempted_title:
+        failures.append("exemption blanked a title on the summary element or left summary text")
+    if not scan_overclaims(exempted_title, "template"):
+        failures.append("a title on an exempt summary element was not flagged")
     manuscript_title = "The Quasi-Riemann Hypothesis (alternate 11/12 proof)"
     manuscript_html = f'<a data-upstream="manuscript">{manuscript_title}</a>'
     if scan_overclaims(exempt_upstream_text(manuscript_html, {manuscript_title, "003"}), "template"):
@@ -885,6 +961,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The argument is fraudulent.",
         "The note shows dishonesty.",
         "The author is plagiarizing.",
+        "The draft is junky.",
     )
     for sample in hostile_notes:
         message = expect_error(f"hostile note {sample}", lambda sample=sample: curated_note(sample))
@@ -899,6 +976,11 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "junction",
         "cheatsheet",
         "quackery",
+        "cheat-sheet",
+        "plagiarism-check",
+        "junkers",
+        "fraud detection",
+        "sham pooled",
     ):
         try:
             curated_note(f"The method uses {sample}.")

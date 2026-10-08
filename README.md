@@ -89,8 +89,9 @@ status. See `CONTRIBUTING.md`. Curated text uses the same sentence check as
 the rest of the site. A hostile note fails the build. A whole word and its
 plurals and inflections are matched. A hyphenated compound fails when a part
 is hostile or the parts join into a hostile word, and so does a split pair of
-words. A stored hyphenated technical compound is left alone, as is one stored
-two-word technical phrase.
+words. A stored hyphenated technical compound is left alone, as is a stored
+two-word technical phrase. A stored whole token is left alone when the
+inflection rule would split it into a hostile stem.
 
 Citation edges are read from `OAI:` keys in upstream manuscript `.tex` and
 `.bib` files and stored when the catalogue is built. The merge step turns
@@ -119,11 +120,20 @@ inequality, estimate, bound, computation, scheme, solver, or approximation,
 and the sentence does not also say regularity, smoothness, smooth (unless
 the next word is data), blow up, blow-up, blowup, existence, well-posed, or
 well-posedness. When a claim verb is also present, the word smooth cancels
-that exception even if the next word is data. A claim noun also cancels that
-exception. A space, hyphen, or dash may
+that exception even if the next word is data. A space, hyphen, or dash may
 separate the words blow and up, and the words well and posed. A sentence
 that only names an energy inequality for smooth data, and has no claim verb,
 still passes.
+
+A claim noun within four tokens of a guarded problem name also fails, in
+either order. Punctuation and possessives are ignored when the tokens are
+counted. The nouns are proof, proofs, solution, solutions, resolution, and
+resolved. The sentence passes when a technical qualifier sits immediately
+beside that noun. The qualifiers are scheme, operator, numerical, weak,
+Leray, mild, strong, assistant, lemma, estimate, estimates, approximate, and
+the pair energy inequality. A qualifier does not rescue a sentence that also
+contains complete, full, final, settled, solved, proven, finished, or the
+phrase “is done”.
 
 Guarded problems: RH, the dotted form R.H., the Riemann Hypothesis,
 Riemann's hypothesis, Riemann-Hypothesis (hyphen or dash), Navier–Stokes
@@ -132,13 +142,10 @@ problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
 disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
-proof of, proofs of, proof for, proofs for, proof complete, the proof, a proof,
-complete proof, establish, establishes, established, establishing, a solution of,
-a solution to, the solution of, the solution to, resolution, resolutions, resolve,
+establish, establishes, established, establishing, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, cracking, finish, finishes,
-finished, and finishing. A problem name followed only by solution is a claim.
-A technical noun phrase is not. Further claim
+finished, and finishing. Further claim
 words are true, holds, follows, verify, verifies, verified, verifying, show,
 shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
 demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
@@ -147,8 +154,10 @@ correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem
 The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML, including text inside an element marked as an upstream
 quotation. That text is left out of the check only when it exactly equals
-that family's upstream title, id, summary, or manuscript title. The page still
-shows it. Text that does not match fails the check. alt, title, meta content,
+that family's upstream title, id, summary, or manuscript title. Only the text
+nodes are left out. Attributes on that element and on elements inside it are
+still checked. The page still shows it. Text that does not match fails the
+check. alt, title, meta content,
 aria-label, aria-description, placeholder, and data-* attributes are included,
 quoted or unquoted. In built HTML, a data-* value is left out only when it
 exactly equals one of those same strings. The citation graph has no such

@@ -131,27 +131,31 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
     rf"\b(?:regularity|smooth(?:ness)?|blow{_SEP}*up|existence|well{_SEP}*posed(?:ness)?)\b",
     re.IGNORECASE,
 )
-# Noun forms count only inside a claim construction. A technical noun phrase does not.
-# That includes complete proof, proof of/for, proof complete, the/a proof,
-# a/the solution of/to, and resolution. A problem name followed only by solution
-# is a claim. A claim noun cancels the flow-name qualifier exception.
-_CLAIM_NOUN = (
-    r"\bcomplete\s+proofs?\b|"
-    r"\bproofs?\s+complete\b|"
-    r"\bproofs?\s+(?:of|for)\b|"
-    r"\b(?:the|a|an)\s+proofs?\b|"
-    r"\b(?:a|an|the)\s+solutions?\s+(?:of|to)\b|"
-    r"\bresolutions?\b"
+# A claim noun within four tokens of a guarded problem name is a claim, in
+# either order. Punctuation and possessives are ignored. The only rescue is a
+# technical qualifier immediately beside the noun, and that rescue does not
+# apply when the sentence also says complete, full, final, settled, solved,
+# proven, finished, or "is done".
+_CLAIM_NOUNS = frozenset({"proof", "proofs", "solution", "solutions", "resolution", "resolved"})
+_NOUN_QUALIFIERS = frozenset(
+    {
+        "scheme",
+        "operator",
+        "numerical",
+        "weak",
+        "leray",
+        "mild",
+        "strong",
+        "assistant",
+        "lemma",
+        "estimate",
+        "estimates",
+        "approximate",
+    }
 )
-CLAIM_NOUN_RE = re.compile(_CLAIM_NOUN, re.IGNORECASE)
-_PROBLEM_NAME = (
-    rf"navier{_SEP}*stokes"
-    rf"|(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b"
-    rf"|clay{_SEP}+(?:millennium{_SEP}+)?(?:problem|prize)"
-    rf"|millennium{_SEP}+(?:problem|prize)"
-)
-BARE_SOLUTION_RE = re.compile(
-    rf"^(?:the\s+|a\s+|an\s+)?(?:{_PROBLEM_NAME})(?:\s+equations?)?\s+(?:the\s+|a\s+|an\s+)?solutions?$",
+_NOUN_PROXIMITY = 4
+_NOUN_RESCUE_BLOCK_RE = re.compile(
+    r"\b(?:complete|full|final|settled|solved|proven|finished)\b|\bis\s+done\b",
     re.IGNORECASE,
 )
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
@@ -166,8 +170,7 @@ BARE_SOLUTION_RE = re.compile(
 # win/wins/won/winning, award/awards/awarded/awarding, correct,
 # obtain/obtains/obtained/obtaining, done.
 CLAIM_VERB_RE = re.compile(
-    _CLAIM_NOUN
-    + r"|\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
+    r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
     r"\bestablish(?:es|ed|ing)?\b|"
     r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
@@ -256,13 +259,22 @@ NOTE_HOSTILE_DIGESTS = frozenset(
         "f514ae60147922b97e8d1bed3e4bb3b108366876cc77fff92b0ee181fd16d9cc",
         "2d48a24e8e8bd908b53d8ab81e7ca6320d50e5ce3260d522b549d4b02a8b308f",
         "6cf2bed0023c84a655f6aeba6f404f6674b03c061e5297462262ec5f07804e4b",
+        "d9b4323e416218d2514eca2acd82410ed976d4815bd7cf798208e28408f3213d",
     }
 )
 NOTE_HOSTILE_PHRASE_DIGEST = "3dedd643819c6059145438295590f166326d20c812fff8971bbd627078626fd1"
+# Whole tokens the inflection rule would otherwise split into a hostile stem.
+NOTE_ALLOW_TOKEN_DIGESTS = frozenset(
+    {
+        "2737596a7a48877e6afaa9719940a6d0c548e875b8ee72cbe389f1fcc0d442c7",
+    }
+)
 # Two-word technical phrases whose first word would otherwise match a hostile token.
 NOTE_EXEMPT_PHRASE_DIGESTS = frozenset(
     {
         "4f76b35955d6c947426a2f9fce18cc84c6368723c0e0d46817451e4b2280556f",
+        "fd753b0edd3df7d9657bf426696cf94b640c37c50953a2213685586829ae8b4f",
+        "99f60348c017becd964023ead3d29334482b6278c8379b5905f34fabb033c247",
     }
 )
 # Hyphenated technical compounds. Any other hyphenated compound is checked.
@@ -270,6 +282,8 @@ NOTE_EXEMPT_HYPHEN_DIGESTS = frozenset(
     {
         "b0515c3530385ed70aab8811467b5cd73ad2007389384959e3d232f8a1fabf60",
         "418f827bfd243359b42239c005cc21ab487cbee409904f9b61644b799ade00b1",
+        "aa45363e9c06f52ac87b1a7a461015183cf2879806ddf8abed403d39b16ee77b",
+        "c74b0d8465d47e3d11949fb1fbf9a5aa7868f09ad418b1d8d3cdd4c436622965",
     }
 )
 NOTE_SUFFIXES = ("ing", "ers", "ed", "ly")
@@ -1168,7 +1182,13 @@ def validate_curated_file(path: Path, payload: Any) -> dict[str, Any]:
         },
         ensure_ascii=False,
     )
-    overclaims = scan_overclaims(authored, path.name)
+    # json.dumps escapes a newline, so scan the why and caution strings raw too.
+    prose_parts = [authored]
+    prose_parts.extend(item["why"] for item in clean_lenses)
+    prose_parts.extend(item["why"] for item in clean_related)
+    if clean_caution is not None:
+        prose_parts.append(clean_caution["text"])
+    overclaims = scan_overclaims("\n".join(prose_parts), path.name)
     if overclaims:
         raise AtlasError(overclaims[0])
     return {
@@ -1466,22 +1486,76 @@ def prose_for_scan(text: str) -> str:
     return re.sub(r"\bR\s*\.\s*H\s*\.", " RH ", plain, flags=re.IGNORECASE)
 
 
-def bare_solution_claim(sentence: str) -> bool:
-    """True when the whole sentence is a guarded problem plus the noun solution."""
-    return BARE_SOLUTION_RE.fullmatch(sentence_key(sentence)) is not None
+def _claim_tokens(text: str) -> list[str]:
+    """Lowercase tokens with punctuation and possessives removed."""
+    lowered = text.lower().replace("\u2019", "'")
+    lowered = re.sub(r"(?<=[a-z])'s\b", "", lowered)
+    return [token for token in re.split(r"[^a-z0-9]+", lowered) if token]
 
 
-def claim_noun_present(sentence: str) -> bool:
-    return CLAIM_NOUN_RE.search(sentence) is not None or bare_solution_claim(sentence)
+def _problem_token_spans(tokens: list[str]) -> list[tuple[int, int]]:
+    """Half-open spans of RH, Riemann Hypothesis, Navier–Stokes, Clay, and Millennium."""
+    spans: list[tuple[int, int]] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token == "riemann" and index + 1 < len(tokens) and tokens[index + 1] == "hypothesis":
+            spans.append((index, index + 2))
+            index += 2
+            continue
+        if token == "navier" and index + 1 < len(tokens) and tokens[index + 1] == "stokes":
+            spans.append((index, index + 2))
+            index += 2
+            continue
+        if token in {"rh", "clay", "millennium"}:
+            spans.append((index, index + 1))
+            index += 1
+            continue
+        index += 1
+    return spans
+
+
+def _qualifier_beside_noun(tokens: list[str], index: int) -> bool:
+    if index > 0 and tokens[index - 1] in _NOUN_QUALIFIERS:
+        return True
+    if index + 1 < len(tokens) and tokens[index + 1] in _NOUN_QUALIFIERS:
+        return True
+    if index >= 2 and tokens[index - 2] == "energy" and tokens[index - 1] == "inequality":
+        return True
+    if index + 2 < len(tokens) and tokens[index + 1] == "energy" and tokens[index + 2] == "inequality":
+        return True
+    return False
+
+
+def proximate_claim_noun(sentence: str) -> bool:
+    """True when a claim noun sits within four tokens of a guarded problem name.
+
+    A technical qualifier immediately beside the noun is allowed. That rescue
+    is ignored when the sentence also contains complete, full, final, settled,
+    solved, proven, finished, or the phrase "is done".
+    """
+    tokens = _claim_tokens(sentence)
+    spans = _problem_token_spans(tokens)
+    if not spans:
+        return False
+    blocked = _NOUN_RESCUE_BLOCK_RE.search(sentence) is not None
+    for index, token in enumerate(tokens):
+        if token not in _CLAIM_NOUNS:
+            continue
+        for start, end in spans:
+            if start <= index < end:
+                continue
+            gap = start - index - 1 if index < start else index - end
+            if gap <= _NOUN_PROXIMITY and (blocked or not _qualifier_beside_noun(tokens, index)):
+                return True
+    return False
 
 
 def mentions_guarded_problem(sentence: str) -> bool:
     """True when the problem itself is named, not when the name only modifies another noun."""
-    has_claim = CLAIM_VERB_RE.search(sentence) is not None or bare_solution_claim(sentence)
+    has_claim = CLAIM_VERB_RE.search(sentence) is not None
     clay = FLOW_CLAY_WORDING_WITH_CLAIM_RE if has_claim else FLOW_CLAY_WORDING_RE
-    # A claim noun beats the qualifier exception. An ordinary claim verb does not,
-    # so an energy inequality can still be the thing a verb addresses.
-    blocks_flow_exception = clay.search(sentence) is not None or claim_noun_present(sentence)
+    blocks_flow_exception = clay.search(sentence) is not None
     for match in PROBLEM_RE.finditer(sentence):
         qualified = FLOW_QUALIFIER_RE.match(sentence[match.end() :]) is not None
         if match.group("flow") and qualified and not blocks_flow_exception:
@@ -1500,15 +1574,18 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     regularity, smoothness, smooth (except when the next word is data), blow up,
     blow-up, blowup, existence, well-posed, or well-posedness. When a claim verb
     is also present, smooth cancels that exception even if the next word is data.
-    A claim noun also cancels the qualifier exception. A space, hyphen, or dash
-    may separate blow and up, or well and posed. Noun forms count in a claim
-    construction: complete proof, proof of, proof for, proof complete, the proof,
-    a proof, a solution of, a solution to, resolution, and a problem name followed
-    only by solution. A technical noun phrase does not. alt, title, content,
+    A space, hyphen, or dash may separate blow and up, or well and posed. A claim
+    noun within four tokens of a guarded problem name fails in either order.
+    Punctuation and possessives are ignored. scheme, operator, numerical, weak,
+    Leray, mild, strong, assistant, lemma, estimate, estimates, approximate, or
+    the pair energy inequality may sit immediately beside the noun. That rescue
+    does not apply when the sentence also contains complete, full, final,
+    settled, solved, proven, finished, or "is done". alt, title, content,
     aria-label, aria-description, placeholder, and data-* attributes are scanned
-    with the prose, including unquoted values. Text inside a data-upstream element
-    is scanned unless that element's text exactly equals the family's upstream
-    title, id, summary, or manuscript title.
+    with the prose, including unquoted values. Text nodes inside a data-upstream
+    element are left out only when that element's text exactly equals the
+    family's upstream title, id, summary, or manuscript title. Attributes on
+    that element and its descendants are still scanned.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1518,8 +1595,8 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
         key = sentence_key(chunk)
         if not key or key in allowed:
             continue
-        claimed = CLAIM_VERB_RE.search(key) is not None or bare_solution_claim(key)
-        if mentions_guarded_problem(key) and claimed:
+        claimed = CLAIM_VERB_RE.search(key) is not None
+        if (mentions_guarded_problem(key) and claimed) or proximate_claim_noun(key):
             failures.append(f"{label}: {key[:180]}")
     return failures
 
@@ -1545,6 +1622,8 @@ def _digest(token: str) -> str:
 
 def hostile_token(token: str) -> bool:
     """Whole-word match, plus a plural or inflection of a stored stem."""
+    if _digest(token) in NOTE_ALLOW_TOKEN_DIGESTS:
+        return False
     if _digest(token) in NOTE_HOSTILE_DIGESTS:
         return True
     for suffix in NOTE_SUFFIXES:
@@ -1567,7 +1646,8 @@ def note_tone_failure(note: str) -> bool:
     A stored hyphenated technical compound is left alone. Any other hyphenated
     compound fails when a part is hostile or the joined parts are hostile.
     Adjacent words that join into a hostile word fail too. A stored two-word
-    technical phrase is left alone.
+    technical phrase is left alone. A stored whole token is left alone when the
+    inflection rule would split it into a hostile stem.
     """
     lowered = normalize_scan_text(note).lower()
     exempt_spans: list[tuple[int, int]] = []
@@ -1834,14 +1914,26 @@ def visible_element_text(body: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", body))).strip()
 
 
+def blank_text_nodes(body: str) -> str:
+    """Drop text nodes and keep every tag, including attributes on descendants."""
+    return "".join(part for part in re.split(r"(<[^>]*>)", body) if part.startswith("<"))
+
+
 def exempt_upstream_text(html_text: str, allowed: set[str]) -> str:
-    """Blank a data-upstream element only when its text equals an allowed upstream string."""
+    """Blank text nodes of a data-upstream element whose text equals an allowed string.
+
+    Attributes on that element and on elements inside it stay in the scan.
+    """
     normalized = {re.sub(r"\s+", " ", item).strip() for item in allowed if item}
 
     def replacer(match: re.Match[str]) -> str:
         if visible_element_text(match.group("body")) not in normalized:
             return match.group(0)
-        return f"<{match.group('tag')}{match.group('attrs')}></{match.group('tag')}>"
+        return (
+            f"<{match.group('tag')}{match.group('attrs')}>"
+            f"{blank_text_nodes(match.group('body'))}"
+            f"</{match.group('tag')}>"
+        )
 
     return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
 
@@ -1932,7 +2024,11 @@ def exempt_upstream_by_family_link(html_text: str, families: list[dict[str, Any]
         allowed = by_id.get(found[-1], set()) if found else set()
         if visible_element_text(match.group("body")) not in {re.sub(r"\s+", " ", item).strip() for item in allowed}:
             return match.group(0)
-        return f"<{match.group('tag')}{match.group('attrs')}></{match.group('tag')}>"
+        return (
+            f"<{match.group('tag')}{match.group('attrs')}>"
+            f"{blank_text_nodes(match.group('body'))}"
+            f"</{match.group('tag')}>"
+        )
 
     return _UPSTREAM_ELEMENT_RE.sub(replacer, html_text)
 
