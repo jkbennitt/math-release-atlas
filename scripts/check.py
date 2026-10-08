@@ -165,6 +165,9 @@ def check_sync_does_not_write_status() -> list[str]:
     if "--force-with-lease" not in workflow:
         failures.append("sync workflow lost its lease check for a bot branch")
     failures.extend(check_sync_pr_selection())
+    advanced = check_sync_reuses_bot_pr_when_main_advances()
+    if advanced:
+        failures.append(advanced)
     if "pr merge" in workflow or "auto-merge" in workflow:
         failures.append("sync workflow merges a pull request")
     if "needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3'" not in workflow:
@@ -266,6 +269,108 @@ def check_sync_pr_selection() -> list[str]:
     if crowded.returncode == 0:
         failures.append("sync pull request filter allowed more than one match")
     return failures
+
+
+def check_sync_reuses_bot_pr_when_main_advances() -> str | None:
+    """Main moving forward must not look like a human edit of the open bot pull request."""
+    bot = "github-actions[bot]"
+    bot_email = "41898282+github-actions[bot]@users.noreply.github.com"
+    script = ROOT / "scripts" / "sync_push_plan.sh"
+    if not script.is_file():
+        return "sync push plan is missing"
+    plan_text = script.read_text(encoding="utf-8")
+    if "origin/main..sync-existing" not in plan_text:
+        return "sync push plan does not compare against origin/main"
+    workflow = (ROOT / ".github" / "workflows" / "sync.yml").read_text(encoding="utf-8")
+    if "fetch-depth: 0" not in workflow or "scripts/sync_push_plan.sh" not in workflow:
+        return "sync publish checkout does not fetch full history"
+    if "refs/heads/main:refs/remotes/origin/main" not in workflow:
+        return "sync publish job does not fetch origin/main"
+
+    def commit(repo: Path, name: str, email: str, message: str, body: str) -> None:
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": name,
+            "GIT_AUTHOR_EMAIL": email,
+            "GIT_COMMITTER_NAME": name,
+            "GIT_COMMITTER_EMAIL": email,
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+        (repo / "f").write_text(body, encoding="utf-8")
+        subprocess.run(["git", "add", "f"], cwd=repo, env=env, check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", message], cwd=repo, env=env, check=True, capture_output=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        origin = Path(tmp) / "origin"
+        shallow = Path(tmp) / "shallow"
+        origin.mkdir()
+        subprocess.run(["git", "init", "-b", "main", str(origin)], check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "main A", "a\n")
+        subprocess.run(["git", "branch", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        subprocess.run(["git", "checkout", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        commit(origin, bot, bot_email, "bot B", "b\n")
+        subprocess.run(["git", "checkout", "main"], cwd=origin, check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "main C", "c\n")
+        subprocess.run(
+            ["git", "clone", "--no-local", "--depth", "1", "--branch", "main", str(origin), str(shallow)],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "fetch", "--no-tags", "origin", "upstream-sync:sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+        )
+        shallow_log = subprocess.run(
+            ["git", "log", "--format=%s", "HEAD..sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if "main A" not in shallow_log.stdout.splitlines():
+            return "shallow history did not reproduce the false human commit"
+        subprocess.run(["git", "fetch", "--unshallow", "origin"], cwd=shallow, check=True, capture_output=True)
+        reuse = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "upstream-sync",
+                "42",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            ],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if reuse.stdout != "mode=reuse\nbranch=upstream-sync\nnumber=42\n":
+            return f"sync plan did not reuse the bot pull request: {reuse.stdout!r}"
+        subprocess.run(["git", "checkout", "upstream-sync"], cwd=origin, check=True, capture_output=True)
+        commit(origin, "Ada", "ada@example.com", "human D", "d\n")
+        subprocess.run(
+            ["git", "fetch", "--no-tags", "origin", "+upstream-sync:sync-existing"],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+        )
+        fresh = subprocess.run(
+            [
+                "bash",
+                str(script),
+                "upstream-sync",
+                "42",
+                "0123456789abcdef0123456789abcdef01234567",
+            ],
+            cwd=shallow,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if fresh.stdout != "mode=fresh\nbranch=upstream-sync-0123456789ab\nnumber=\n":
+            return f"sync plan reused a branch with a human commit: {fresh.stdout!r}"
+    return None
 
 
 def _calls_named(func, name: str) -> bool:

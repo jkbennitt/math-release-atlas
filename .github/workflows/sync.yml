@@ -130,6 +130,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: sync-payload
@@ -194,18 +195,17 @@ jobs:
           spec="$(git ls-remote "$remote" "refs/heads/${branch}")"
           if [ -n "$spec" ]; then
             # A new generated_at must not replace a human commit on this branch.
-            git fetch --no-tags "$remote" "refs/heads/${branch}:refs/heads/sync-existing"
-            human=false
-            while IFS=$'\t' read -r name email committer committer_email; do
-              [ -z "$name" ] && continue
-              if [ "$name" != "github-actions[bot]" ] || [ "$email" != "41898282+github-actions[bot]@users.noreply.github.com" ] || [ "$committer" != "github-actions[bot]" ] || [ "$committer_email" != "41898282+github-actions[bot]@users.noreply.github.com" ]; then
-                human=true
-                break
-              fi
-            done < <(git log --format='%an%x09%ae%x09%cn%x09%ce' HEAD..sync-existing)
-            if [ "$human" = true ]; then
+            # Fetch full main so commits already on main are not unique to this branch.
+            git fetch --no-tags "$remote" "+refs/heads/main:refs/remotes/origin/main" "refs/heads/${branch}:refs/heads/sync-existing"
+            plan="$(bash scripts/sync_push_plan.sh "$branch" "$number" "$NEW")"
+            mode="$(printf '%s\n' "$plan" | sed -n 's/^mode=//p')"
+            if [ "$mode" = fresh ]; then
               echo "Leaving ${branch} in place because it has a human commit." >&2
               fresh="upstream-sync-${NEW:0:12}"
+              if [ "$fresh" != "$(printf '%s\n' "$plan" | sed -n 's/^branch=//p')" ]; then
+                echo "Refusing an unexpected fresh branch name." >&2
+                exit 1
+              fi
               if git ls-remote "$remote" "refs/heads/${fresh}" | grep -q .; then
                 echo "Refusing to overwrite existing ${fresh}." >&2
                 exit 1
@@ -214,9 +214,12 @@ jobs:
               git push "$remote" "HEAD:refs/heads/${fresh}"
               branch="$fresh"
               number=""
-            else
+            elif [ "$mode" = reuse ]; then
               sha="${spec%%$'\t'*}"
               git push --force-with-lease="refs/heads/${branch}:${sha}" "$remote" "HEAD:refs/heads/${branch}"
+            else
+              echo "Sync branch plan failed." >&2
+              exit 1
             fi
           else
             git push "$remote" "HEAD:refs/heads/${branch}"

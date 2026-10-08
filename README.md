@@ -48,7 +48,8 @@ repository script. It commits that data. If one sync pull request from the
 Actions app is already open on this repository, it updates that pull request
 by number. A pull request from another repository is ignored. Two matching
 pull requests stop the job. A human commit on the sync branch is left in
-place, and the job opens a separate branch instead of replacing it. It never
+place, and the job opens a separate branch instead of replacing it. A commit
+already on main does not count as an edit of the sync branch. It never
 merges that pull request. The site updates only after the pull request is
 merged and the Pages workflow runs.
 
