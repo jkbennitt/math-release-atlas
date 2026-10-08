@@ -262,10 +262,13 @@ a.tag:hover { text-decoration: underline; }
 }
 .site-footer p { margin: 0.25rem 0; }
 
+tr[hidden] { display: none; }
+
 @media (max-width: 800px) {
   .stats { grid-template-columns: 1fr 1fr; }
   .site-header .wrap { flex-direction: column; align-items: start; }
   table, tbody, tr, td { display: block; width: 100%; }
+  tr[hidden] { display: none; }
   thead, thead tr { display: block; }
   thead tr {
     display: flex;
