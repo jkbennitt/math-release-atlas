@@ -79,7 +79,7 @@ a:hover { text-decoration: none; }
   font-size: 0.92rem;
 }
 
-nav { display: flex; gap: 0.9rem; }
+nav { display: flex; flex-wrap: wrap; gap: 0.9rem; }
 nav a {
   color: var(--ink);
   text-decoration: none;
@@ -233,7 +233,7 @@ blockquote {
 a.tag { color: var(--ink); text-decoration: none; }
 a.tag:hover { text-decoration: underline; }
 
-.family h2, .lens-page h2 {
+.family h2, .lens-page h2, .graph-page h2, .status-page h2 {
   font-family: var(--serif);
   font-size: 1.25rem;
   margin: 1.4rem 0 0.4rem;
@@ -243,6 +243,26 @@ a.tag:hover { text-decoration: underline; }
 .family code, .provenance code, .lens-page code {
   font-family: var(--mono);
   font-size: 0.86em;
+}
+
+.edge-list { padding-left: 1.15rem; }
+.edge-list li { margin: 0.45rem 0; }
+.edge-list a, .status-list a { overflow-wrap: anywhere; }
+.graph-map {
+  width: 100%;
+  height: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.graph-map line.cite { stroke: var(--accent); stroke-width: 1.25; }
+.graph-map line.topic { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 5 4; }
+.graph-map .cite-arrow { fill: var(--accent); }
+.graph-map .topic-arrow { fill: var(--muted); }
+.graph-map text {
+  font-size: 12px;
+  fill: var(--ink);
+  font-family: var(--mono);
 }
 
 .prose { max-width: 68ch; }
@@ -265,6 +285,7 @@ a.tag:hover { text-decoration: underline; }
 tr[hidden] { display: none; }
 
 @media (max-width: 800px) {
+  .graph-map text { display: none; }
   .stats { grid-template-columns: 1fr 1fr; }
   .site-header .wrap { flex-direction: column; align-items: start; }
   table, tbody, tr, td { display: block; width: 100%; }

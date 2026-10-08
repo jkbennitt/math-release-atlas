@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-07T23:44:19+00:00",
+  "generated_at": "2026-10-08T01:42:55+00:00",
   "upstream": {
     "repo": "https://github.com/openai/math",
     "commit": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
@@ -121,7 +121,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "032",
+          "via": "OAI:The-rational-Hodge-conjecture-for-CM-abelian-varieties-September-30-2026",
+          "source": "preprints/Milnes-rationality-conjecture-for-abelian-varieties-September-23-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Milnes-rationality-conjecture-for-abelian-varieties-September-23-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "002",
@@ -161,7 +169,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "006",
+          "via": "OAI:Goldfelds-analytic-density-conjecture-and-the-2-converse-for-elliptic-curves-September-23-2026",
+          "source": "preprints/Exact-Birch-Swinnerton-Dyer-Formula-from-Low-Selmer-Corank-October-3-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Exact-Birch-Swinnerton-Dyer-Formula-from-Low-Selmer-Corank-October-3-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "003",
@@ -230,7 +246,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "023",
+          "via": "OAI:An-unconditional-first-moment-for-cubic-Gauss-sums-September-25-2026",
+          "source": "preprints/The-Quasi-Riemann-Hypothesis-September-30-2026/build/paper.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Quasi-Riemann-Hypothesis-September-30-2026/build/paper.tex"
+        }
+      ]
     },
     {
       "id": "004",
@@ -263,7 +287,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "006",
+          "via": "OAI:Goldfelds-analytic-density-conjecture-and-the-2-converse-for-elliptic-curves-September-23-2026",
+          "source": "preprints/A-pointwise-2-converse-for-elliptic-curves-with-rational-two-torsion-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-pointwise-2-converse-for-elliptic-curves-with-rational-two-torsion-September-24-2026/build/references.bib"
+        },
+        {
+          "to": "010",
+          "via": "OAI:Fontaine-Mazur-modularity-at-the-prime-2-September-23-2026",
+          "source": "preprints/Hilberts-tenth-problem-over-the-rational-numbers-September-24-2026/build/references/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Hilberts-tenth-problem-over-the-rational-numbers-September-24-2026/build/references/references.bib"
+        }
+      ]
     },
     {
       "id": "005",
@@ -295,7 +333,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "006",
@@ -328,7 +367,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "002",
+          "via": "OAI:The-two-primary-Birch-Swinnerton-Dyer-formula-in-Selmer-corank-at-most-one-September-24-2026",
+          "source": "preprints/Goldfelds-analytic-density-conjecture-and-the-2-converse-for-elliptic-curves-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Goldfelds-analytic-density-conjecture-and-the-2-converse-for-elliptic-curves-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "007",
@@ -369,7 +416,8 @@
         "subject": "Ordinary two-point correlations of multiplicative functions",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/ordinary-two-point-correlations.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "008",
@@ -403,7 +451,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "009",
@@ -449,7 +498,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "010",
@@ -489,7 +539,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "004",
+          "via": "OAI:Hilberts-tenth-problem-over-the-rational-numbers-September-24-2026",
+          "source": "preprints/Fontaine-Mazur-modularity-at-the-prime-2-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Fontaine-Mazur-modularity-at-the-prime-2-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "011",
@@ -529,7 +587,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "012",
@@ -561,7 +620,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "013",
@@ -598,7 +658,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "003",
+          "via": "OAI:The-Quasi-Riemann-Hypothesis-September-30-2026",
+          "source": "preprints/the-additive-indecomposability-of-the-primes-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/the-additive-indecomposability-of-the-primes-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "014",
@@ -673,7 +741,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "015",
@@ -719,7 +788,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "016",
@@ -766,7 +836,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "003",
+          "via": "OAI:The-Quasi-Riemann-Hypothesis-September-30-2026",
+          "source": "preprints/The-E-times-CM-Component-of-Zilber-Pink-for-Curves-in-A2-September-24-2026/build/paper.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-E-times-CM-Component-of-Zilber-Pink-for-Curves-in-A2-September-24-2026/build/paper.tex"
+        }
+      ]
     },
     {
       "id": "017",
@@ -802,7 +880,8 @@
         "subject": "The irrationality exponent of π",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/irrationality-exponent-of-pi.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "018",
@@ -835,7 +914,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "019",
@@ -868,7 +948,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "002",
+          "via": "OAI:The-Selmer-converse-for-elliptic-curves-at-every-prime-September-24-2026",
+          "source": "preprints/The-p-adic-section-conjecture-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-p-adic-section-conjecture-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "020",
@@ -902,7 +990,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "021",
@@ -941,7 +1030,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "022",
@@ -967,7 +1057,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "023",
@@ -999,7 +1090,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "024",
@@ -1036,7 +1128,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "011",
+          "via": "OAI:Weighted-Dilation-Graphs-Smooth-Shifted-Primes-and-Totient-Fibers-September-24-2026",
+          "source": "preprints/An-asymptotic-formula-for-the-number-of-totients-September-25-2026/build/source/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-asymptotic-formula-for-the-number-of-totients-September-25-2026/build/source/references.bib"
+        }
+      ]
     },
     {
       "id": "025",
@@ -1077,7 +1177,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "026",
@@ -1109,7 +1210,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "027",
@@ -1135,7 +1237,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "028",
@@ -1169,7 +1272,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "029",
@@ -1202,7 +1306,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "003",
+          "via": "OAI:The-Quasi-Riemann-Hypothesis-September-30-2026",
+          "source": "preprints/Primitive-roots-for-every-admissible-integer-base-October-4-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Primitive-roots-for-every-admissible-integer-base-October-4-2026/build/references.tex"
+        },
+        {
+          "to": "011",
+          "via": "OAI:Weighted-Dilation-Graphs-Smooth-Shifted-Primes-and-Totient-Fibers-September-24-2026",
+          "source": "preprints/Primitive-roots-for-every-admissible-integer-base-October-4-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Primitive-roots-for-every-admissible-integer-base-October-4-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "030",
@@ -1228,7 +1346,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "031",
@@ -1254,7 +1373,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "032",
@@ -1329,7 +1449,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "001",
+          "via": "OAI:Milnes-rationality-conjecture-for-abelian-varieties-September-23-2026",
+          "source": "preprints/The-rational-Hodge-conjecture-for-CM-abelian-varieties-September-30-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-rational-Hodge-conjecture-for-CM-abelian-varieties-September-30-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "033",
@@ -1389,7 +1517,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "034",
+          "via": "OAI:Log-abundance-in-characteristic-zero-September-24-2026",
+          "source": "preprints/Logarithmic-Kodaira-dimension-and-whole-fiber-variation-September-26-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Logarithmic-Kodaira-dimension-and-whole-fiber-variation-September-26-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "034",
@@ -1506,7 +1642,27 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "033",
+          "via": "OAI:Orbifold-and-logarithmic-Iitaka-subadditivity-September-26-2026",
+          "source": "preprints/Conditional-good-minimal-models-for-compact-Kahler-fourfolds-October-5-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Conditional-good-minimal-models-for-compact-Kahler-fourfolds-October-5-2026/build/references.bib"
+        },
+        {
+          "to": "036",
+          "via": "OAI:Minimal-models-and-Mori-fibre-spaces-for-generalized-log-canonical-Q-pairs-September-24-2026",
+          "source": "preprints/Log-abundance-for-compact-Kahler-spaces-under-logarithmic-Iitaka-subadditivity-October-4-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Log-abundance-for-compact-Kahler-spaces-under-logarithmic-Iitaka-subadditivity-October-4-2026/build/references.bib"
+        },
+        {
+          "to": "056",
+          "via": "OAI:Finite-ordinary-minimal-model-programs-on-compact-Kahler-fourfolds-October-5-2026",
+          "source": "preprints/Conditional-good-minimal-models-for-compact-Kahler-fourfolds-October-5-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Conditional-good-minimal-models-for-compact-Kahler-fourfolds-October-5-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "035",
@@ -1539,7 +1695,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "036",
@@ -1586,7 +1743,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "033",
+          "via": "OAI:Orbifold-and-logarithmic-Iitaka-subadditivity-September-26-2026",
+          "source": "preprints/Numerical-semiampleness-of-nef-adjoint-classes-on-compact-Kahler-manifolds-October-4-2026/build/companions.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Numerical-semiampleness-of-nef-adjoint-classes-on-compact-Kahler-manifolds-October-4-2026/build/companions.bib"
+        },
+        {
+          "to": "034",
+          "via": "OAI:Log-abundance-in-characteristic-zero-September-24-2026",
+          "source": "preprints/Minimal-models-and-Mori-fibre-spaces-for-generalized-log-canonical-Q-pairs-September-24-2026/build/references/bibliography.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Minimal-models-and-Mori-fibre-spaces-for-generalized-log-canonical-Q-pairs-September-24-2026/build/references/bibliography.bib"
+        }
+      ]
     },
     {
       "id": "037",
@@ -1619,7 +1790,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "038",
@@ -1645,7 +1817,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "039",
@@ -1707,7 +1880,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "040",
@@ -1733,7 +1907,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "041",
@@ -1766,7 +1941,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "042",
@@ -1792,7 +1968,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "060",
+          "via": "OAI:Global-Spherical-Shells-on-Minimal-Surfaces-of-Class-VII-September-24-2026",
+          "source": "preprints/Every-complex-K3-surface-is-Oka-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Every-complex-K3-surface-is-Oka-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "043",
@@ -1818,7 +2002,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "044",
@@ -1844,7 +2029,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "046",
@@ -1877,7 +2063,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "057",
+          "via": "OAI:The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026",
+          "source": "preprints/A-surface-counterexample-to-Shafarevich-holomorphic-convexity-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-surface-counterexample-to-Shafarevich-holomorphic-convexity-September-23-2026/build/references.bib"
+        },
+        {
+          "to": "058",
+          "via": "OAI:Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026",
+          "source": "preprints/A-surface-counterexample-to-Shafarevich-holomorphic-convexity-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-surface-counterexample-to-Shafarevich-holomorphic-convexity-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "047",
@@ -1911,7 +2111,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "048",
@@ -1937,7 +2138,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "049",
@@ -1985,7 +2187,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "047",
+          "via": "OAI:An-explicit-failure-of-complex-affine-space-cancellation-September-23-2026",
+          "source": "preprints/A-stable-coordinate-that-is-not-a-coordinate-in-four-variables-October-5-2026/build/source/refs.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-stable-coordinate-that-is-not-a-coordinate-in-four-variables-October-5-2026/build/source/refs.bib"
+        }
+      ]
     },
     {
       "id": "050",
@@ -2019,7 +2229,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "051",
@@ -2045,7 +2256,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "038",
+          "via": "OAI:Fujitas-freeness-conjecture-September-23-2026",
+          "source": "preprints/Canonical-ampleness-of-compact-hyperbolic-Kahler-manifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Canonical-ampleness-of-compact-hyperbolic-Kahler-manifolds-September-23-2026/build/references.bib"
+        },
+        {
+          "to": "058",
+          "via": "OAI:Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026",
+          "source": "preprints/Canonical-ampleness-of-compact-hyperbolic-Kahler-manifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Canonical-ampleness-of-compact-hyperbolic-Kahler-manifolds-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "052",
@@ -2091,7 +2316,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "053",
@@ -2117,7 +2343,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "054",
@@ -2143,7 +2370,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "055",
@@ -2176,7 +2404,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "056",
@@ -2230,7 +2459,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "034",
+          "via": "OAI:Log-abundance-in-characteristic-zero-September-24-2026",
+          "source": "preprints/Termination-for-projective-log-canonical-fourfolds-with-rational-boundary-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Termination-for-projective-log-canonical-fourfolds-with-rational-boundary-September-24-2026/build/references.bib"
+        },
+        {
+          "to": "066",
+          "via": "OAI:Bounded-klt-complements-for-Fano-contractions-September-25-2026",
+          "source": "preprints/Termination-for-projective-log-canonical-fourfolds-with-rational-boundary-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Termination-for-projective-log-canonical-fourfolds-with-rational-boundary-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "057",
@@ -2270,7 +2513,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "033",
+          "via": "OAI:Orbifold-and-logarithmic-Iitaka-subadditivity-September-26-2026",
+          "source": "preprints/The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026/build/references.bib"
+        },
+        {
+          "to": "046",
+          "via": "OAI:A-surface-counterexample-to-Shafarevich-holomorphic-convexity-September-23-2026",
+          "source": "preprints/The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "058",
@@ -2311,7 +2568,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "034",
+          "via": "OAI:Log-abundance-in-characteristic-zero-September-24-2026",
+          "source": "preprints/Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026/build/references.bib"
+        },
+        {
+          "to": "057",
+          "via": "OAI:The-abelianity-conjecture-for-special-compact-Kahler-manifolds-September-23-2026",
+          "source": "preprints/Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Semialgebraic-universal-covers-of-normal-projective-varieties-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "059",
@@ -2344,7 +2615,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "064",
+          "via": "OAI:Topological-triviality-of-mu-constant-families-of-surface-singularities-September-24-2026",
+          "source": "preprints/Ambiently-homeomorphic-isolated-hypersurfaces-of-multiplicities-two-and-three-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Ambiently-homeomorphic-isolated-hypersurfaces-of-multiplicities-two-and-three-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "060",
@@ -2370,7 +2649,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "062",
@@ -2396,7 +2676,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "063",
@@ -2422,7 +2703,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "064",
@@ -2448,7 +2730,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "065",
@@ -2481,7 +2764,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "066",
@@ -2514,7 +2798,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "036",
+          "via": "OAI:Minimal-models-and-Mori-fibre-spaces-for-generalized-log-canonical-Q-pairs-September-24-2026",
+          "source": "preprints/Uniform-Cartier-sections-for-Fano-type-contractions-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Uniform-Cartier-sections-for-Fano-type-contractions-September-25-2026/build/references.bib"
+        },
+        {
+          "to": "037",
+          "via": "OAI:The-ordinary-double-point-gap-in-every-dimension-September-24-2026",
+          "source": "preprints/Uniform-Cartier-sections-for-Fano-type-contractions-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Uniform-Cartier-sections-for-Fano-type-contractions-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "067",
@@ -2540,7 +2838,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "068",
@@ -2608,7 +2907,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "069",
@@ -2634,7 +2934,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "071",
@@ -2673,7 +2974,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "072",
@@ -2728,7 +3030,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "073",
@@ -2767,7 +3070,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "166",
+          "via": "OAI:The-higher-dimensional-Erdos-distinct-distances-conjecture-September-23-2026",
+          "source": "preprints/The-Falconer-distance-conjecture-in-all-dimensions-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Falconer-distance-conjecture-in-all-dimensions-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "074",
@@ -2800,7 +3111,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "077",
+          "via": "OAI:Elliptic-capacity-propagation-and-Fourier-restriction-to-the-sphere-September-24-2026",
+          "source": "preprints/The-Kakeya-maximal-conjecture-in-three-dimensions-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Kakeya-maximal-conjecture-in-three-dimensions-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "075",
@@ -2826,7 +3145,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "076",
@@ -2879,7 +3199,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "144",
+          "via": "OAI:A-smooth-three-torus-diffeomorphism-with-simple-Lebesgue-spectrum-September-23-2026",
+          "source": "preprints/Asymptotically-minimal-maxima-of-real-Littlewood-polynomials-September-23-2026/build/refs.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Asymptotically-minimal-maxima-of-real-Littlewood-polynomials-September-23-2026/build/refs.bib"
+        }
+      ]
     },
     {
       "id": "077",
@@ -2912,7 +3240,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "074",
+          "via": "OAI:The-Kakeya-maximal-conjecture-in-three-dimensions-September-23-2026",
+          "source": "preprints/Diagonal-Fourier-extension-for-positively-curved-surfaces-in-three-dimensions-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Diagonal-Fourier-extension-for-positively-curved-surfaces-in-three-dimensions-September-24-2026/build/references.bib"
+        },
+        {
+          "to": "078",
+          "via": "OAI:Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026",
+          "source": "preprints/Elliptic-capacity-propagation-and-Fourier-restriction-to-the-sphere-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Elliptic-capacity-propagation-and-Fourier-restriction-to-the-sphere-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "078",
@@ -2938,7 +3280,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "077",
+          "via": "OAI:Elliptic-capacity-propagation-and-Fourier-restriction-to-the-sphere-September-24-2026",
+          "source": "preprints/Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026/build/references.bib"
+        },
+        {
+          "to": "079",
+          "via": "OAI:Critical-local-smoothing-for-the-three-dimensional-wave-equation-September-24-2026",
+          "source": "preprints/Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "079",
@@ -2964,7 +3320,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "078",
+          "via": "OAI:Bochner-Riesz-Multipliers-in-Three-Dimensions-September-24-2026",
+          "source": "preprints/Critical-local-smoothing-for-the-three-dimensional-wave-equation-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Critical-local-smoothing-for-the-three-dimensional-wave-equation-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "080",
@@ -2997,7 +3361,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "081",
@@ -3031,7 +3396,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "082",
@@ -3079,7 +3445,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "083",
@@ -3111,7 +3478,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "084",
@@ -3150,7 +3518,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "085",
@@ -3189,7 +3558,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "086",
@@ -3215,7 +3585,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "087",
@@ -3286,7 +3657,15 @@
         "subject": "Symmetric and general Mahler conjectures",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/symmetric-and-general-mahler-conjectures.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "343",
+          "via": "OAI:Symplectic-Ball-Packings-in-Higher-Dimensions-September-23-2026",
+          "source": "preprints/Symplectic-Balls-in-Symmetric-Polar-Products-September-22-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Symplectic-Balls-in-Symmetric-Polar-Products-September-22-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "088",
@@ -3341,7 +3720,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "089",
@@ -3389,7 +3769,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "090",
@@ -3457,7 +3838,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "091",
@@ -3491,7 +3873,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "092",
@@ -3537,7 +3920,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "093",
@@ -3563,7 +3947,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "094",
@@ -3597,7 +3982,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "098",
+          "via": "OAI:A-doubling-Hilbert-subset-with-no-finite-dimensional-bi-Lipschitz-embedding-September-25-2026",
+          "source": "preprints/Subpolynomial-dimension-reduction-in-Lp-September-23-2026/build/paper.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Subpolynomial-dimension-reduction-in-Lp-September-23-2026/build/paper.tex"
+        }
+      ]
     },
     {
       "id": "095",
@@ -3645,7 +4038,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "096",
@@ -3679,7 +4073,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "102",
+          "via": "OAI:The-Unique-Games-Theorem-September-23-2026",
+          "source": "preprints/The-Gaussian-Propeller-Bound-in-Every-Dimension-September-24-2026/build/sources/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Gaussian-Propeller-Bound-in-Every-Dimension-September-24-2026/build/sources/references.tex"
+        }
+      ]
     },
     {
       "id": "097",
@@ -3713,7 +4115,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "098",
@@ -3754,7 +4157,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "094",
+          "via": "OAI:Subpolynomial-dimension-reduction-in-Lp-September-23-2026",
+          "source": "preprints/A-doubling-Hilbert-subset-with-no-finite-dimensional-bi-Lipschitz-embedding-September-25-2026/build/main.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-doubling-Hilbert-subset-with-no-finite-dimensional-bi-Lipschitz-embedding-September-25-2026/build/main.tex"
+        }
+      ]
     },
     {
       "id": "099",
@@ -3815,7 +4226,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "121",
+          "via": "OAI:An-Almost-Linear-Approximation-Scheme-for-Edit-Distance-September-24-2026",
+          "source": "preprints/Tree-Constructions-for-the-l1-Distortion-of-Binary-Edit-Distance-September-27-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Tree-Constructions-for-the-l1-Distortion-of-Binary-Edit-Distance-September-27-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "100",
@@ -3878,7 +4297,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "101",
@@ -3904,7 +4324,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "102",
@@ -3994,7 +4415,27 @@
         "subject": "Ordinary NP-hardness at the basic semidefinite threshold",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/basic-semidefinite-threshold-np-hardness.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "096",
+          "via": "OAI:The-Gaussian-Propeller-Bound-in-Every-Dimension-September-24-2026",
+          "source": "preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib"
+        },
+        {
+          "to": "105",
+          "via": "OAI:Perfect-completeness-for-2-to-1-games-September-23-2026",
+          "source": "preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib"
+        },
+        {
+          "to": "117",
+          "via": "OAI:Constant-factor-hardness-of-uniform-sparsest-cut-September-24-2026",
+          "source": "preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Unique-Games-Theorem-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "103",
@@ -4020,7 +4461,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "104",
@@ -4080,7 +4522,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "105",
@@ -4114,7 +4557,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "106",
+          "via": "OAI:Hardness-of-finding-large-independent-sets-in-three-colorable-graphs-September-24-2026",
+          "source": "preprints/Perfect-completeness-for-2-to-1-games-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Perfect-completeness-for-2-to-1-games-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "106",
@@ -4148,7 +4599,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "105",
+          "via": "OAI:Perfect-completeness-for-2-to-1-games-September-23-2026",
+          "source": "preprints/Hardness-of-finding-large-independent-sets-in-three-colorable-graphs-September-24-2026/build/source/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Hardness-of-finding-large-independent-sets-in-three-colorable-graphs-September-24-2026/build/source/references.bib"
+        }
+      ]
     },
     {
       "id": "107",
@@ -4205,7 +4664,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "108",
@@ -4242,7 +4702,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "109",
@@ -4268,7 +4729,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "130",
+          "via": "OAI:An-explicit-power-saving-for-the-exact-discrete-Fourier-transform-September-25-2026",
+          "source": "preprints/Integer-multiplication-below-n-log-n-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Integer-multiplication-below-n-log-n-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "110",
@@ -4312,7 +4781,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "111",
@@ -4349,7 +4819,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "112",
@@ -4383,7 +4854,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "113",
@@ -4453,7 +4925,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "114",
@@ -4494,7 +4967,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "115",
+          "via": "OAI:An-FPRAS-for-Cell-Bounded-Contingency-Tables-September-24-2026",
+          "source": "preprints/An-FPRAS-for-Common-Integer-Polymatroid-Bases-with-Binary-Capacities-October-5-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-FPRAS-for-Common-Integer-Polymatroid-Bases-with-Binary-Capacities-October-5-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "115",
@@ -4533,7 +5014,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "114",
+          "via": "OAI:Approximate-counting-of-common-bases-of-two-matroids-September-23-2026",
+          "source": "preprints/An-FPRAS-for-Cell-Bounded-Contingency-Tables-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-FPRAS-for-Cell-Bounded-Contingency-Tables-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "116",
@@ -4586,7 +5075,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "117",
@@ -4627,7 +5117,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "102",
+          "via": "OAI:The-Unique-Games-Theorem-September-23-2026",
+          "source": "preprints/Constant-factor-hardness-of-uniform-sparsest-cut-September-24-2026/build/source/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Constant-factor-hardness-of-uniform-sparsest-cut-September-24-2026/build/source/references.bib"
+        }
+      ]
     },
     {
       "id": "118",
@@ -4661,7 +5159,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "119",
@@ -4707,7 +5206,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "120",
@@ -4733,7 +5233,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "121",
@@ -4765,7 +5266,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "099",
+          "via": "OAI:Edit-Distance-in-l1-Matching-Bounds-up-to-Constants-in-the-Exponent-September-27-2026",
+          "source": "preprints/An-Almost-Linear-Approximation-Scheme-for-Edit-Distance-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-Almost-Linear-Approximation-Scheme-for-Edit-Distance-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "122",
@@ -4811,7 +5320,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "124",
@@ -4843,7 +5353,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "125",
@@ -4899,7 +5410,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "126",
@@ -4936,7 +5448,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "127",
@@ -4970,7 +5483,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "128",
@@ -5004,7 +5518,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "129",
@@ -5059,7 +5574,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "130",
@@ -5100,7 +5616,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "109",
+          "via": "OAI:Integer-multiplication-below-n-log-n-September-23-2026",
+          "source": "preprints/An-explicit-power-saving-for-the-exact-discrete-Fourier-transform-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-explicit-power-saving-for-the-exact-discrete-Fourier-transform-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "131",
@@ -5132,7 +5656,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "113",
+          "via": "OAI:A-Fully-Polynomial-Randomized-Approximation-Scheme-for-Perfect-Matchings-in-General-Graphs-September-23-2026",
+          "source": "preprints/Polynomial-Mixing-of-the-Switch-Chain-for-Every-Graphical-Degree-Sequence-September-25-2026/build/sources/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Polynomial-Mixing-of-the-Switch-Chain-for-Every-Graphical-Degree-Sequence-September-25-2026/build/sources/references.tex"
+        },
+        {
+          "to": "115",
+          "via": "OAI:Exact-Uniform-Sampling-of-Contingency-Tables-with-Arbitrary-Margins-September-24-2026",
+          "source": "preprints/Polynomial-Mixing-of-the-Switch-Chain-for-Every-Graphical-Degree-Sequence-September-25-2026/build/sources/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Polynomial-Mixing-of-the-Switch-Chain-for-Every-Graphical-Degree-Sequence-September-25-2026/build/sources/references.tex"
+        }
+      ]
     },
     {
       "id": "132",
@@ -5166,7 +5704,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "133",
@@ -5234,7 +5773,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "134",
@@ -5280,7 +5820,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "135",
@@ -5312,7 +5853,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "136",
@@ -5338,7 +5880,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "137",
@@ -5364,7 +5907,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "138",
@@ -5397,7 +5941,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "139",
@@ -5431,7 +5976,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "140",
@@ -5544,7 +6090,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "141",
@@ -5570,7 +6117,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "142",
@@ -5596,7 +6144,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "029",
+          "via": "OAI:Primitive-roots-for-every-admissible-integer-base-October-4-2026",
+          "source": "preprints/Deterministic-Polynomial-Factorization-over-Prime-Fields-October-4-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Deterministic-Polynomial-Factorization-over-Prime-Fields-October-4-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "143",
@@ -5637,7 +6193,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "144",
@@ -5669,7 +6226,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "145",
+          "via": "OAI:Rokhlins-multiple-mixing-problem-for-one-transformation-September-23-2026",
+          "source": "preprints/A-smooth-three-torus-diffeomorphism-with-simple-Lebesgue-spectrum-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-smooth-three-torus-diffeomorphism-with-simple-Lebesgue-spectrum-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "145",
@@ -5701,7 +6266,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "146",
@@ -5743,7 +6309,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "147",
@@ -5776,7 +6343,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "148",
@@ -5815,7 +6383,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "149",
@@ -5854,7 +6423,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "150",
@@ -5893,7 +6463,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "151",
@@ -5925,7 +6496,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "152",
@@ -5957,7 +6529,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "153",
@@ -5983,7 +6556,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "154",
@@ -6030,7 +6604,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "086",
+          "via": "OAI:An-L3-bound-for-the-trilinear-Hilbert-transform-October-5-2026",
+          "source": "preprints/Pointwise-convergence-of-fourfold-ergodic-averages-for-mixing-transformations-October-4-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Pointwise-convergence-of-fourfold-ergodic-averages-for-mixing-transformations-October-4-2026/build/references.tex"
+        },
+        {
+          "to": "145",
+          "via": "OAI:Rokhlins-multiple-mixing-problem-for-one-transformation-September-23-2026",
+          "source": "preprints/Pointwise-Multiple-Ergodic-Averages-for-Mixing-Transformations-October-4-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Pointwise-Multiple-Ergodic-Averages-for-Mixing-Transformations-October-4-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "155",
@@ -6064,7 +6652,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "156",
@@ -6098,7 +6687,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "157",
@@ -6144,7 +6734,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "158",
@@ -6185,7 +6776,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "159",
@@ -6221,7 +6813,15 @@
         "subject": "Quasipolynomial bounds for arithmetic progressions",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/quasipolynomial-arithmetic-progressions.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "160",
+          "via": "OAI:Quantitative-Superexponential-Bounds-for-van-der-Waerden-Numbers-September-23-2026",
+          "source": "preprints/Quasipolynomial-Bounds-for-Arithmetic-Progressions-September-23-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Quasipolynomial-Bounds-for-Arithmetic-Progressions-September-23-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "160",
@@ -6255,7 +6855,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "159",
+          "via": "OAI:Quasipolynomial-Bounds-for-Arithmetic-Progressions-September-23-2026",
+          "source": "preprints/Quantitative-Superexponential-Bounds-for-van-der-Waerden-Numbers-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Quantitative-Superexponential-Bounds-for-van-der-Waerden-Numbers-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "161",
@@ -6287,7 +6895,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "162",
@@ -6340,7 +6949,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "164",
@@ -6366,7 +6976,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "165",
@@ -6414,7 +7025,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "166",
@@ -6440,7 +7052,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "167",
@@ -6486,7 +7099,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "168",
@@ -6518,7 +7132,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "169",
@@ -6550,7 +7165,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "170",
@@ -6594,7 +7210,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "171",
@@ -6620,7 +7237,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "172",
@@ -6686,7 +7304,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "173",
@@ -6720,7 +7339,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "174",
@@ -6766,7 +7386,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "175",
@@ -6821,7 +7442,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "176",
@@ -6855,7 +7477,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "175",
+          "via": "OAI:Integral-and-fractional-expectation-thresholds-are-equivalent-September-23-2026",
+          "source": "preprints/The-second-Kahn-Kalai-conjecture-September-24-2026/build/source/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-second-Kahn-Kalai-conjecture-September-24-2026/build/source/references.tex"
+        }
+      ]
     },
     {
       "id": "177",
@@ -6887,7 +7517,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "178",
@@ -6913,7 +7544,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "179",
@@ -6952,7 +7584,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "180",
@@ -6984,7 +7617,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "181",
@@ -7018,7 +7652,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "182",
@@ -7064,7 +7699,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "003",
+          "via": "OAI:The-Quasi-Riemann-Hypothesis-September-30-2026",
+          "source": "preprints/A-Power-Saving-for-Polynomial-Differences-at-Prime-Arguments-October-5-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Power-Saving-for-Polynomial-Differences-at-Prime-Arguments-October-5-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "183",
@@ -7096,7 +7739,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "184",
@@ -7137,7 +7781,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "170",
+          "via": "OAI:The-Sharp-Logarithmic-Exponent-of-r-5-t-September-24-2026",
+          "source": "preprints/A-Logarithmic-Independence-Bound-for-Clique-Free-Graphs-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Logarithmic-Independence-Bound-for-Clique-Free-Graphs-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "185",
@@ -7176,7 +7828,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "186",
@@ -7215,7 +7868,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "175",
+          "via": "OAI:Integral-and-fractional-expectation-thresholds-are-equivalent-September-23-2026",
+          "source": "preprints/A-Sharp-Threshold-Bound-for-Monotone-Graph-Properties-September-25-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Sharp-Threshold-Bound-for-Monotone-Graph-Properties-September-25-2026/build/references.tex"
+        },
+        {
+          "to": "176",
+          "via": "OAI:The-second-Kahn-Kalai-conjecture-September-24-2026",
+          "source": "preprints/A-Sharp-Threshold-Bound-for-Monotone-Graph-Properties-September-25-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Sharp-Threshold-Bound-for-Monotone-Graph-Properties-September-25-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "187",
@@ -7257,7 +7924,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "188",
@@ -7289,7 +7957,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "189",
@@ -7321,7 +7990,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "190",
@@ -7355,7 +8025,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "191",
@@ -7387,7 +8058,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "192",
@@ -7419,7 +8091,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "193",
@@ -7445,7 +8118,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "194",
+          "via": "OAI:Lechs-multiplicity-conjecture-September-23-2026",
+          "source": "preprints/Positivity-of-Serres-Intersection-Multiplicity-September-23-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Positivity-of-Serres-Intersection-Multiplicity-September-23-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "194",
@@ -7477,7 +8158,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "195",
+          "via": "OAI:A-Complete-Local-Domain-Without-a-Small-Cohen-Macaulay-Module-September-23-2026",
+          "source": "preprints/Lechs-multiplicity-conjecture-September-23-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Lechs-multiplicity-conjecture-September-23-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "195",
@@ -7503,7 +8192,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "196",
@@ -7537,7 +8227,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "197",
@@ -7615,7 +8306,21 @@
         "subject": "Kaplansky's direct-finiteness conjecture in characteristic two",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/kaplansky-direct-finiteness-characteristic-two.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "196",
+          "via": "OAI:A-Torsion-Free-Group-Algebra-with-Zero-Divisors-September-23-2026",
+          "source": "preprints/A-Torsion-Free-Group-Algebra-That-Is-Not-Directly-Finite-October-4-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Torsion-Free-Group-Algebra-That-Is-Not-Directly-Finite-October-4-2026/build/references.bib"
+        },
+        {
+          "to": "250",
+          "via": "OAI:A-universal-group-of-type-F-infinity-September-23-2026",
+          "source": "preprints/A-Counterexample-to-Kaplanskys-Direct-Finiteness-Conjecture-in-Characteristic-Two-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Counterexample-to-Kaplanskys-Direct-Finiteness-Conjecture-in-Characteristic-Two-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "198",
@@ -7656,7 +8361,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "199",
+          "via": "OAI:A-counterexample-to-Tachikawas-second-conjecture-September-23-2026",
+          "source": "preprints/An-algebra-of-infinite-little-finitistic-dimension-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/An-algebra-of-infinite-little-finitistic-dimension-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "199",
@@ -7704,7 +8417,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "198",
+          "via": "OAI:An-algebra-of-infinite-little-finitistic-dimension-September-23-2026",
+          "source": "preprints/A-counterexample-to-Tachikawas-second-conjecture-September-23-2026/build/refs.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-counterexample-to-Tachikawas-second-conjecture-September-23-2026/build/refs.bib"
+        }
+      ]
     },
     {
       "id": "200",
@@ -7737,7 +8458,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "201",
@@ -7763,7 +8485,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "202",
@@ -7789,7 +8512,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "203",
@@ -7822,7 +8546,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "202",
+          "via": "OAI:The-Blockwise-Alperin-Weight-Conjecture-September-23-2026",
+          "source": "preprints/Donovans-Conjecture-over-Algebraic-Closures-of-Prime-Fields-September-24-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Donovans-Conjecture-over-Algebraic-Closures-of-Prime-Fields-September-24-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "204",
@@ -7848,7 +8580,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "205",
@@ -7894,7 +8627,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "206",
@@ -7933,7 +8667,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "207",
@@ -7979,7 +8714,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "208",
@@ -8005,7 +8741,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "209",
@@ -8038,7 +8775,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "210",
@@ -8079,7 +8817,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "211",
@@ -8153,7 +8892,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "212",
@@ -8199,7 +8939,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "213",
@@ -8245,7 +8986,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "214",
@@ -8282,7 +9024,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "215",
@@ -8344,7 +9087,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "216",
@@ -8405,7 +9149,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "217",
@@ -8438,7 +9183,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "218",
@@ -8505,7 +9251,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "219",
@@ -8538,7 +9285,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "220",
@@ -8596,7 +9344,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "221",
@@ -8632,7 +9381,15 @@
         "subject": "The Mézard–Parisi formula for diluted spin glasses",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/mezard-parisi-formula.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "235",
+          "via": "OAI:Computing-the-Random-3-SAT-Threshold-September-27-2026",
+          "source": "preprints/The-Mezard-Parisi-formula-for-diluted-spin-glasses-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Mezard-Parisi-formula-for-diluted-spin-glasses-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "222",
@@ -8695,7 +9452,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "223",
@@ -8756,7 +9514,27 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "218",
+          "via": "OAI:Quenched-SLE3-Universality-for-the-Weak-Random-Bond-Ising-Model-October-5-2026",
+          "source": "preprints/Quenched-SLE-Universality-for-Weakly-Disordered-FK-Ising-Interfaces-October-5-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Quenched-SLE-Universality-for-Weakly-Disordered-FK-Ising-Interfaces-October-5-2026/build/references.tex"
+        },
+        {
+          "to": "224",
+          "via": "OAI:Cardys-formula-for-critical-Poisson-Voronoi-percolation-September-23-2026",
+          "source": "preprints/Square-lattice-FK-interfaces-and-nested-loops-for-1-leq-q-lt-4-September-23-2026/build/refs.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Square-lattice-FK-interfaces-and-nested-loops-for-1-leq-q-lt-4-September-23-2026/build/refs.bib"
+        },
+        {
+          "to": "225",
+          "via": "OAI:The-Gaussian-free-field-limit-of-the-balanced-six-vertex-model-with-variance-multiplier-1-over-arcsin-c-over-2-September-23-2026",
+          "source": "preprints/Natural-Occupation-Measures-for-Critical-Square-Lattice-FK-Interfaces-October-5-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Natural-Occupation-Measures-for-Critical-Square-Lattice-FK-Interfaces-October-5-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "224",
@@ -8796,7 +9574,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "223",
+          "via": "OAI:Square-lattice-FK-interfaces-and-nested-loops-for-1-leq-q-lt-4-September-23-2026",
+          "source": "preprints/Cardys-formula-for-critical-Poisson-Voronoi-percolation-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Cardys-formula-for-critical-Poisson-Voronoi-percolation-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "225",
@@ -8822,7 +9608,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "226",
@@ -8848,7 +9635,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "227",
@@ -8953,7 +9741,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "228",
@@ -9006,7 +9795,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "229",
@@ -9057,7 +9847,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "230",
@@ -9096,7 +9887,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "231",
@@ -9133,7 +9925,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "236",
+          "via": "OAI:The-sharp-factor-of-IID-threshold-for-the-free-Ising-model-on-regular-trees-September-26-2026",
+          "source": "preprints/The-free-uniform-spanning-forest-is-a-factor-of-IID-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-free-uniform-spanning-forest-is-a-factor-of-IID-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "232",
@@ -9173,7 +9973,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "225",
+          "via": "OAI:The-Gaussian-free-field-limit-of-the-balanced-six-vertex-model-with-variance-multiplier-1-over-arcsin-c-over-2-September-23-2026",
+          "source": "preprints/Gaussian-free-field-limits-of-weighted-integer-Lipschitz-heights-September-25-2026/build/references/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Gaussian-free-field-limits-of-weighted-integer-Lipschitz-heights-September-25-2026/build/references/references.bib"
+        }
+      ]
     },
     {
       "id": "233",
@@ -9199,7 +10007,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "225",
+          "via": "OAI:The-Gaussian-free-field-limit-of-the-balanced-six-vertex-model-with-variance-multiplier-1-over-arcsin-c-over-2-September-23-2026",
+          "source": "preprints/The-joint-scaling-limit-of-critical-Ashkin-Teller-currents-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-joint-scaling-limit-of-critical-Ashkin-Teller-currents-September-25-2026/build/references.bib"
+        },
+        {
+          "to": "232",
+          "via": "OAI:The-Gaussian-free-field-limit-of-integer-Lipschitz-heights-with-two-arc-boundary-data-September-25-2026",
+          "source": "preprints/The-joint-scaling-limit-of-critical-Ashkin-Teller-currents-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-joint-scaling-limit-of-critical-Ashkin-Teller-currents-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "234",
@@ -9231,7 +10053,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "222",
+          "via": "OAI:The-free-energy-of-the-Ising-random-perceptron-September-24-2026",
+          "source": "preprints/All-temperature-pressure-for-orthogonally-invariant-Ising-spin-glasses-September-25-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/All-temperature-pressure-for-orthogonally-invariant-Ising-spin-glasses-September-25-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "235",
@@ -9299,7 +10129,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "221",
+          "via": "OAI:The-Mezard-Parisi-formula-for-diluted-spin-glasses-September-23-2026",
+          "source": "preprints/Computing-the-Random-3-SAT-Threshold-September-27-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Computing-the-Random-3-SAT-Threshold-September-27-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "236",
@@ -9333,7 +10171,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "231",
+          "via": "OAI:The-free-uniform-spanning-forest-is-a-factor-of-IID-September-25-2026",
+          "source": "preprints/The-sharp-factor-of-IID-threshold-for-the-free-Ising-model-on-regular-trees-September-26-2026/build/references/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-sharp-factor-of-IID-threshold-for-the-free-Ising-model-on-regular-trees-September-26-2026/build/references/references.bib"
+        }
+      ]
     },
     {
       "id": "237",
@@ -9459,7 +10305,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "238",
@@ -9636,7 +10483,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "239",
@@ -9669,7 +10517,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "240",
@@ -9710,7 +10559,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "241",
@@ -9744,7 +10594,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "242",
@@ -9778,7 +10629,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "243",
@@ -9824,7 +10676,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "244",
@@ -9863,7 +10716,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "245",
@@ -9895,7 +10749,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "246",
@@ -9927,7 +10782,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "247",
@@ -9966,7 +10822,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "248",
@@ -10000,7 +10857,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "214",
+          "via": "OAI:Nonuniqueness-of-percolation-on-nonamenable-quasi-transitive-graphs-September-24-2026",
+          "source": "preprints/Thompsons-group-F-is-nonamenable-September-23-2026/build/references/sources.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Thompsons-group-F-is-nonamenable-September-23-2026/build/references/sources.bib"
+        },
+        {
+          "to": "251",
+          "via": "OAI:Unitarizability-Implies-Amenability-for-Countable-Groups-September-23-2026",
+          "source": "preprints/Thompsons-group-F-is-nonamenable-September-23-2026/build/references/sources.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Thompsons-group-F-is-nonamenable-September-23-2026/build/references/sources.bib"
+        }
+      ]
     },
     {
       "id": "249",
@@ -10032,7 +10903,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "250",
@@ -10090,7 +10962,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "251",
@@ -10136,7 +11009,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "288",
+          "via": "OAI:Kadisons-similarity-theorem-through-uniform-derivation-estimates-September-23-2026",
+          "source": "preprints/Unitarizability-Implies-Amenability-for-Countable-Groups-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Unitarizability-Implies-Amenability-for-Countable-Groups-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "252",
@@ -10170,7 +11051,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "253",
@@ -10204,7 +11086,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "254",
@@ -10264,7 +11147,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "255",
@@ -10296,7 +11180,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "256",
@@ -10335,7 +11220,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "257",
@@ -10369,7 +11255,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "258",
@@ -10402,7 +11289,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "259",
@@ -10428,7 +11316,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "260",
@@ -10544,7 +11433,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "261",
@@ -10583,7 +11473,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "262",
@@ -10631,7 +11522,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "263",
@@ -10684,7 +11576,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "264",
@@ -10724,7 +11617,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "265",
@@ -10757,7 +11651,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "266",
@@ -10801,7 +11696,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "267",
@@ -10861,7 +11757,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "268",
@@ -10894,7 +11791,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "269",
@@ -10950,7 +11848,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "270",
@@ -10983,7 +11882,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "271",
@@ -11040,7 +11940,8 @@
         "subject": "Spontaneous magnetization in the quantum Heisenberg ferromagnet",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/spontaneous-magnetization-quantum-heisenberg-ferromagnet.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "272",
@@ -11077,7 +11978,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "273",
@@ -11109,7 +12011,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "274",
@@ -11157,7 +12060,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "275",
@@ -11196,7 +12100,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "263",
+          "via": "OAI:Uniform-excess-charge-for-Coulomb-molecules-and-the-outer-radius-of-neutral-atoms-September-24-2026",
+          "source": "preprints/Continuum-Coulomb-hardness-with-binary-nuclear-charges-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Continuum-Coulomb-hardness-with-binary-nuclear-charges-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "276",
@@ -11230,7 +12142,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "277",
@@ -11264,7 +12177,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "278",
@@ -11290,7 +12204,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "279",
@@ -11322,7 +12237,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "280",
@@ -11354,7 +12270,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "281",
@@ -11398,7 +12315,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "282",
@@ -11424,7 +12342,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "283",
@@ -11450,7 +12369,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "284",
@@ -11476,7 +12396,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "285",
@@ -11516,7 +12437,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "207",
+          "via": "OAI:The-Bass-trace-conjecture-for-complex-group-rings-September-24-2026",
+          "source": "preprints/A-Torsion-Free-Counterexample-to-the-Kadison-Kaplansky-Projection-Conjecture-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-Torsion-Free-Counterexample-to-the-Kadison-Kaplansky-Projection-Conjecture-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "286",
@@ -11549,7 +12478,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "287",
+          "via": "OAI:An-isomorphism-of-the-free-group-factors-September-23-2026",
+          "source": "preprints/The-arithmetic-category-and-stable-recovery-of-lattice-factors-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-arithmetic-category-and-stable-recovery-of-lattice-factors-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "287",
@@ -11585,7 +12522,8 @@
         "subject": "Isomorphism of free group factors",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/free-group-factor-isomorphism.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "288",
@@ -11622,7 +12560,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "251",
+          "via": "OAI:Unitarizability-Implies-Amenability-for-Countable-Groups-September-23-2026",
+          "source": "preprints/Kadisons-similarity-theorem-through-uniform-derivation-estimates-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Kadisons-similarity-theorem-through-uniform-derivation-estimates-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "289",
@@ -11668,7 +12614,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "288",
+          "via": "OAI:Kadisons-similarity-theorem-through-uniform-derivation-estimates-September-23-2026",
+          "source": "preprints/Universal-strong-Kadison-Kastler-stability-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Universal-strong-Kadison-Kastler-stability-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "290",
@@ -11709,7 +12663,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "291",
@@ -11764,7 +12719,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "299",
+          "via": "OAI:The-Kirchberg-Rordam-character-criterion-September-25-2026",
+          "source": "preprints/Nuclear-dimension-and-Jiang-Su-stability-without-elementary-subquotients-September-23-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Nuclear-dimension-and-Jiang-Su-stability-without-elementary-subquotients-September-23-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "292",
@@ -11796,7 +12759,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "293",
@@ -11862,7 +12826,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "294",
@@ -11901,7 +12866,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "295",
@@ -11933,7 +12899,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "296",
@@ -11972,7 +12939,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "287",
+          "via": "OAI:An-isomorphism-of-the-free-group-factors-September-23-2026",
+          "source": "preprints/Relative-generation-and-the-generator-problem-for-finite-factors-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Relative-generation-and-the-generator-problem-for-finite-factors-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "297",
@@ -12004,7 +12979,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "298",
@@ -12036,7 +13012,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "287",
+          "via": "OAI:An-isomorphism-of-the-free-group-factors-September-23-2026",
+          "source": "preprints/A-finite-entropy-separation-of-microstates-and-nonmicrostates-free-entropy-September-25-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-finite-entropy-separation-of-microstates-and-nonmicrostates-free-entropy-September-25-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "299",
@@ -12070,7 +13054,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "291",
+          "via": "OAI:Nuclear-dimension-and-Jiang-Su-stability-without-elementary-subquotients-September-23-2026",
+          "source": "preprints/The-Kirchberg-Rordam-character-criterion-September-25-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Kirchberg-Rordam-character-criterion-September-25-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "300",
@@ -12103,7 +13095,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "301",
@@ -12129,7 +13122,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "291",
+          "via": "OAI:Nuclear-dimension-and-Jiang-Su-stability-without-elementary-subquotients-September-23-2026",
+          "source": "preprints/The-trace-cone-classifies-Razak-Jacelon-stabilizations-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-trace-cone-classifies-Razak-Jacelon-stabilizations-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "302",
@@ -12162,7 +13163,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "303",
@@ -12199,7 +13201,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "304",
@@ -12225,7 +13228,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "305",
@@ -12265,7 +13269,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "306",
@@ -12291,7 +13296,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "307",
@@ -12330,7 +13336,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "285",
+          "via": "OAI:A-Torsion-Free-Counterexample-to-Reduced-Baum-Connes-Injectivity-September-23-2026",
+          "source": "preprints/A-counterexample-to-the-coarse-Novikov-conjecture-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/A-counterexample-to-the-coarse-Novikov-conjecture-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "308",
@@ -12363,7 +13377,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "309",
@@ -12389,7 +13404,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "310",
@@ -12415,7 +13431,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "311",
@@ -12441,7 +13458,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "312",
@@ -12475,7 +13493,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "313",
@@ -12501,7 +13520,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "314",
@@ -12527,7 +13547,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "315",
@@ -12553,7 +13574,21 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "060",
+          "via": "OAI:Global-Spherical-Shells-on-Minimal-Surfaces-of-Class-VII-September-24-2026",
+          "source": "preprints/The-Singer-conjecture-in-dimension-four-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Singer-conjecture-in-dimension-four-September-25-2026/build/references.bib"
+        },
+        {
+          "to": "305",
+          "via": "OAI:A-PD4-group-without-an-aspherical-manifold-model-September-24-2026",
+          "source": "preprints/The-Singer-conjecture-in-dimension-four-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Singer-conjecture-in-dimension-four-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "316",
@@ -12579,7 +13614,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "317",
@@ -12611,7 +13647,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "312",
+          "via": "OAI:The-Grothendieck-homotopy-hypothesis-via-elementary-expansions-September-24-2026",
+          "source": "preprints/Thomason-Model-Structures-in-Every-Strict-Higher-Dimension-September-25-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Thomason-Model-Structures-in-Every-Strict-Higher-Dimension-September-25-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "318",
@@ -12665,7 +13709,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "319",
@@ -12691,7 +13736,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "311",
+          "via": "OAI:Stabilizer-Orbits-and-Thick-Tensor-Ideals-of-Dualizable-Kn-Local-Spectra-September-24-2026",
+          "source": "preprints/Counterexamples-to-the-Hahn-Wilson-conjecture-at-height-two-September-26-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Counterexamples-to-the-Hahn-Wilson-conjecture-at-height-two-September-26-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "320",
@@ -12717,7 +13770,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "305",
+          "via": "OAI:A-marked-tensor-obstruction-to-four-dimensional-disk-embedding-September-24-2026",
+          "source": "preprints/Nonhomeomorphic-closed-aspherical-four-manifolds-with-the-same-homotopy-type-October-4-2026/build/references.tex",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Nonhomeomorphic-closed-aspherical-four-manifolds-with-the-same-homotopy-type-October-4-2026/build/references.tex"
+        }
+      ]
     },
     {
       "id": "321",
@@ -12743,7 +13804,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "322",
@@ -12777,7 +13839,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "323",
@@ -12809,7 +13872,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "324",
@@ -12857,7 +13921,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "322",
+          "via": "OAI:A-positive-solution-to-Tingleys-problem-September-23-2026",
+          "source": "preprints/Lipschitz-Equivalent-Separable-Banach-Spaces-Need-Not-Be-Linearly-Isomorphic-September-24-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Lipschitz-Equivalent-Separable-Banach-Spaces-Need-Not-Be-Linearly-Isomorphic-September-24-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "325",
@@ -12922,7 +13994,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "326",
@@ -12956,7 +14029,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "327",
@@ -12990,7 +14064,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "328",
@@ -13024,7 +14099,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "329",
@@ -13058,7 +14134,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "330",
@@ -13095,7 +14172,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "331",
@@ -13214,7 +14292,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "332",
@@ -13240,7 +14319,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "333",
@@ -13272,7 +14352,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "334",
+          "via": "OAI:A-Smooth-Metric-with-No-Local-Isometric-Immersion-into-Three-Space-September-24-2026",
+          "source": "preprints/Smooth-isometric-immersions-of-closed-surfaces-into-Euclidean-four-space-September-23-2026/build/refs.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Smooth-isometric-immersions-of-closed-surfaces-into-Euclidean-four-space-September-23-2026/build/refs.bib"
+        }
+      ]
     },
     {
       "id": "334",
@@ -13306,7 +14394,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "335",
@@ -13339,7 +14428,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "336",
@@ -13379,7 +14469,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "335",
+          "via": "OAI:Positive-scalar-curvature-forces-rational-inessentiality-September-23-2026",
+          "source": "preprints/Positive-scalar-curvature-and-uniform-codimension-two-width-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Positive-scalar-curvature-and-uniform-codimension-two-width-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "337",
@@ -13423,7 +14521,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "338",
@@ -13449,7 +14548,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "339",
@@ -13475,7 +14575,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "340",
@@ -13501,7 +14602,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "341",
@@ -13527,7 +14629,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "342",
+          "via": "OAI:Taming-implies-compatibility-on-four-manifolds-September-23-2026",
+          "source": "preprints/Deforming-hypersymplectic-four-manifolds-to-hyperkahler-triples-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Deforming-hypersymplectic-four-manifolds-to-hyperkahler-triples-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "342",
@@ -13561,7 +14671,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "341",
+          "via": "OAI:Deforming-hypersymplectic-four-manifolds-to-hyperkahler-triples-September-23-2026",
+          "source": "preprints/Taming-implies-compatibility-on-four-manifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Taming-implies-compatibility-on-four-manifolds-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "343",
@@ -13598,7 +14716,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "344",
@@ -13624,7 +14743,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "345",
@@ -13650,7 +14770,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "346",
@@ -13683,7 +14804,15 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": [
+        {
+          "to": "349",
+          "via": "OAI:The-Solomon-Yau-least-volume-theorem-September-23-2026",
+          "source": "preprints/Almost-everywhere-regularity-of-stationary-integral-varifolds-September-23-2026/build/references.bib",
+          "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/Almost-everywhere-regularity-of-stationary-integral-varifolds-September-23-2026/build/references.bib"
+        }
+      ]
     },
     {
       "id": "347",
@@ -13745,7 +14874,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "348",
@@ -13791,7 +14921,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "349",
@@ -13817,7 +14948,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "350",
@@ -13878,7 +15010,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "351",
@@ -13918,7 +15051,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "352",
@@ -13944,7 +15078,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "353",
@@ -13983,7 +15118,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "354",
@@ -14015,7 +15151,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "355",
@@ -14041,7 +15178,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "356",
@@ -14082,7 +15220,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "357",
@@ -14108,7 +15247,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "358",
@@ -14142,7 +15282,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "359",
@@ -14183,7 +15324,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "360",
@@ -14231,7 +15373,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "361",
@@ -14272,7 +15415,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "362",
@@ -14310,7 +15454,8 @@
         "subject": "The three-dimensional relativistic Vlasov–Maxwell system",
         "url": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/reasoning_traces/relativistic-vlasov-maxwell.pdf"
       },
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "363",
@@ -14349,7 +15494,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "364",
@@ -14382,7 +15528,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "365",
@@ -14430,7 +15577,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "366",
@@ -14456,7 +15604,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "367",
@@ -14488,7 +15637,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "368",
@@ -14521,7 +15671,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "369",
@@ -14553,7 +15704,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "370",
@@ -14587,7 +15739,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "371",
@@ -14619,7 +15772,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "372",
@@ -14651,7 +15805,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "373",
@@ -14683,7 +15838,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "374",
@@ -14715,7 +15871,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "375",
@@ -14741,7 +15898,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "376",
@@ -14854,7 +16012,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     },
     {
       "id": "377",
@@ -14880,7 +16039,8 @@
         "scope": "Partial progress."
       },
       "reasoning_trace": null,
-      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+      "upstream_sha": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "citations": []
     }
   ]
 }

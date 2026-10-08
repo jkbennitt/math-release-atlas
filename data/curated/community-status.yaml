@@ -1,0 +1,14 @@
+# Community status vocabulary for data/curated/NNN.yaml.
+# Family files in this catalogue use claimed. Another status needs evidence.
+vocabulary:
+  - id: claimed
+    evidence: optional
+  - id: community-checking
+    evidence: required
+  - id: independently-checked
+    evidence: required
+  - id: disputed
+    evidence: required
+  - id: retracted
+    evidence: required
+rule: "Every status change is a human-approved pull request. Jason approves each change."

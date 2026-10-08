@@ -1,0 +1,199 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+
+interface Point {
+  id: string;
+  x: number;
+  y: number;
+  lx: number;
+  ly: number;
+}
+
+const citations = atlas.families.flatMap((family) =>
+  family.cites.map((edge) => ({
+    from: family.id,
+    to: edge.to,
+    via: edge.via,
+    source: edge.source,
+    url: edge.url,
+  })),
+);
+
+const shared = atlas.families.flatMap((family) =>
+  family.related
+    .filter((item) => item.kind === "shared-topic")
+    .map((item) => ({
+      from: family.id,
+      to: item.to,
+      why: item.why,
+      source: item.source,
+    })),
+);
+
+const involved = [
+  ...new Set([
+    ...citations.flatMap((edge) => [edge.from, edge.to]),
+    ...shared.flatMap((edge) => [edge.from, edge.to]),
+  ]),
+].sort();
+
+const size = 1000;
+const center = size / 2;
+const orbit = 400;
+const labelOrbit = 456;
+const count = Math.max(involved.length, 1);
+const nodes: Point[] = involved.map((id, index) => {
+  const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
+  return {
+    id,
+    x: center + orbit * Math.cos(angle),
+    y: center + orbit * Math.sin(angle),
+    lx: center + labelOrbit * Math.cos(angle),
+    ly: center + labelOrbit * Math.sin(angle),
+  };
+});
+const at = new Map(nodes.map((node) => [node.id, node]));
+const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]));
+---
+
+<Base
+  title="Citation graph · Math Release Atlas"
+  description="Directed citation edges between result families, each linked to the upstream file that contains the reference."
+>
+  <article class="graph-page">
+    <h1>Citation graph</h1>
+    <p>
+      Each citation is an <code>OAI:</code> key in an upstream manuscript source. The list names
+      every directed edge and links the file that contains the key. The map below draws the same
+      edges. Nothing on this page needs JavaScript.
+    </p>
+    <p>
+      {citations.length} directed links among {citedFamilies.size} families in this catalogue.
+    </p>
+
+    <h2>Map</h2>
+    {
+      nodes.length === 0 ? (
+        <p>No families are linked yet, so there is no map.</p>
+      ) : (
+        <svg
+          class="graph-map"
+          viewBox={`0 0 ${size} ${size}`}
+          aria-labelledby="citation-map-title"
+        >
+          <title id="citation-map-title">Map of the citation edges listed below.</title>
+          <defs>
+            <marker
+              id="cite-arrow"
+              viewBox="0 0 8 8"
+              refX="8"
+              refY="4"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" class="cite-arrow" />
+            </marker>
+            <marker
+              id="topic-arrow"
+              viewBox="0 0 8 8"
+              refX="8"
+              refY="4"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L8,4 L0,8 Z" class="topic-arrow" />
+            </marker>
+          </defs>
+          {shared.map((edge) => {
+            const from = at.get(edge.from);
+            const to = at.get(edge.to);
+            if (!from || !to) {
+              return null;
+            }
+            return (
+              <line
+                class="topic"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                marker-end="url(#topic-arrow)"
+              />
+            );
+          })}
+          {citations.map((edge) => {
+            const from = at.get(edge.from);
+            const to = at.get(edge.to);
+            if (!from || !to) {
+              return null;
+            }
+            return (
+              <line
+                class="cite"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                marker-end="url(#cite-arrow)"
+              />
+            );
+          })}
+          {nodes.map((node) => (
+            <a href={`${base}f/${node.id}/`}>
+              <text x={node.lx} y={node.ly} text-anchor="middle" dominant-baseline="middle">
+                {node.id}
+              </text>
+            </a>
+          ))}
+        </svg>
+      )
+    }
+
+    <h2>Citation edges</h2>
+    {
+      citations.length === 0 ? (
+        <p>No citation edges are recorded in this catalogue.</p>
+      ) : (
+        <ul class="edge-list">
+          {citations.map((edge) => (
+            <li>
+              <a href={`${base}f/${edge.from}/`}>{edge.from}</a>
+              {" cites "}
+              <a href={`${base}f/${edge.to}/`}>{edge.to}</a>
+              <span class="meta"> · {edge.via}</span>
+              <p class="meta">
+                Receipt: <a href={edge.url}>{edge.source}</a>
+              </p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <h2>Shared-topic links</h2>
+    <p>Dashed lines are shared-topic links: our grouping, not a citation.</p>
+    {
+      shared.length === 0 ? (
+        <p>This catalogue records no shared-topic links.</p>
+      ) : (
+        <ul class="edge-list">
+          {shared.map((edge) => (
+            <li>
+              <a href={`${base}f/${edge.from}/`}>{edge.from}</a>
+              {" · "}
+              <a href={`${base}f/${edge.to}/`}>{edge.to}</a>
+              <p>{edge.why}</p>
+              <p class="meta">Source: {edge.source}</p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+  </article>
+</Base>

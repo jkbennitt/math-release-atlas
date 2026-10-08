@@ -11,6 +11,8 @@ const base = import.meta.env.BASE_URL;
 const here = Astro.url.pathname;
 const homeCurrent = here === base ? "page" : undefined;
 const lensCurrent = here.startsWith(`${base}lens`) ? "page" : undefined;
+const graphCurrent = here.startsWith(`${base}graph`) ? "page" : undefined;
+const statusCurrent = here.startsWith(`${base}status`) ? "page" : undefined;
 const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
 ---
 
@@ -33,6 +35,8 @@ const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
         <nav aria-label="Primary">
           <a href={base} aria-current={homeCurrent}>Table</a>
           <a href={`${base}lens/`} aria-current={lensCurrent}>Lenses</a>
+          <a href={`${base}graph/`} aria-current={graphCurrent}>Graph</a>
+          <a href={`${base}status/`} aria-current={statusCurrent}>Status</a>
           <a href={`${base}about/`} aria-current={aboutCurrent}>About</a>
         </nav>
       </div>

@@ -19,6 +19,7 @@ const { family } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const status = family.community?.status ?? "claimed";
 const statusLabel = communityLabelFor(status);
+const history = family.community?.history ?? [];
 const commit = family.upstream_sha;
 ---
 
@@ -68,12 +69,72 @@ const commit = family.upstream_sha;
         <ul class="notes">
           {family.community.evidence.map((item) => (
             <li>
-              <a href={item.url}>{item.who}</a>
-              <span class="meta">
-                {" "}
-                · {item.date}. Source: {item.source}
-              </span>
-              <p>{item.quote}</p>
+              <a href={item.url}>{item.date}</a>
+              <p>{item.note}</p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <h2>Status history</h2>
+    <p>
+      Current status: {statusLabel}. <a href={`${base}status/`}>Status vocabulary</a>
+    </p>
+    {
+      history.length === 0 ? (
+        <p>No approved status change is recorded.</p>
+      ) : (
+        <ol class="notes">
+          {history.map((item) => (
+            <li>
+              <span>{communityLabelFor(item.status)}</span>
+              <span class="meta"> · {item.date}</span>
+              {item.url ? (
+                <span class="meta">
+                  {" "}
+                  · <a href={item.url}>Evidence</a>
+                </span>
+              ) : null}
+              <p>{item.note}</p>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+
+    <h2>Cites</h2>
+    {
+      family.cites.length === 0 ? (
+        <p>This family cites no other family in the upstream sources.</p>
+      ) : (
+        <ul class="edge-list">
+          {family.cites.map((edge) => (
+            <li>
+              <a href={`${base}f/${edge.to}/`}>{edge.to}</a>
+              <span class="meta"> · {edge.via}</span>
+              <p class="meta">
+                Receipt: <a href={edge.url}>{edge.source}</a>
+              </p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <h2>Cited by</h2>
+    {
+      family.cited_by.length === 0 ? (
+        <p>No other family cites this one in the upstream sources.</p>
+      ) : (
+        <ul class="edge-list">
+          {family.cited_by.map((edge) => (
+            <li>
+              <a href={`${base}f/${edge.from}/`}>{edge.from}</a>
+              <span class="meta"> · {edge.via}</span>
+              <p class="meta">
+                Receipt: <a href={edge.url}>{edge.source}</a>
+              </p>
             </li>
           ))}
         </ul>
