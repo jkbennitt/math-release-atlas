@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import inspect
+import json
 import os
 import subprocess
 import sys
@@ -153,10 +154,17 @@ def check_sync_does_not_write_status() -> list[str]:
         failures.append("sync schedule is not daily at 10:17 UTC")
     if "0 13 * * 1" in workflow or 'cron: "0 ' in workflow:
         failures.append("sync cron is not the daily off-peak schedule")
-    if "upstream-sync-*)" not in workflow or 'branch="upstream-sync"' not in workflow:
-        failures.append("sync does not reuse one open pull request branch")
-    if 'branch="upstream-sync-${' in workflow:
-        failures.append("sync names a new branch for each commit")
+    if "scripts/sync_pr_select.jq" not in workflow:
+        failures.append("sync workflow does not use the pull request filter")
+    if "pr list --head" in workflow:
+        failures.append("sync workflow selects a pull request by branch name")
+    if 'gh pr edit "$number"' not in workflow:
+        failures.append("sync workflow does not edit a pull request by number")
+    if "human commit" not in workflow or "upstream-sync-${NEW:0:12}" not in workflow:
+        failures.append("sync workflow overwrites a human commit")
+    if "--force-with-lease" not in workflow:
+        failures.append("sync workflow lost its lease check for a bot branch")
+    failures.extend(check_sync_pr_selection())
     if "pr merge" in workflow or "auto-merge" in workflow:
         failures.append("sync workflow merges a pull request")
     if "needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3'" not in workflow:
@@ -188,6 +196,75 @@ def check_sync_does_not_write_status() -> list[str]:
         for status in sorted(COMMUNITY_STATUSES):
             if status in source:
                 failures.append(f"{label} names community status {status}")
+    return failures
+
+
+def check_sync_pr_selection() -> list[str]:
+    """The sync pull request filter ignores forks and human branches."""
+    jq_path = ROOT / "scripts" / "sync_pr_select.jq"
+    fixture_path = ROOT / "scripts" / "testdata" / "sync-prs.json"
+    if not jq_path.is_file() or not fixture_path.is_file():
+        return ["sync pull request filter is missing"]
+    jq_text = jq_path.read_text(encoding="utf-8")
+    failures: list[str] = []
+    for required in ("isCrossRepository", "app/github-actions", "github-actions[bot]", "upstream-sync"):
+        if required not in jq_text:
+            failures.append(f"sync pull request filter is missing {required}")
+    if "error(" not in jq_text:
+        failures.append("sync pull request filter does not fail when more than one match exists")
+    selected = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path), str(fixture_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if selected.returncode != 0:
+        failures.append("sync pull request filter rejected the bot pull request")
+        return failures
+    try:
+        chosen = json.loads(selected.stdout)
+    except json.JSONDecodeError:
+        failures.append("sync pull request filter did not return JSON")
+        return failures
+    if chosen != [{"number": 42, "headRefName": "upstream-sync"}]:
+        failures.append("sync pull request filter kept a fork or a human branch")
+    app_only = [
+        {
+            "number": 7,
+            "isCrossRepository": False,
+            "author": {"login": "app/github-actions", "is_bot": True},
+            "headRefName": "upstream-sync-0123456789ab",
+        }
+    ]
+    app_run = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path)],
+        input=json.dumps(app_only),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if app_run.returncode != 0 or json.loads(app_run.stdout) != [
+        {"number": 7, "headRefName": "upstream-sync-0123456789ab"}
+    ]:
+        failures.append("sync pull request filter rejected the Actions app")
+    doubled = json.loads(fixture_path.read_text(encoding="utf-8"))
+    doubled.append(
+        {
+            "number": 43,
+            "isCrossRepository": False,
+            "author": {"login": "github-actions[bot]", "is_bot": True},
+            "headRefName": "upstream-sync-abcdefabcdef",
+        }
+    )
+    crowded = subprocess.run(
+        ["jq", "-e", "-f", str(jq_path)],
+        input=json.dumps(doubled),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if crowded.returncode == 0:
+        failures.append("sync pull request filter allowed more than one match")
     return failures
 
 

@@ -44,10 +44,13 @@ runner. It reads upstream HEAD. When that commit matches the one recorded
 in the catalogue, the job exits and does not open a pull request. When the
 commit changed, a read-only job regenerates the data files and runs the
 build and the wording checks. A second job does not run the install or any
-repository script. It commits that data. If a sync pull request is already
-open, it updates that same branch and pull request. Otherwise it opens one.
-It never merges that pull request. The site updates only after the pull
-request is merged and the Pages workflow runs.
+repository script. It commits that data. If one sync pull request from the
+Actions app is already open on this repository, it updates that pull request
+by number. A pull request from another repository is ignored. Two matching
+pull requests stop the job. A human commit on the sync branch is left in
+place, and the job opens a separate branch instead of replacing it. It never
+merges that pull request. The site updates only after the pull request is
+merged and the Pages workflow runs.
 
 If the parsed family and manuscript counts disagree with the count sentence
 in the upstream README, the pull request is still opened and the check fails.

@@ -1,0 +1,38 @@
+[
+  {
+    "number": 8,
+    "isCrossRepository": true,
+    "author": {"login": "github-actions[bot]", "is_bot": true},
+    "headRefName": "upstream-sync"
+  },
+  {
+    "number": 9,
+    "isCrossRepository": true,
+    "author": {"login": "attacker", "is_bot": false},
+    "headRefName": "upstream-sync"
+  },
+  {
+    "number": 10,
+    "isCrossRepository": false,
+    "author": {"login": "jkbennitt", "is_bot": false},
+    "headRefName": "upstream-sync"
+  },
+  {
+    "number": 11,
+    "isCrossRepository": false,
+    "author": {"login": "jkbennitt", "is_bot": false},
+    "headRefName": "upstream-sync-0123456789ab"
+  },
+  {
+    "number": 12,
+    "isCrossRepository": false,
+    "author": {"login": "github-actions[bot]", "is_bot": true},
+    "headRefName": "not-a-sync-branch"
+  },
+  {
+    "number": 42,
+    "isCrossRepository": false,
+    "author": {"login": "github-actions[bot]", "is_bot": true},
+    "headRefName": "upstream-sync"
+  }
+]
