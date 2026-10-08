@@ -131,11 +131,33 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
     rf"\b(?:regularity|smooth(?:ness)?|blow{_SEP}*up|existence|well{_SEP}*posed(?:ness)?)\b",
     re.IGNORECASE,
 )
+# Noun forms count only inside a claim construction. A technical noun phrase does not.
+# That includes complete proof, proof of/for, proof complete, the/a proof,
+# a/the solution of/to, and resolution. A problem name followed only by solution
+# is a claim. A claim noun cancels the flow-name qualifier exception.
+_CLAIM_NOUN = (
+    r"\bcomplete\s+proofs?\b|"
+    r"\bproofs?\s+complete\b|"
+    r"\bproofs?\s+(?:of|for)\b|"
+    r"\b(?:the|a|an)\s+proofs?\b|"
+    r"\b(?:a|an|the)\s+solutions?\s+(?:of|to)\b|"
+    r"\bresolutions?\b"
+)
+CLAIM_NOUN_RE = re.compile(_CLAIM_NOUN, re.IGNORECASE)
+_PROBLEM_NAME = (
+    rf"navier{_SEP}*stokes"
+    rf"|(?:quasi{_SEP}+)?riemann(?:['\u2019]s)?{_SEP}+hypothesis|\brh\b"
+    rf"|clay{_SEP}+(?:millennium{_SEP}+)?(?:problem|prize)"
+    rf"|millennium{_SEP}+(?:problem|prize)"
+)
+BARE_SOLUTION_RE = re.compile(
+    rf"^(?:the\s+|a\s+|an\s+)?(?:{_PROBLEM_NAME})(?:\s+equations?)?\s+(?:the\s+|a\s+|an\s+)?solutions?$",
+    re.IGNORECASE,
+)
 # prove/proves/proved/proving/proven, disprove/disproves/disproved/disproving/disproven,
-# proof, proofs, proof of/for, proof complete, complete proof,
 # confirm/confirms/confirmed/confirming,
-# establish/establishes/established/establishing, solution, solutions,
-# resolution, resolutions, resolve/resolves/resolved/resolving,
+# establish/establishes/established/establishing,
+# resolve/resolves/resolved/resolving,
 # settle/settles/settled/settling,
 # solve/solves/solved/solving, crack/cracks/cracked/cracking,
 # finish/finishes/finished/finishing,
@@ -144,12 +166,11 @@ FLOW_CLAY_WORDING_WITH_CLAIM_RE = re.compile(
 # win/wins/won/winning, award/awards/awarded/awarding, correct,
 # obtain/obtains/obtained/obtaining, done.
 CLAIM_VERB_RE = re.compile(
-    r"\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
+    _CLAIM_NOUN
+    + r"|\bproven\b|\bprov(?:e|es|ed|ing)\b|\bdisprov(?:en|e|es|ed|ing)\b|"
     r"\bconfirm(?:ed|s|ing)?\b|"
-    r"\bcomplete\s+proofs?\b|\bproofs?\b|"
     r"\bestablish(?:es|ed|ing)?\b|"
-    r"\bsolutions?\b|"
-    r"\bresolutions?\b|\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
+    r"\bresolv(?:e|es|ed|ing)\b|\bsettl(?:e|es|ed|ing)\b|"
     r"\bsolv(?:e|es|ed|ing)\b|\bcrack(?:s|ed|ing)?\b|"
     r"\bfinish(?:es|ed|ing)?\b|"
     r"\btrue\b|\bholds\b|\bfollows\b|\bverif(?:y|ies|ied|ying)\b|"
@@ -231,6 +252,10 @@ NOTE_HOSTILE_DIGESTS = frozenset(
         "3a1b45d4778cc8a6e07420119952efa34e7ffd44ffe01d3726d501824d5f51b9",
         "3734f204b6669b3125d0e7a551413dda2b5bec48fffdc3f9a5010f9ad0413f51",
         "87654be893e93c6552e800afb313c7e4ea0f345c8c575211a91baa07bed5a107",
+        "b028fac88cf83c2a2f0e4f04e02cbf823c8d2179f92c41d813df95e5ee152adf",
+        "f514ae60147922b97e8d1bed3e4bb3b108366876cc77fff92b0ee181fd16d9cc",
+        "2d48a24e8e8bd908b53d8ab81e7ca6320d50e5ce3260d522b549d4b02a8b308f",
+        "6cf2bed0023c84a655f6aeba6f404f6674b03c061e5297462262ec5f07804e4b",
     }
 )
 NOTE_HOSTILE_PHRASE_DIGEST = "3dedd643819c6059145438295590f166326d20c812fff8971bbd627078626fd1"
@@ -238,6 +263,13 @@ NOTE_HOSTILE_PHRASE_DIGEST = "3dedd643819c6059145438295590f166326d20c812fff8971b
 NOTE_EXEMPT_PHRASE_DIGESTS = frozenset(
     {
         "4f76b35955d6c947426a2f9fce18cc84c6368723c0e0d46817451e4b2280556f",
+    }
+)
+# Hyphenated technical compounds. Any other hyphenated compound is checked.
+NOTE_EXEMPT_HYPHEN_DIGESTS = frozenset(
+    {
+        "b0515c3530385ed70aab8811467b5cd73ad2007389384959e3d232f8a1fabf60",
+        "418f827bfd243359b42239c005cc21ab487cbee409904f9b61644b799ade00b1",
     }
 )
 NOTE_SUFFIXES = ("ing", "ers", "ed", "ly")
@@ -1220,17 +1252,6 @@ def merge_data(
         merged["lenses"] = note["lenses"] if note else []
         merged["related"] = note["related"] if note else []
         merged["community"] = note["community"] if note else None
-        summary = family.get("upstream_summary") or ""
-        if summary and scan_overclaims(summary, family["id"]):
-            merged["upstream_summary_withheld"] = True
-        manuscripts = []
-        for item in merged.get("manuscripts") or []:
-            copied = dict(item)
-            title = copied.get("title") or ""
-            if title and scan_overclaims(title, family["id"]):
-                copied["title_withheld"] = True
-            manuscripts.append(copied)
-        merged["manuscripts"] = manuscripts
         merged_families.append(merged)
     apply_citation_graph(merged_families)
     payload = {
@@ -1445,10 +1466,22 @@ def prose_for_scan(text: str) -> str:
     return re.sub(r"\bR\s*\.\s*H\s*\.", " RH ", plain, flags=re.IGNORECASE)
 
 
+def bare_solution_claim(sentence: str) -> bool:
+    """True when the whole sentence is a guarded problem plus the noun solution."""
+    return BARE_SOLUTION_RE.fullmatch(sentence_key(sentence)) is not None
+
+
+def claim_noun_present(sentence: str) -> bool:
+    return CLAIM_NOUN_RE.search(sentence) is not None or bare_solution_claim(sentence)
+
+
 def mentions_guarded_problem(sentence: str) -> bool:
     """True when the problem itself is named, not when the name only modifies another noun."""
-    clay = FLOW_CLAY_WORDING_WITH_CLAIM_RE if CLAIM_VERB_RE.search(sentence) else FLOW_CLAY_WORDING_RE
-    blocks_flow_exception = clay.search(sentence) is not None
+    has_claim = CLAIM_VERB_RE.search(sentence) is not None or bare_solution_claim(sentence)
+    clay = FLOW_CLAY_WORDING_WITH_CLAIM_RE if has_claim else FLOW_CLAY_WORDING_RE
+    # A claim noun beats the qualifier exception. An ordinary claim verb does not,
+    # so an energy inequality can still be the thing a verb addresses.
+    blocks_flow_exception = clay.search(sentence) is not None or claim_noun_present(sentence)
     for match in PROBLEM_RE.finditer(sentence):
         qualified = FLOW_QUALIFIER_RE.match(sentence[match.end() :]) is not None
         if match.group("flow") and qualified and not blocks_flow_exception:
@@ -1467,12 +1500,15 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
     regularity, smoothness, smooth (except when the next word is data), blow up,
     blow-up, blowup, existence, well-posed, or well-posedness. When a claim verb
     is also present, smooth cancels that exception even if the next word is data.
-    A space, hyphen, or dash may separate blow and up, or well and posed. Noun
-    forms count too: proof, solution, resolution, finish, and complete proof.
-    alt, title, content, aria-label, aria-description, placeholder, and data-*
-    attributes are scanned with the prose, including unquoted values. Text
-    inside a data-upstream element is scanned unless that element's text
-    exactly equals the family's upstream title or id.
+    A claim noun also cancels the qualifier exception. A space, hyphen, or dash
+    may separate blow and up, or well and posed. Noun forms count in a claim
+    construction: complete proof, proof of, proof for, proof complete, the proof,
+    a proof, a solution of, a solution to, resolution, and a problem name followed
+    only by solution. A technical noun phrase does not. alt, title, content,
+    aria-label, aria-description, placeholder, and data-* attributes are scanned
+    with the prose, including unquoted values. Text inside a data-upstream element
+    is scanned unless that element's text exactly equals the family's upstream
+    title, id, summary, or manuscript title.
     """
     allowed = allowed_caution_keys()
     if extra_allowed:
@@ -1482,7 +1518,8 @@ def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None
         key = sentence_key(chunk)
         if not key or key in allowed:
             continue
-        if mentions_guarded_problem(key) and CLAIM_VERB_RE.search(key):
+        claimed = CLAIM_VERB_RE.search(key) is not None or bare_solution_claim(key)
+        if mentions_guarded_problem(key) and claimed:
             failures.append(f"{label}: {key[:180]}")
     return failures
 
@@ -1527,14 +1564,24 @@ def hostile_token(token: str) -> bool:
 def note_tone_failure(note: str) -> bool:
     """True when a note contains a hostile word, inflection, or the stored phrase.
 
-    A hyphenated compound is not a whole word. A stored two-word technical phrase is not either.
+    A stored hyphenated technical compound is left alone. Any other hyphenated
+    compound fails when a part is hostile or the joined parts are hostile.
+    Adjacent words that join into a hostile word fail too. A stored two-word
+    technical phrase is left alone.
     """
     lowered = normalize_scan_text(note).lower()
-    hyphen_spans = [(match.start(), match.end()) for match in HYPHEN_RUN_RE.finditer(lowered)]
+    exempt_spans: list[tuple[int, int]] = []
+    for match in HYPHEN_RUN_RE.finditer(lowered):
+        if _digest(match.group()) in NOTE_EXEMPT_HYPHEN_DIGESTS:
+            exempt_spans.append((match.start(), match.end()))
+            continue
+        parts = match.group().split("-")
+        if any(hostile_token(part) for part in parts) or hostile_token("".join(parts)):
+            return True
     tokens: list[tuple[str, bool]] = []
     for match in TOKEN_RE.finditer(lowered):
-        inside_hyphen = any(start <= match.start() and match.end() <= end for start, end in hyphen_spans)
-        tokens.append((match.group(), inside_hyphen))
+        inside_exempt = any(start <= match.start() and match.end() <= end for start, end in exempt_spans)
+        tokens.append((match.group(), inside_exempt))
     words = [token for token, _inside in tokens]
     exempt: set[int] = set()
     for index in range(len(words) - 1):
@@ -1544,8 +1591,13 @@ def note_tone_failure(note: str) -> bool:
     for index in range(len(words) - 2):
         if _digest(" ".join(words[index : index + 3])) == NOTE_HOSTILE_PHRASE_DIGEST:
             return True
-    for index, (token, inside_hyphen) in enumerate(tokens):
-        if inside_hyphen or index in exempt:
+    for index in range(len(words) - 1):
+        if index in exempt or index + 1 in exempt or tokens[index][1] or tokens[index + 1][1]:
+            continue
+        if hostile_token(words[index] + words[index + 1]):
+            return True
+    for index, (token, inside_exempt) in enumerate(tokens):
+        if inside_exempt or index in exempt:
             continue
         if hostile_token(token):
             return True
@@ -1670,6 +1722,7 @@ def strip_upstream_quotes(html_text: str) -> str:
 
 def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: str) -> list[str]:
     failures: list[str] = []
+    index_text = html.unescape(index_html)
     for family in families:
         if f"f/{family['id']}/" not in index_html:
             failures.append(f"table does not link to family {family['id']}")
@@ -1706,9 +1759,16 @@ def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: s
         caution = family.get("caution")
         if caution and caution not in text:
             failures.append(f"family page {family['id']} is missing its caution")
+        summary = family.get("upstream_summary") or ""
+        if summary and summary not in text:
+            failures.append(f"family page {family['id']} is missing its upstream summary")
+        if summary and summary not in index_text:
+            failures.append(f"table is missing the upstream summary for {family['id']}")
         for item in family["manuscripts"]:
-            if item["pdf"] not in text or item["date"] not in text:
+            if item["pdf"] not in text or item["date"] not in text or item["title"] not in text:
                 failures.append(f"family page {family['id']} is missing manuscript {item['slug']}")
+            if item["title"] not in index_text:
+                failures.append(f"table is missing manuscript title for {family['id']}")
     return failures
 
 
@@ -1775,7 +1835,7 @@ def visible_element_text(body: str) -> str:
 
 
 def exempt_upstream_text(html_text: str, allowed: set[str]) -> str:
-    """Blank a data-upstream element only when its text equals an allowed title or id."""
+    """Blank a data-upstream element only when its text equals an allowed upstream string."""
     normalized = {re.sub(r"\s+", " ", item).strip() for item in allowed if item}
 
     def replacer(match: re.Match[str]) -> str:
@@ -1787,11 +1847,19 @@ def exempt_upstream_text(html_text: str, allowed: set[str]) -> str:
 
 
 def family_scan_identity(family: dict[str, Any]) -> set[str]:
-    """Upstream title and id. A rendered value is exempt only when it equals one of these."""
+    """Upstream title, id, summary, and manuscript titles.
+
+    A rendered data-upstream value is exempt only when it equals one of these.
+    Text that does not match stays on the page and fails the check.
+    """
     allowed = {family["id"]}
-    title = family.get("title")
-    if isinstance(title, str) and title:
-        allowed.add(title)
+    for value in (family.get("title"), family.get("upstream_summary")):
+        if isinstance(value, str) and value:
+            allowed.add(value)
+    for item in family.get("manuscripts") or []:
+        manuscript_title = item.get("title") if isinstance(item, dict) else None
+        if isinstance(manuscript_title, str) and manuscript_title:
+            allowed.add(manuscript_title)
     return allowed
 
 
@@ -1903,6 +1971,8 @@ def check_dist(dist: Path) -> list[str]:
     combined = "\n".join(path.read_text(encoding="utf-8") for path in pages)
     if denylist_hit(combined):
         failures.append("built site contains a denylist token")
+    if "not shown on this page" in html.unescape(combined):
+        failures.append("built site hides upstream text")
     index = dist / "index.html"
     about = dist / "about" / "index.html"
     if not index.is_file() or not about.is_file():

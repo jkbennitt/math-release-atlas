@@ -236,8 +236,7 @@
           "title": "The Quasi-Riemann Hypothesis (alternate 11/12 proof)",
           "date": "2026-10-05",
           "pdf": "https://github.com/openai/math/blob/adc7f1241b42e322a6451854ab7e4b4c146bf78a/preprints/The-Quasi-Riemann-Hypothesis-October-5-2026/paper2.pdf",
-          "main_result_formalized": false,
-          "title_withheld": true
+          "main_result_formalized": false
         }
       ],
       "lean": {
@@ -282,7 +281,6 @@
       "lenses": [],
       "related": [],
       "community": null,
-      "upstream_summary_withheld": true,
       "cites": [
         {
           "to": "023",

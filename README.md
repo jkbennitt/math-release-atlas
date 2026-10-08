@@ -87,8 +87,10 @@ Jason (repo policy). Branch protection is off. `.github/CODEOWNERS` names
 @jkbennitt on `data/curated/`. The weekly sync does not write community
 status. See `CONTRIBUTING.md`. Curated text uses the same sentence check as
 the rest of the site. A hostile note fails the build. A whole word and its
-plurals and inflections are matched. A hyphenated compound is left alone, as
-is one stored two-word technical phrase.
+plurals and inflections are matched. A hyphenated compound fails when a part
+is hostile or the parts join into a hostile word, and so does a split pair of
+words. A stored hyphenated technical compound is left alone, as is one stored
+two-word technical phrase.
 
 Citation edges are read from `OAI:` keys in upstream manuscript `.tex` and
 `.bib` files and stored when the catalogue is built. The merge step turns
@@ -117,7 +119,8 @@ inequality, estimate, bound, computation, scheme, solver, or approximation,
 and the sentence does not also say regularity, smoothness, smooth (unless
 the next word is data), blow up, blow-up, blowup, existence, well-posed, or
 well-posedness. When a claim verb is also present, the word smooth cancels
-that exception even if the next word is data. A space, hyphen, or dash may
+that exception even if the next word is data. A claim noun also cancels that
+exception. A space, hyphen, or dash may
 separate the words blow and up, and the words well and posed. A sentence
 that only names an energy inequality for smooth data, and has no claim verb,
 still passes.
@@ -129,12 +132,13 @@ problem, Millennium-problem, and the Millennium prize.
 
 Claim verbs: prove, proves, proved, proving, proven, disprove, disproves,
 disproved, disproving, disproven, confirm, confirms, confirmed, confirming,
-proof, proofs, proof of, proofs of, proof for, proofs for, proof complete,
-complete proof, establish, establishes, established, establishing, solution,
-solutions, a solution to, solution of, resolution, resolutions, resolve,
+proof of, proofs of, proof for, proofs for, proof complete, the proof, a proof,
+complete proof, establish, establishes, established, establishing, a solution of,
+a solution to, the solution of, the solution to, resolution, resolutions, resolve,
 resolves, resolved, resolving, settle, settles, settled, settling, solve,
 solves, solved, solving, crack, cracks, cracked, cracking, finish, finishes,
-finished, and finishing. Further claim
+finished, and finishing. A problem name followed only by solution is a claim.
+A technical noun phrase is not. Further claim
 words are true, holds, follows, verify, verifies, verified, verifying, show,
 shows, showed, shown, showing, demonstrate, demonstrates, demonstrated,
 demonstrating, win, wins, won, winning, award, awards, awarded, awarding,
@@ -142,13 +146,13 @@ correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem
 
 The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML, including text inside an element marked as an upstream
-quotation. That text is left out only when it exactly equals that family's
-upstream title or id. An upstream summary or manuscript title that fails the check is left out of
-the built pages. The text stays in the catalogue data, and the fixed caution
-still appears. alt, title, meta content, aria-label, aria-description,
-placeholder, and data-* attributes are included, quoted or unquoted. In built
-HTML, a data-* value is left out only when it exactly equals that family's
-upstream title or id. The citation graph has no such exemption. Curated
+quotation. That text is left out of the check only when it exactly equals
+that family's upstream title, id, summary, or manuscript title. The page still
+shows it. Text that does not match fails the check. alt, title, meta content,
+aria-label, aria-description, placeholder, and data-* attributes are included,
+quoted or unquoted. In built HTML, a data-* value is left out only when it
+exactly equals one of those same strings. The citation graph has no such
+exemption. Curated
 evidence URLs must be http or https, with no spaces, quotes, or angle brackets.
 Before either check, text is NFKC-normalized and soft hyphens and zero-width
 characters are removed.

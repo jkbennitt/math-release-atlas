@@ -82,7 +82,26 @@ def check_source() -> list[str]:
     failures.extend(check_status_approvals(curated))
     failures.extend(check_codeowners())
     failures.extend(check_sync_does_not_write_status())
+    failures.extend(check_upstream_text_is_shown())
     failures.extend(check_authored())
+    return failures
+
+
+def check_upstream_text_is_shown() -> list[str]:
+    """Upstream summaries and manuscript titles stay on the page."""
+    failures: list[str] = []
+    for relative in (
+        "src/pages/f/[id].astro",
+        "src/pages/index.astro",
+        "src/lib/atlas.ts",
+    ):
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        if "withheld" in text or "not shown on this page" in text:
+            failures.append(f"{relative} hides upstream text")
+    if "withheld" in (ROOT / "scripts" / "atlaslib.py").read_text(encoding="utf-8"):
+        failures.append("scripts/atlaslib.py hides upstream text")
+    if "withheld" in FAMILIES_JSON.read_text(encoding="utf-8"):
+        failures.append("families.json hides upstream text")
     return failures
 
 
@@ -408,6 +427,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Navier–Stokes: a complete proof.",
         "A complete proof of the Millennium problem.",
         "A complete proof of the Clay problem.",
+        "Navier–Stokes estimates: complete proof.",
     ]
     for text in flagged:
         if not scan_overclaims(text, "sample"):
@@ -436,6 +456,11 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "Navier–Stokes energy inequality",
         "A complete proof of the lemma.",
         "A resolution of the linear system.",
+        "A Navier–Stokes solution scheme",
+        "numerical solution of Navier–Stokes",
+        "The Navier–Stokes solution operator is bounded",
+        "Weak solutions of Navier–Stokes",
+        "Leray solutions of the Navier–Stokes equations",
     ]
     for text in allowed:
         if scan_overclaims(text, "sample"):
@@ -517,6 +542,17 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     exact_title = '<h1 data-upstream="title">RH is proven.</h1>'
     if scan_overclaims(exempt_upstream_text(exact_title, {"RH is proven.", "001"}), "template"):
         failures.append("an exact upstream title was flagged")
+    exact_summary = (
+        "Proves that every Dirichlet L-function is zero-free in Re s > 7/8, "
+        "resolving the quasi-Riemann hypothesis."
+    )
+    summary_html = f'<blockquote data-upstream="summary">{exact_summary}</blockquote>'
+    if scan_overclaims(exempt_upstream_text(summary_html, {exact_summary, "003"}), "template"):
+        failures.append("an exact upstream summary was flagged")
+    manuscript_title = "The Quasi-Riemann Hypothesis (alternate 11/12 proof)"
+    manuscript_html = f'<a data-upstream="manuscript">{manuscript_title}</a>'
+    if scan_overclaims(exempt_upstream_text(manuscript_html, {manuscript_title, "003"}), "template"):
+        failures.append("an exact manuscript title was flagged")
     authored_claim = "<p>RH: proof complete.</p>"
     if not scan_overclaims(strip_upstream_quotes(authored_claim), "page"):
         failures.append("an authored claim in HTML was not flagged")
@@ -840,12 +876,30 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         "The authors cheated.",
         "The note is dishonest.",
         "The claim is a sham.",
+        "The note calls it junk-science.",
+        "The note calls it sham-proof.",
+        "The note calls it garbage-tier.",
+        "The note calls it crack-pot.",
+        "The note says crack pot.",
+        "The author is a fraudster.",
+        "The argument is fraudulent.",
+        "The note shows dishonesty.",
+        "The author is plagiarizing.",
     )
     for sample in hostile_notes:
         message = expect_error(f"hostile note {sample}", lambda sample=sample: curated_note(sample))
         if message:
             failures.append(message)
-    for sample in ("garbage collection", "fraud-detection", "fake-free"):
+    for sample in (
+        "garbage collection",
+        "fraud-detection",
+        "fake-free",
+        "scheme",
+        "shampoo",
+        "junction",
+        "cheatsheet",
+        "quackery",
+    ):
         try:
             curated_note(f"The method uses {sample}.")
         except AtlasError as exc:
