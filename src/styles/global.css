@@ -185,7 +185,7 @@ table[data-family-table] th:nth-child(1) { width: 7.5rem; }
 table[data-family-table] th:nth-child(2) { width: 4.75rem; }
 table[data-family-table] th:nth-child(4) { width: 7rem; }
 table[data-family-table] th:nth-child(5) { width: 8.5rem; }
-table[data-family-table] th:nth-child(6) { width: 6.5rem; }
+table[data-family-table] th:nth-child(6) { width: 8.25rem; }
 table[data-family-table] th:nth-child(7) { width: 8.5rem; }
 th, td {
   text-align: left;
@@ -203,9 +203,11 @@ th button {
   color: var(--muted);
   white-space: normal;
   text-align: left;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
-table[data-family-table] th,
+table[data-family-table] th {
+  overflow-wrap: normal;
+}
 table[data-family-table] td,
 .site-footer a,
 .provenance,
