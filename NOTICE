@@ -6,3 +6,8 @@ https://github.com/openai/math (Apache License 2.0), reformatted into
 JSON and into a website. We changed and derived these files. The
 upstream license is included here as UPSTREAM_LICENSE. PDFs and other
 originals are not mirrored; links point at the upstream repository.
+
+The link-preview card uses a subset of the Liberation fonts from
+https://github.com/liberationfonts (SIL Open Font License 1.1). The subset
+is a modified version and does not use the reserved font name. The license
+is scripts/fonts/OFL.txt.

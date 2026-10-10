@@ -69,7 +69,7 @@ jobs:
             echo ""
             echo "## Verification"
             echo ""
-            echo "Pull requests opened by this workflow do not start the Build or Guard workflows, so the read-only job ran both before the pull request was opened."
+            echo "A pull request opened with the default token leaves Build and Guard waiting for approval, so they do not run. After the push, the publish job starts both with workflow_dispatch. The read-only job also ran them before the pull request was opened."
             echo ""
             if [ "$guard" -eq 0 ]; then
               echo "- Guard: passed (\`python3 scripts/check.py --self-test --source --verify-upstream\`)."
@@ -123,6 +123,7 @@ jobs:
     if: needs.prepare.result == 'success' && (needs.prepare.outputs.code == '2' || needs.prepare.outputs.code == '3')
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -254,6 +255,20 @@ jobs:
           else
             echo "No commit and no open pull request."
           fi
+      - name: Start Build and Guard
+        if: success() && steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+        run: |
+          # pull_request runs from this token stay at action_required and never execute.
+          # workflow_dispatch always creates a run, and the checks attach to this branch.
+          if [ -z "$BRANCH" ]; then
+            echo "Sync push did not report a branch." >&2
+            exit 1
+          fi
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+          gh workflow run guard.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
       - name: Fail on count drift or a failed check
         if: success()
         env:
