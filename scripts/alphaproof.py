@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from anthropic import anthropic_join, anthropic_preview
 from atlaslib import (
     ROOT,
     UPSTREAM_WEB,
@@ -25,6 +26,7 @@ from atlaslib import (
     git,
     list_tree,
     materialize_upstream,
+    oeis_preview_phrase,
     read_json,
     snapshot_for_compare,
     write_json,
@@ -224,21 +226,159 @@ def snapshot_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(encoded.encode()).hexdigest()
 
 
-def catalogue_extras(upstream: dict[str, Any], alphaproof: dict[str, Any]) -> dict[str, Any]:
-    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"])
+def openai_preview(source: dict[str, Any], counts: dict[str, Any]) -> dict[str, Any]:
+    """Card facts for the manuscript catalogue. Counts come from the merged catalogue."""
+    families = int(counts["families"])
+    manuscripts = int(counts["manuscripts"])
+    name = source["name"]
     return {
-        "sources": registry,
-        "alphaproof": alphaproof,
-        "cross": cross_source(upstream["families"], alphaproof["records"]),
+        "fragment": (
+            f"{families} result families and {manuscripts} manuscripts from the {name} catalogue"
+        ),
+        "tiles": [
+            {"value": str(families), "label": "result families"},
+            {"value": str(manuscripts), "label": "manuscripts"},
+        ],
+        "detail": "",
+        "bindings": [
+            {"value": str(families), "path": ["counts", "families"]},
+            {"value": str(manuscripts), "path": ["counts", "manuscripts"]},
+        ],
     }
 
 
-def source_registry(openai_commit: str, alphaproof_commit: str) -> dict[str, Any]:
+def alphaproof_preview(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Card facts for AlphaProof Nexus. Status words are the gap statuses."""
+    source = snapshot["source"]
+    counts = snapshot["counts"]
+    gaps = {gap["id"]: gap for gap in snapshot["gaps"]}
+    oeis = gaps["oeis-count"]
+    attempted = gaps["erdos-attempted"]
+    provenance = gaps["per-row-provenance"]
+    name = source["name"]
+    lean = int(counts["lean_files"])
+    oeis_files = int(counts["oeis_files"])
+    paper = int(oeis["paper_count"])
+    erdos = int(counts["erdos"])
+    stacks = int(counts["stacks"])
+    collaborator = int(counts["ai_collaborator"])
+    phrase = oeis_preview_phrase(oeis_files, paper, str(oeis["status"]))
+    fragment = (
+        f"{lean} Lean files from {name}, {phrase}, "
+        f"attempted list {attempted['status']}, per-row provenance {provenance['status']}"
+    )
+    return {
+        "fragment": fragment,
+        "tiles": [
+            {"value": str(lean), "label": "Lean files"},
+            {"value": str(oeis["status"]), "label": f"OEIS {oeis_files} of {paper}"},
+            {"value": str(attempted["status"]), "label": "attempted list"},
+            {"value": str(provenance["status"]), "label": "provenance"},
+        ],
+        "detail": f"Erdos {erdos}, Stacks {stacks}, AI collaborator {collaborator}",
+        "bindings": [
+            {"value": str(lean), "path": ["alphaproof", "counts", "lean_files"]},
+            {"value": str(oeis["status"]), "path": ["alphaproof", "gaps", "oeis-count", "status"]},
+            {"value": str(attempted["status"]), "path": ["alphaproof", "gaps", "erdos-attempted", "status"]},
+            {"value": str(provenance["status"]), "path": ["alphaproof", "gaps", "per-row-provenance", "status"]},
+            {"value": str(oeis_files), "path": ["alphaproof", "counts", "oeis_files"]},
+            {"value": str(paper), "path": ["alphaproof", "gaps", "oeis-count", "paper_count"]},
+            {"value": str(erdos), "path": ["alphaproof", "counts", "erdos"]},
+            {"value": str(stacks), "path": ["alphaproof", "counts", "stacks"]},
+            {"value": str(collaborator), "path": ["alphaproof", "counts", "ai_collaborator"]},
+        ],
+    }
+
+
+def derived_source_previews(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Recompute previews from catalogue counts. A source that brings its own preview is left alone."""
+    sources = catalog["sources"]["sources"]
+    by_id = {source["id"]: source for source in sources}
+    derived: dict[str, dict[str, Any]] = {}
+    if OPENAI_SOURCE_ID in by_id:
+        derived[OPENAI_SOURCE_ID] = openai_preview(by_id[OPENAI_SOURCE_ID], catalog["counts"])
+    if ALPHAPROOF_SOURCE_ID in by_id and isinstance(catalog.get("alphaproof"), dict):
+        derived[ALPHAPROOF_SOURCE_ID] = alphaproof_preview(catalog["alphaproof"])
+    anthropic = catalog.get("anthropic")
+    if isinstance(anthropic, dict):
+        source_id = str(anthropic.get("source", {}).get("id", ""))
+        if source_id in by_id:
+            derived[source_id] = anthropic_preview(anthropic)
+    return derived
+
+
+def attach_previews(
+    registry: dict[str, Any],
+    upstream: dict[str, Any],
+    alphaproof: dict[str, Any],
+    anthropic: dict[str, Any] | None,
+) -> None:
+    """Write one preview onto every registered source. Known sources are derived; others must carry one."""
+    catalog = {
+        "counts": upstream["counts"],
+        "sources": registry,
+        "alphaproof": alphaproof,
+    }
+    if anthropic is not None:
+        catalog["anthropic"] = anthropic
+    derived = derived_source_previews(catalog)
+    for source in registry["sources"]:
+        expected = derived.get(source["id"])
+        if expected is not None:
+            source["preview"] = expected
+            continue
+        preview = source.get("preview")
+        if not isinstance(preview, dict) or not preview.get("fragment") or not preview.get("tiles"):
+            raise AtlasError(f"{source['id']} has no preview derived from its counts")
+
+
+def catalogue_extras(
+    upstream: dict[str, Any],
+    alphaproof: dict[str, Any],
+    anthropic: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    extra = [dict(anthropic["source"])] if anthropic is not None else None
+    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"], extra)
+    attach_previews(registry, upstream, alphaproof, anthropic)
+    records = alphaproof["records"]
+    joined = cross_source(upstream["families"], records)
+    if anthropic is not None:
+        openai_erdos: set[int] = set()
+        for family in upstream["families"]:
+            openai_erdos.update(explicit_erdos_numbers(family))
+        apn_erdos = {
+            record["erdos_number"]
+            for record in records
+            if isinstance(record.get("erdos_number"), int)
+        }
+        other_text = "\n".join(
+            f"{record.get('path', '')}\n{record.get('filename', '')}" for record in records
+        )
+        other_text += "\n" + json.dumps(upstream["families"], ensure_ascii=False)
+        joined.update(anthropic_join(anthropic, openai_erdos, apn_erdos, other_text))
+    payload = {
+        "sources": registry,
+        "alphaproof": alphaproof,
+        "cross": joined,
+    }
+    if anthropic is not None:
+        payload["anthropic"] = anthropic
+    return payload
+
+
+def source_registry(
+    openai_commit: str,
+    alphaproof_commit: str,
+    extra: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     openai = dict(OPENAI_SOURCE)
     openai["commit"] = openai_commit
     alphaproof = dict(ALPHAPROOF_SOURCE)
     alphaproof["commit"] = alphaproof_commit
-    return {"schema_version": 1, "sources": [openai, alphaproof]}
+    sources = [openai, alphaproof]
+    if extra:
+        sources.extend(extra)
+    return {"schema_version": 1, "sources": sources}
 
 
 def explicit_erdos_numbers(value: Any) -> set[int]:

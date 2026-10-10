@@ -9,7 +9,37 @@
       "paper": null,
       "license": "Apache-2.0",
       "sync": "sparse-fetch",
-      "commit": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb"
+      "commit": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
+      "preview": {
+        "fragment": "372 result families and 719 manuscripts from the OpenAI Math catalogue",
+        "tiles": [
+          {
+            "value": "372",
+            "label": "result families"
+          },
+          {
+            "value": "719",
+            "label": "manuscripts"
+          }
+        ],
+        "detail": "",
+        "bindings": [
+          {
+            "value": "372",
+            "path": [
+              "counts",
+              "families"
+            ]
+          },
+          {
+            "value": "719",
+            "path": [
+              "counts",
+              "manuscripts"
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "alphaproof-nexus",
@@ -19,7 +49,180 @@
       "paper": "https://arxiv.org/abs/2605.22763",
       "license": "Apache-2.0 code; CC-BY 4.0 other materials; OEIS-derived material CC BY-SA 4.0",
       "sync": "tree-snapshot",
-      "commit": "0647711a71183c1ea492ad60860776617ce1ea88"
+      "commit": "0647711a71183c1ea492ad60860776617ce1ea88",
+      "preview": {
+        "fragment": "71 Lean files from AlphaProof Nexus, OEIS 38 of 44 in paper (PARTIAL), attempted list MATCH, per-row provenance MISSING",
+        "tiles": [
+          {
+            "value": "71",
+            "label": "Lean files"
+          },
+          {
+            "value": "PARTIAL",
+            "label": "OEIS 38 of 44"
+          },
+          {
+            "value": "MATCH",
+            "label": "attempted list"
+          },
+          {
+            "value": "MISSING",
+            "label": "provenance"
+          }
+        ],
+        "detail": "Erdos 9, Stacks 11, AI collaborator 13",
+        "bindings": [
+          {
+            "value": "71",
+            "path": [
+              "alphaproof",
+              "counts",
+              "lean_files"
+            ]
+          },
+          {
+            "value": "PARTIAL",
+            "path": [
+              "alphaproof",
+              "gaps",
+              "oeis-count",
+              "status"
+            ]
+          },
+          {
+            "value": "MATCH",
+            "path": [
+              "alphaproof",
+              "gaps",
+              "erdos-attempted",
+              "status"
+            ]
+          },
+          {
+            "value": "MISSING",
+            "path": [
+              "alphaproof",
+              "gaps",
+              "per-row-provenance",
+              "status"
+            ]
+          },
+          {
+            "value": "38",
+            "path": [
+              "alphaproof",
+              "counts",
+              "oeis_files"
+            ]
+          },
+          {
+            "value": "44",
+            "path": [
+              "alphaproof",
+              "gaps",
+              "oeis-count",
+              "paper_count"
+            ]
+          },
+          {
+            "value": "9",
+            "path": [
+              "alphaproof",
+              "counts",
+              "erdos"
+            ]
+          },
+          {
+            "value": "11",
+            "path": [
+              "alphaproof",
+              "counts",
+              "stacks"
+            ]
+          },
+          {
+            "value": "13",
+            "path": [
+              "alphaproof",
+              "counts",
+              "ai_collaborator"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "org": "Anthropic",
+      "repo": "https://github.com/anthropics/formal-math",
+      "paper": null,
+      "license": "Apache-2.0",
+      "sync": "tree-snapshot",
+      "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+      "also": [
+        {
+          "label": "Fermat's Last Theorem",
+          "repo": "https://github.com/anthropics/fermats-last-theorem",
+          "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+        }
+      ],
+      "preview": {
+        "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)",
+        "tiles": [
+          {
+            "value": "61238",
+            "label": "Lean files"
+          },
+          {
+            "value": "3",
+            "label": "releases"
+          },
+          {
+            "value": "2",
+            "label": "new results"
+          },
+          {
+            "value": "1",
+            "label": "formalization"
+          }
+        ],
+        "detail": "",
+        "bindings": [
+          {
+            "value": "61238",
+            "path": [
+              "anthropic",
+              "counts",
+              "lean_files"
+            ]
+          },
+          {
+            "value": "3",
+            "path": [
+              "anthropic",
+              "counts",
+              "releases"
+            ]
+          },
+          {
+            "value": "2",
+            "path": [
+              "anthropic",
+              "counts",
+              "new_results"
+            ]
+          },
+          {
+            "value": "1",
+            "path": [
+              "anthropic",
+              "counts",
+              "formalizations"
+            ]
+          }
+        ]
+      }
     }
   ]
 }

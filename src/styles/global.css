@@ -211,10 +211,14 @@ th button {
 .badge.comparator-challenge-only, .badge.partial { background: var(--comparator); }
 .badge.match { background: var(--match); }
 .badge.more-than-paper { background: var(--more-than-paper); }
-.badge.none, .badge.missing { background: var(--none); }
+.badge.none, .badge.missing, .badge.not-in-comparator { background: var(--none); }
+.badge.new-result { background: var(--match); }
+.badge.formalization { background: #5c3d6e; }
+.badge.not-formalized { background: var(--more-than-paper); }
+.badge.noted { background: var(--comparator); }
 .source-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
   margin: 0 0 1.2rem;
 }

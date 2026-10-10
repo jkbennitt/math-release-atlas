@@ -1,0 +1,188 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, shortSha } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+const record = atlas.anthropic;
+const flt = record.source.also[0];
+
+function gapBadgeClass(status: string): string {
+  switch (status) {
+    case "NOT IN COMPARATOR":
+      return "not-in-comparator";
+    case "NOT FORMALIZED":
+      return "not-formalized";
+    case "NOTED":
+      return "noted";
+    default:
+      return status.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+}
+---
+
+<Base
+  title="Anthropic · Math Release Atlas"
+  description="Three Anthropic releases pinned to upstream commits, with derived Lean-file counts and the gaps this atlas records."
+>
+  <article class="prose">
+    <p class="meta"><a href={`${base}source/`}>All sources</a></p>
+    <h1>Anthropic</h1>
+    <p>
+      {record.source.org}. Repository
+      <a href={record.source.repo}>{record.source.repo}</a>.
+      Commit <a href={`${record.source.repo}/commit/${record.source.commit}`}><code>{record.source.commit}</code></a>
+      ({shortSha(record.source.commit)}).
+      {flt.label}: repository <a href={flt.repo}>{flt.repo}</a>,
+      commit <a href={`${flt.repo}/commit/${flt.commit}`}><code>{flt.commit}</code></a>
+      ({shortSha(flt.commit)}).
+    </p>
+    <p>{record.check_wording}</p>
+    <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
+
+    <h2>Counts at these commits</h2>
+    <ul id="anthropic-counts">
+      {record.count_lines.map((line) => <li>{line}</li>)}
+    </ul>
+
+    <h2>Identifier scan</h2>
+    <p>
+      {record.identifiers.method}. Erdős ids {record.identifiers.erdos.length}.
+      OEIS ids {record.identifiers.oeis.length}. Stacks ids {record.identifiers.stacks.length}.
+    </p>
+
+    <h2>Upstream quotations</h2>
+    <p>These sentences are the sources’ wording, quoted here.</p>
+    {
+      record.quotations.map((quotation) => (
+        <blockquote data-upstream="quotation">
+          {quotation.text}
+          <span class="meta"> Source: {quotation.source}.</span>
+        </blockquote>
+      ))
+    }
+
+    {
+      record.releases.map((release) => (
+        <section id={release.id}>
+          <h2>{release.title}</h2>
+          <p>
+            <span id={`kind-${release.id}`} class={`badge ${release.kind}`}>{release.kind_label}</span>
+          </p>
+          <p>{release.statement}</p>
+          <p class="meta">
+            Repository <a href={release.tree_url}>{release.path || release.repo}</a>.
+            Commit <a href={`${release.repo}/commit/${release.commit}`}><code>{shortSha(release.commit)}</code></a>,
+            committed {release.commit_date}. Toolchain <code>{release.lean_toolchain}</code>.
+            License: {release.license}.
+          </p>
+          <p class="meta">Commit message: “{release.commit_subject}”</p>
+          {
+            release.paper && (
+              <p>
+                Paper <a href={release.paper.url}>{release.paper.title}</a>,
+                arXiv {release.paper.id}. v1 submitted {release.paper.v1_submitted}.
+                {release.paper.v2_submitted ? <> v2 submitted {release.paper.v2_submitted}.</> : null}
+              </p>
+            )
+          }
+          {
+            release.announcement ? (
+              <p>
+                Announcement <a href={release.announcement}>{release.announcement}</a>
+                {release.announcement_date ? <>, dated {release.announcement_date}</> : null}.
+              </p>
+            ) : null
+          }
+          {
+            release.tag && (
+              <p class="meta">
+                Tag <code>{release.tag.name}</code> object <code>{release.tag.tag_object}</code> peels to
+                commit <code>{release.tag.commit}</code>.
+              </p>
+            )
+          }
+          {release.scope_notes.map((note) => <p class="caution">{note}</p>)}
+          <ul>
+            {release.gaps.map((gap) => (
+              <li id={`gap-${gap.id}`}>
+                <span class={`badge ${gapBadgeClass(gap.status)}`}>{gap.status}</span>
+                {" "}Label: {gap.label.endsWith(".") ? gap.label : gap.label + "."}
+              </li>
+            ))}
+          </ul>
+          {
+            release.axioms && release.axioms.length > 0 && (
+              <p>Axioms named in formalization.yaml: {release.axioms.join(", ")}.</p>
+            )
+          }
+          <ul class="links">
+            {release.license_files.map((item) => (
+              <li>
+                <a href={item.url}>{item.path}</a>
+                <span class="meta"> · Apache-2.0 · sha256 {item.sha256}</span>
+              </li>
+            ))}
+            {release.statement_files.map((item) => (
+              <li>
+                <a href={item.url}>{item.path}</a>
+                <span class="meta"> · {item.role}</span>
+              </li>
+            ))}
+            {release.id === "zeta23" && (
+              <>
+                <li>
+                  <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator.json`}>zeta23/comparator.json</a>
+                  <span class="meta"> · headline comparator configuration</span>
+                </li>
+                <li>
+                  <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator-xiprime.json`}>zeta23/comparator-xiprime.json</a>
+                  <span class="meta"> · xi-prime comparator configuration</span>
+                </li>
+              </>
+            )}
+            {release.id === "3sum-apsp" && (
+              <li>
+                <a href={`${release.repo}/blob/${release.commit}/3sum-apsp/comparator-paperstatements.json`}>3sum-apsp/comparator-paperstatements.json</a>
+                <span class="meta"> · paper-statements comparator configuration</span>
+              </li>
+            )}
+          </ul>
+          {
+            release.headline_theorems.length > 0 && (
+              <>
+                <h3>Headline names</h3>
+                <ul class="links">
+                  {release.headline_theorems.map((name) => (
+                    <li><code>{name}</code></li>
+                  ))}
+                </ul>
+              </>
+            )
+          }
+          {
+            release.xi_prime_theorems.length > 0 && (
+              <>
+                <h3>Xi-prime names</h3>
+                <ul class="links">
+                  {release.xi_prime_theorems.map((name) => (
+                    <li><code>{name}</code></li>
+                  ))}
+                </ul>
+              </>
+            )
+          }
+        </section>
+      ))
+    }
+    {
+      record.skipped_directories.length > 0 && (
+        <>
+          <h2>Directories that are not releases</h2>
+          <ul id="skipped-directories">
+            {record.skipped_directories.map((name) => <li>{name}</li>)}
+          </ul>
+        </>
+      )
+    }
+  </article>
+</Base>

@@ -79,6 +79,23 @@ export interface Family {
   cited_by: CitationIn[];
 }
 
+export interface PreviewTile {
+  value: string;
+  label: string;
+}
+
+export interface PreviewBinding {
+  value: string;
+  path: string[];
+}
+
+export interface SourcePreview {
+  fragment: string;
+  tiles: PreviewTile[];
+  detail: string;
+  bindings: PreviewBinding[];
+}
+
 export interface SourceInfo {
   id: string;
   name: string;
@@ -88,6 +105,8 @@ export interface SourceInfo {
   paper: string | null;
   license: string;
   sync: string;
+  preview: SourcePreview;
+  also?: AlsoRepo[];
 }
 
 export interface NaturalLanguageProof {
@@ -168,12 +187,130 @@ export interface AlphaProofData {
   records: AlphaProofRecord[];
 }
 
+export interface AlsoRepo {
+  label: string;
+  repo: string;
+  commit: string;
+}
+
+export interface AnthropicLicense {
+  path: string;
+  url: string;
+  sha256: string;
+}
+
+export interface AnthropicStatementFile {
+  path: string;
+  url: string;
+  role: string;
+}
+
+export interface AnthropicGap {
+  id: string;
+  status: string;
+  label: string;
+}
+
+export interface AnthropicPaper {
+  id: string;
+  title: string;
+  url: string;
+  v1_submitted: string;
+  v2_submitted: string | null;
+}
+
+export interface AnthropicTag {
+  name: string;
+  tag_object: string;
+  commit: string;
+}
+
+export type AnthropicKind = "new-result" | "formalization";
+
+export interface AnthropicRelease {
+  id: string;
+  kind: AnthropicKind;
+  kind_label: string;
+  title: string;
+  statement: string;
+  repo: string;
+  commit: string;
+  commit_date: string;
+  commit_subject: string;
+  path: string;
+  tree_url: string;
+  license: string;
+  license_files: AnthropicLicense[];
+  lean_toolchain: string;
+  paper: AnthropicPaper | null;
+  announcement: string | null;
+  announcement_date: string | null;
+  tag: AnthropicTag | null;
+  headline_theorems: string[];
+  xi_prime_theorems: string[];
+  statement_files: AnthropicStatementFile[];
+  axioms?: string[];
+  scope_notes: string[];
+  gaps: AnthropicGap[];
+}
+
+export interface AnthropicSource extends SourceInfo {
+  also: AlsoRepo[];
+}
+
+export interface AnthropicQuotation {
+  text: string;
+  source: string;
+}
+
+export interface AnthropicData {
+  source: AnthropicSource;
+  check_wording: string;
+  quotations: AnthropicQuotation[];
+  counts: {
+    releases: number;
+    new_results: number;
+    formalizations: number;
+    lean_files: number;
+  };
+  identifiers: {
+    erdos: string[];
+    oeis: string[];
+    stacks: string[];
+    method: string;
+  };
+  skipped_directories: string[];
+  releases: AnthropicRelease[];
+  count_lines: string[];
+}
+
+export function anthropicLeanRank(kind: AnthropicKind): number {
+  switch (kind) {
+    case "new-result":
+      return 4;
+    case "formalization":
+      return 5;
+    default: {
+      const exhaustive: never = kind;
+      return exhaustive;
+    }
+  }
+}
+
 export interface CrossJoin {
   method: string;
   shared: { number: number; openai_families: string[]; alphaproof_records: string[] }[];
   empty_text: string;
   openai_numbers: { number: number; families: string[] }[];
   alphaproof_numbers: { number: number; records: string[] }[];
+  anthropic_identifiers: {
+    erdos: string[];
+    oeis: string[];
+    stacks: string[];
+    method: string;
+  };
+  shared_with_anthropic: { kind: string; id: string }[];
+  anthropic_empty_text: string;
 }
 
 export interface AtlasData {
@@ -181,6 +318,7 @@ export interface AtlasData {
   generated_at: string;
   sources: { schema_version: number; sources: SourceInfo[] };
   alphaproof: AlphaProofData;
+  anthropic: AnthropicData;
   cross: CrossJoin;
   upstream: {
     repo: string;

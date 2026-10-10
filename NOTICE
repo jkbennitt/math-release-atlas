@@ -17,7 +17,15 @@ are Creative Commons Attribution 4.0. Material from the OEIS is Creative
 Commons Attribution-ShareAlike 4.0. The upstream README says: "This is not
 an official Google product." The organization label used here is Google
 DeepMind. This atlas is not an official Google product and is not affiliated
-with OpenAI or Google DeepMind.
+with OpenAI, Google DeepMind, or Anthropic.
+
+This project also stores counts, license hashes, and links for
+https://github.com/anthropics/formal-math at commit
+e1a4e6508154ea59f030480661590a9fe3018011 and
+https://github.com/anthropics/fermats-last-theorem at commit
+6e837e75355538c7f80bab5b956861e86c4eacc2. Those Lean files are not copied
+into this repository. Both upstream repositories are Apache License 2.0.
+This atlas is not an official Anthropic product.
 
 The link-preview card uses a subset of the Liberation fonts from
 https://github.com/liberationfonts (SIL Open Font License 1.1). The subset

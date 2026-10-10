@@ -6,6 +6,7 @@ from __future__ import annotations
 import sys
 
 from alphaproof import ALPHAPROOF_JSON, SOURCES_JSON, catalogue_extras
+from anthropic import ANTHROPIC_JSON
 from atlaslib import (
     CAUTIONS_JSON,
     CURATED_DIR,
@@ -25,7 +26,8 @@ def main() -> int:
         raise AtlasError("data/upstream.json is missing; run scripts/sync.py")
     upstream = read_json(UPSTREAM_JSON)
     alphaproof = read_json(ALPHAPROOF_JSON)
-    extras = catalogue_extras(upstream, alphaproof)
+    anthropic = read_json(ANTHROPIC_JSON)
+    extras = catalogue_extras(upstream, alphaproof, anthropic)
     registry = extras["sources"]
     merged = merge_data(
         upstream,

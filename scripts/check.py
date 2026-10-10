@@ -17,6 +17,7 @@ from pathlib import Path
 import yaml
 
 import alphaproof
+import anthropic
 import atlaslib
 import og_card
 from alphaproof import (
@@ -26,6 +27,11 @@ from alphaproof import (
     assert_cross_source,
     catalogue_extras,
     verify_recorded_alphaproof,
+)
+from anthropic import (
+    ANTHROPIC_JSON,
+    assert_anthropic,
+    verify_recorded_anthropic,
 )
 from atlaslib import (
     CAUTIONS_JSON,
@@ -85,11 +91,13 @@ def check_source() -> list[str]:
         upstream = read_json(UPSTREAM_JSON)
         families = read_json(FAMILIES_JSON)
         alphaproof_payload = read_json(ALPHAPROOF_JSON)
-        extras = catalogue_extras(upstream, alphaproof_payload)
+        anthropic_payload = read_json(ANTHROPIC_JSON)
+        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
         assert_counts(upstream)
         assert_upstream_digest(upstream)
         assert_counts(families)
         assert_alphaproof(alphaproof_payload)
+        assert_anthropic(anthropic_payload)
         assert_cross_source(
             upstream["upstream"]["commit"],
             alphaproof_payload["source"]["commit"],
@@ -600,22 +608,48 @@ def alphaproof_self_test() -> list[str]:
             phrase = atlaslib.oeis_preview_phrase(repo_files, gap["paper_count"], gap["status"])
             if phrase != f"OEIS {repo_files} of 44 in paper ({status})":
                 failures.append(f"preview phrase for {status} was {phrase}")
-            if phrase not in preview_alt(372, 719, 71, repo_files, 44, gap["status"]):
+            preview = alphaproof.alphaproof_preview(
+                {
+                    "source": {"name": "AlphaProof Nexus", "org": "Google DeepMind"},
+                    "counts": {
+                        "lean_files": 71,
+                        "oeis_files": repo_files,
+                        "erdos": 9,
+                        "stacks": 11,
+                        "ai_collaborator": 13,
+                    },
+                    "gaps": [
+                        gap,
+                        {"id": "erdos-attempted", "status": "MATCH"},
+                        {"id": "per-row-provenance", "status": "MISSING"},
+                    ],
+                }
+            )
+            entries = [
+                {
+                    "name": "OpenAI Math",
+                    "org": "OpenAI",
+                    "fragment": "372 result families and 719 manuscripts from the OpenAI Math catalogue",
+                    "tiles": [
+                        {"value": "372", "label": "result families"},
+                        {"value": "719", "label": "manuscripts"},
+                    ],
+                    "detail": "",
+                },
+                {
+                    "name": "AlphaProof Nexus",
+                    "org": "Google DeepMind",
+                    "fragment": preview["fragment"],
+                    "tiles": preview["tiles"],
+                    "detail": preview["detail"],
+                },
+            ]
+            if phrase not in preview_alt(entries) or status not in preview_alt(entries):
                 failures.append(f"alt text dropped {status}")
+            if "MATCH" not in preview["fragment"] or "MISSING" not in preview["fragment"]:
+                failures.append(f"AlphaProof preview dropped a status label: {preview['fragment']}")
             try:
-                image = og_card.render(
-                    372,
-                    719,
-                    71,
-                    9,
-                    repo_files,
-                    44,
-                    gap["status"],
-                    11,
-                    13,
-                    "MISSING",
-                    "per-row provenance",
-                )
+                image = og_card.render(entries)
             except SystemExit as exc:
                 failures.append(f"preview card rejected {status}: {exc}")
             else:
@@ -681,8 +715,8 @@ def alphaproof_self_test() -> list[str]:
             if not atlaslib.check_gap_elements(leaked, [gap]):
                 failures.append(f"Absent leak passed for {gap['status']}")
         social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-        if "in paper (${oeisStatus})" not in social:
-            failures.append("social alt text does not render the OEIS status")
+        if "source.preview.fragment" not in social:
+            failures.append("social alt text does not render each source preview")
         badge_page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
         for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
             if f'case "{status}":' not in badge_page:
@@ -872,6 +906,168 @@ def ancestry_self_test() -> list[str]:
                 failures.append("upstream verifier did not call the ancestry check")
         finally:
             atlaslib.ensure_ancestor_of_origin_head = original
+    return failures
+
+
+def anthropic_self_test() -> list[str]:
+    """Identifier matching ignores camel-case fragments, and the formalization badge stays separate."""
+    failures: list[str] = []
+    missed = anthropic.find_identifiers("pseudoEisenstein")
+    if any(missed[key] for key in ("erdos", "oeis", "stacks")):
+        failures.append(f"pseudoEisenstein was treated as an identifier: {missed}")
+    found = anthropic.find_identifiers(
+        "pseudoEisenstein",
+        "oeis_12",
+        "A000042",
+        "erdos_7",
+        "https://stacks.math.columbia.edu/tag/00A1",
+    )
+    if found["oeis"] != ["000042", "12"] or found["erdos"] != ["7"]:
+        failures.append(f"identifier scan dropped an explicit id: {found}")
+    if "stacks.math.columbia" not in found["stacks"]:
+        failures.append(f"identifier scan dropped a Stacks URL: {found}")
+    empty = {
+        "identifiers": {"erdos": [], "oeis": [], "stacks": [], "method": anthropic.IDENTIFIER_METHOD},
+    }
+    joined = anthropic.anthropic_join(empty, {741}, set(), "pseudoEisenstein erdos_741 oeis_12")
+    if joined["shared_with_anthropic"] or joined["anthropic_empty_text"] != anthropic.ANTHROPIC_EMPTY_TEXT:
+        failures.append(f"an empty Anthropic scan still joined: {joined}")
+    overlap = {
+        "identifiers": {"erdos": ["741"], "oeis": ["12"], "stacks": [], "method": anthropic.IDENTIFIER_METHOD},
+    }
+    shared = {
+        (item["kind"], item["id"])
+        for item in anthropic.anthropic_join(overlap, {741}, set(), "oeis_12")["shared_with_anthropic"]
+    }
+    if shared != {("erdos", "741"), ("oeis", "12")}:
+        failures.append(f"Anthropic join missed an explicit id: {shared}")
+    classified = anthropic.classify_flt(
+        [
+            "Theorems/Thm_a.lean",
+            "P2M/Sol/a.lean",
+            "P2M/Util.lean",
+            "Definitions/d.lean",
+            "FinalCheck.lean",
+            "README.md",
+        ]
+    )
+    if (classified["theorem_files"], classified["proof_files"], classified["definition_files"]) != (1, 2, 1):
+        failures.append(f"Fermat path classes were {classified}")
+    if classified["other_lean_files"] != ["FinalCheck.lean"] or classified["lean_files"] != 5:
+        failures.append(f"Fermat other files were {classified}")
+    extended = anthropic.classify_flt(
+        [
+            "Theorems/Thm_a.lean",
+            "P2M/Sol/a.lean",
+            "P2M/Util.lean",
+            "Definitions/d.lean",
+            "FinalCheck.lean",
+            "lakefile.lean",
+            "verification/comparator/Challenge.lean",
+            "verification/comparator/Solution.lean",
+            "README.md",
+        ]
+    )
+    readme = (
+        "All 5 modules of this repository built. "
+        "(`Challenge.lean` uses `sorry` by design and is not part of the package)."
+    )
+    label = anthropic.module_count_label(5, extended, readme)
+    expected_bits = (
+        "README says 5 modules, which is the 4 files under Theorems, P2M, and Definitions plus FinalCheck.lean.",
+        "The tree has 8 .lean files.",
+        "The 3 extra .lean files are lakefile.lean, verification/comparator/Challenge.lean, and verification/comparator/Solution.lean.",
+        "They are not package modules.",
+        "The README says Challenge.lean is not part of the package.",
+    )
+    for bit in expected_bits:
+        if bit not in label:
+            failures.append(f"module-count label hid {bit!r}: {label}")
+    if "(3 more)" in label or "Paths outside" in label:
+        failures.append(f"module-count label still treats FinalCheck as an extra: {label}")
+    if anthropic.module_count_label(5, extended, "All 5 modules of this repository built.").endswith(
+        "not part of the package."
+    ):
+        failures.append("module-count label invented a Challenge.lean sentence the README does not say")
+    page = (ROOT / "src" / "pages" / "source" / "anthropic.astro").read_text(encoding="utf-8")
+    for status in ("NOT IN COMPARATOR", "NOT FORMALIZED", "NOTED"):
+        if f'case "{status}":' not in page:
+            failures.append(f"Anthropic source page badge does not handle {status}")
+    if 'id={`gap-${gap.id}`}' not in page or 'id={`kind-${release.id}`}' not in page:
+        failures.append("Anthropic source page does not key gap rows or kind badges")
+    if "{gap.label}." in page:
+        failures.append("Anthropic source page appends a period to every gap label")
+    if "quotation.source" not in page or "quotation.text" not in page:
+        failures.append("Anthropic source page does not label the source of each quotation")
+    if "percolation" in page.lower():
+        failures.append("Anthropic source page names percolation")
+    social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
+    if "source.preview.fragment" not in social or "source.org" not in social:
+        failures.append("social alt text does not read each source preview")
+    anthropic_preview = anthropic.anthropic_preview(
+        {
+            "source": {"name": "Anthropic", "org": "Anthropic"},
+            "counts": {"lean_files": 61238, "releases": 3, "new_results": 2, "formalizations": 1},
+        }
+    )
+    if "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)" not in anthropic_preview["fragment"]:
+        failures.append(f"Anthropic preview fragment was {anthropic_preview['fragment']}")
+    entries = [
+        {
+            "name": "OpenAI Math",
+            "org": "OpenAI",
+            "fragment": "372 result families and 719 manuscripts from the OpenAI Math catalogue",
+            "tiles": [
+                {"value": "372", "label": "result families"},
+                {"value": "719", "label": "manuscripts"},
+            ],
+            "detail": "",
+        },
+        {
+            "name": "AlphaProof Nexus",
+            "org": "Google DeepMind",
+            "fragment": "71 Lean files from AlphaProof Nexus, OEIS 38 of 44 in paper (PARTIAL), attempted list MATCH, per-row provenance MISSING",
+            "tiles": [
+                {"value": "71", "label": "Lean files"},
+                {"value": "PARTIAL", "label": "OEIS 38 of 44"},
+                {"value": "MATCH", "label": "attempted list"},
+                {"value": "MISSING", "label": "provenance"},
+            ],
+            "detail": "Erdos 9, Stacks 11, AI collaborator 13",
+        },
+        {
+            "name": "Anthropic",
+            "org": "Anthropic",
+            "fragment": anthropic_preview["fragment"],
+            "tiles": anthropic_preview["tiles"],
+            "detail": anthropic_preview["detail"],
+        },
+    ]
+    alt = preview_alt(entries)
+    if "not affiliated with OpenAI, Google DeepMind, or Anthropic." not in alt:
+        failures.append(f"preview alt dropped an organization: {alt}")
+    if scan_overclaims(alt, "preview"):
+        failures.append("Anthropic preview alt was flagged")
+    extra = {
+        "name": "Example Source",
+        "org": "Example Org",
+        "fragment": "4 notes from Example Source",
+        "tiles": [{"value": "4", "label": "notes"}],
+        "detail": "",
+    }
+    try:
+        image = og_card.render(entries)
+        wider = og_card.render([*entries, extra])
+    except SystemExit as exc:
+        failures.append(f"preview card rejected a registered source: {exc}")
+    else:
+        if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
+            failures.append(f"Anthropic preview card is {image.size}")
+        if wider.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
+            failures.append(f"a fourth source did not fit on the preview card: {wider.size}")
+        drawn = og_card.planned_text([*entries, extra])
+        if "Example Source" not in drawn or "Anthropic" not in drawn:
+            failures.append(f"preview card omitted a source: {drawn}")
     return failures
 
 
@@ -1312,6 +1508,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     if not denylist_hit(stem[:3] + soft + stem[3:]):
         failures.append("a soft hyphen hid a denylist token")
     failures.extend(alphaproof_self_test())
+    failures.extend(anthropic_self_test())
     failures.extend(ancestry_self_test())
 
     def missing_source() -> None:
@@ -1653,10 +1850,16 @@ def preview_self_test() -> list[str]:
         failures.append(f"published prefix is {published_prefix()!r}")
     prefix = "https://jkbennitt.github.io/math-release-atlas/"
     image = f"{prefix}og.png"
-    counts = {"families": 372, "manuscripts": 722}
     title = "Math Release Atlas"
     description = "Unofficial table of result families."
-    alt = preview_alt(372, 722)
+    openai_only = [
+        {
+            "name": "OpenAI Math",
+            "org": "OpenAI",
+            "fragment": "372 result families and 722 manuscripts from the OpenAI Math catalogue",
+        }
+    ]
+    alt = preview_alt(openai_only)
     if scan_overclaims(alt, "preview"):
         failures.append("preview alt was flagged")
     good = f"""
@@ -1678,38 +1881,64 @@ def preview_self_test() -> list[str]:
     <meta name="twitter:image" content="{image}" />
     <meta name="twitter:image:alt" content="{alt}" />
     """
-    if check_social_preview(good, "fixture", prefix, counts):
+    if check_social_preview(good, "fixture", prefix, openai_only):
         failures.append("a complete preview head was rejected")
     missing_image = good.replace(f'<meta property="og:image" content="{image}" />', "")
-    if not any("missing og:image" in item for item in check_social_preview(missing_image, "fixture", prefix, counts)):
+    if not any("missing og:image" in item for item in check_social_preview(missing_image, "fixture", prefix, openai_only)):
         failures.append("a page missing og:image was accepted")
     relative = good.replace(image, "/math-release-atlas/og.png")
-    if not any("og:image is not absolute" in item for item in check_social_preview(relative, "fixture", prefix, counts)):
+    if not any("og:image is not absolute" in item for item in check_social_preview(relative, "fixture", prefix, openai_only)):
         failures.append("a relative og:image was accepted")
     missing_card = good.replace('<meta name="twitter:card" content="summary_large_image" />', "")
-    if not any("missing twitter:card" in item for item in check_social_preview(missing_card, "fixture", prefix, counts)):
+    if not any("missing twitter:card" in item for item in check_social_preview(missing_card, "fixture", prefix, openai_only)):
         failures.append("a page missing twitter:card was accepted")
     header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 1200, 630)
     if png_dimensions(header + b"\x08\x02\x00\x00\x00") != (1200, 630):
         failures.append("png header parse failed")
     if png_dimensions(b"not a png") is not None:
         failures.append("a non-png had dimensions")
-    rich_counts = {
-        "families": 372,
-        "manuscripts": 719,
-        "lean_files": 71,
-        "oeis_files": 38,
-        "oeis_paper": 44,
-        "oeis_status": "PARTIAL",
-    }
-    rich_alt = preview_alt(372, 719, 71, 38, 44, "PARTIAL")
-    if "OEIS 38 of 44 in paper (PARTIAL)" not in rich_alt:
-        failures.append("preview alt dropped the OEIS paper status")
+    rich_entries = [
+        {
+            "name": "OpenAI Math",
+            "org": "OpenAI",
+            "fragment": "372 result families and 719 manuscripts from the OpenAI Math catalogue",
+        },
+        {
+            "name": "AlphaProof Nexus",
+            "org": "Google DeepMind",
+            "fragment": "71 Lean files from AlphaProof Nexus, OEIS 38 of 44 in paper (PARTIAL), attempted list MATCH, per-row provenance MISSING",
+        },
+    ]
+    rich_alt = preview_alt(rich_entries)
+    if "OEIS 38 of 44 in paper (PARTIAL)" not in rich_alt or "MATCH" not in rich_alt or "MISSING" not in rich_alt:
+        failures.append("preview alt dropped an AlphaProof status")
     rich_page = good.replace(alt, rich_alt)
-    if check_social_preview(rich_page, "fixture", prefix, rich_counts):
+    if check_social_preview(rich_page, "fixture", prefix, rich_entries):
         failures.append("preview alt with the OEIS paper status was rejected")
-    if not any("og:image:alt" in item for item in check_social_preview(good, "fixture", prefix, rich_counts)):
+    if not any("og:image:alt" in item for item in check_social_preview(good, "fixture", prefix, rich_entries)):
         failures.append("a preview alt without the OEIS paper status was accepted")
+    anthropic_entries = [
+        *rich_entries,
+        {
+            "name": "Anthropic",
+            "org": "Anthropic",
+            "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)",
+        },
+    ]
+    anthropic_alt = preview_alt(anthropic_entries)
+    if "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)" not in anthropic_alt:
+        failures.append("preview alt dropped the Anthropic counts")
+    if not anthropic_alt.endswith("Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."):
+        failures.append("preview alt dropped the Anthropic affiliation")
+    if scan_overclaims(anthropic_alt, "preview"):
+        failures.append("Anthropic preview alt was flagged")
+    anthropic_page = good.replace(alt, anthropic_alt)
+    if check_social_preview(anthropic_page, "fixture", prefix, anthropic_entries):
+        failures.append("preview alt with the Anthropic counts was rejected")
+    if not any("og:image:alt" in item for item in check_social_preview(rich_page, "fixture", prefix, anthropic_entries)):
+        failures.append("a preview alt without the Anthropic counts was accepted")
+    if "Anthropic" in preview_alt(openai_only):
+        failures.append("preview alt named Anthropic without a registered source")
     return failures
 
 
@@ -1863,6 +2092,7 @@ def main() -> int:
         try:
             verify_recorded_upstream()
             verify_recorded_alphaproof()
+            verify_recorded_anthropic()
         except AtlasError as exc:
             failures.append(str(exc))
         except subprocess.CalledProcessError as exc:
