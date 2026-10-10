@@ -1,0 +1,111 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, shortSha } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+const record = atlas.alphaproof;
+const counts = record.counts;
+const commit = record.source.commit;
+const oeis = record.gaps.find((gap) => gap.id === "oeis-count");
+const attempted = record.gaps.find((gap) => gap.id === "erdos-attempted");
+const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
+---
+
+<Base
+  title="AlphaProof Nexus · Math Release Atlas"
+  description="Lean files deposited in the AlphaProof Nexus results repository, with paper counts and the gaps this atlas does not fill."
+>
+  <article class="prose">
+    <p class="meta"><a href={`${base}source/`}>All sources</a></p>
+    <h1>AlphaProof Nexus</h1>
+    <p>
+      Google DeepMind. Repository
+      <a href={record.source.repo}>{record.source.repo}</a>.
+      Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>
+      ({shortSha(commit)}), committed {record.commit_date}, message “{record.commit_subject}”.
+      Paper <a href={record.paper.url}>{record.paper.title}</a>,
+      arXiv {record.paper.id}. v1 submitted {record.paper.v1_submitted}. v2 submitted {record.paper.v2_submitted}.
+    </p>
+    <p>{record.check_wording}</p>
+    <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
+
+    <h2>Counts at this commit</h2>
+    <ul>
+      <li>{counts.erdos} Erdős Lean files.</li>
+      <li>{counts.oeis_files} OEIS Lean files.</li>
+      <li>{counts.stacks} Stacks Lean files.</li>
+      <li>{counts.ai_collaborator} AI collaborator Lean files.</li>
+      <li>{counts.lean_files} Lean files in total.</li>
+      <li>{counts.natural_language_pdfs} natural-language PDFs, linked where the filename corresponds.</li>
+    </ul>
+    <p class="meta">
+      AI collaborator folders:
+      {Object.entries(record.subcounts).map(([name, value]) => `${name} ${value}`).join(", ")}.
+    </p>
+
+    <h2>Gaps</h2>
+    <ul>
+      <li>
+        <span class="badge partial">{oeis?.status}</span>
+        {" "}OEIS paper count {oeis?.paper_count}/{oeis?.paper_attempted}. Repository Lean files {oeis?.repo_files}.
+        Absent {oeis?.absent}. Label: {oeis?.label}.
+      </li>
+      <li>
+        <span class="badge partial">{attempted?.status}</span>
+        {" "}Paper attempted {attempted?.paper_attempted}. Newline count in erdos_problems_attempted.txt:
+        {attempted?.repo_newlines}. Non-empty lines: {attempted?.repo_entries}. Label: {attempted?.label}.
+      </li>
+      <li>
+        <span class="badge missing">{provenance?.status}</span>
+        {" "}{provenance?.label}: {provenance?.status}. The repository has no per-file agent record.
+      </li>
+    </ul>
+
+    <h2>Upstream quotations</h2>
+    <p>These sentences are the paper’s wording, quoted here.</p>
+    <blockquote data-upstream="abstract">{record.paper.abstract_claim}</blockquote>
+    <blockquote data-upstream="table">{record.paper.table1_caption}</blockquote>
+    <blockquote data-upstream="density">{record.paper.density_note}</blockquote>
+    <blockquote data-upstream="agent-a">{record.paper.agent_a}</blockquote>
+
+    <h2>Source-level agent note</h2>
+    <p>{record.provenance.agent_d}</p>
+    <p>{record.provenance.agent_a}</p>
+    <p>{record.provenance.lean_paper} Repository toolchain: <code>{record.lean_toolchain}</code>.</p>
+    <p>
+      Upstream CI workflow <code>{record.upstream_ci}</code>.
+      {record.check_wording}
+    </p>
+
+    <h2>Lean files</h2>
+    {
+      record.records.map((item) => (
+        <section id={item.anchor}>
+          <h3>{item.statement}</h3>
+          <p class="meta">
+            {item.category}
+            {item.subcategory ? ` / ${item.subcategory}` : ""}. Problem id {item.problem_id}.
+            Per-row provenance: {item.provenance}.
+          </p>
+          {item.scope_notes.map((note) => (
+            <p class="caution">{note}</p>
+          ))}
+          <p>
+            <a href={item.url}>{item.path}</a>
+          </p>
+          {item.natural_language_proofs.length === 0 ? (
+            <p class="meta">No natural-language PDF shares this filename.</p>
+          ) : (
+            <ul class="links">
+              {item.natural_language_proofs.map((proof) => (
+                <li>
+                  <a href={proof.url}>{proof.path}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ))
+    }
+  </article>
+</Base>

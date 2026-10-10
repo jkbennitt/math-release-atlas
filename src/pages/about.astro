@@ -13,9 +13,12 @@ const commit = atlas.upstream.commit;
   <article class="prose">
     <h1>About</h1>
     <p>
-      Math Release Atlas is an unofficial index of the result families in the manuscript collection
-      at <a href="https://github.com/openai/math">github.com/openai/math</a>. It is not affiliated
-      with OpenAI.
+      Math Release Atlas is an unofficial index of two public catalogues. One is the result families
+      in the manuscript collection at <a href="https://github.com/openai/math">github.com/openai/math</a>.
+      The other is the Lean files in
+      <a href="https://github.com/google-deepmind/alphaproof-nexus-results">github.com/google-deepmind/alphaproof-nexus-results</a>,
+      read with the paper at <a href="https://arxiv.org/abs/2605.22763">arXiv 2605.22763</a>.
+      It is not affiliated with OpenAI or Google DeepMind.
     </p>
     <p>
       The upstream collection groups manuscripts into families. This site turns that catalogue into
@@ -77,10 +80,25 @@ const commit = atlas.upstream.commit;
       </li>
     </ul>
 
+    <h2>AlphaProof Nexus</h2>
+    <p>
+      The second source is pinned at its own commit. Each row is one Lean file from that commit.
+      A natural-language PDF is linked only when the filename corresponds. The source page records
+      the paper count and the repository count side by side. Per-row provenance is MISSING.
+      Lean file deposited upstream; upstream CI builds it. This atlas did not run Lean.
+    </p>
+    <p>
+      <a href={`${base}source/alphaproof-nexus/`}>AlphaProof Nexus source page</a>
+      ·
+      <a href={`${base}source/cross/`}>Cross-source problem ids</a>
+    </p>
+
     <h2>License</h2>
     <p>
-      The atlas is released under Apache-2.0. The upstream collection is also Apache-2.0. A copy of
+      The atlas is released under Apache-2.0. The OpenAI Math collection is also Apache-2.0. A copy of
       that license ships in this repository as <code>UPSTREAM_LICENSE</code>.
+      AlphaProof Nexus code is Apache-2.0. Its other materials are CC-BY 4.0. OEIS-derived material
+      is CC BY-SA 4.0. See <code>NOTICE</code>.
     </p>
     <p>
       We changed and derived these files. Titles and summaries from the upstream catalogue were

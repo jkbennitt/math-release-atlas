@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "openai-math",
+      "name": "OpenAI Math",
+      "org": "OpenAI",
+      "repo": "https://github.com/openai/math",
+      "paper": null,
+      "license": "Apache-2.0",
+      "sync": "sparse-fetch",
+      "commit": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb"
+    },
+    {
+      "id": "alphaproof-nexus",
+      "name": "AlphaProof Nexus",
+      "org": "Google DeepMind",
+      "repo": "https://github.com/google-deepmind/alphaproof-nexus-results",
+      "paper": "https://arxiv.org/abs/2605.22763",
+      "license": "Apache-2.0 code; CC-BY 4.0 other materials; OEIS-derived material CC BY-SA 4.0",
+      "sync": "tree-snapshot",
+      "commit": "0647711a71183c1ea492ad60860776617ce1ea88"
+    }
+  ]
+}

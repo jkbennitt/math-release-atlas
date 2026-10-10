@@ -34,3 +34,10 @@ visible diff. `.github/CODEOWNERS` names @jkbennitt on `data/curated/**`.
 Keep the note descriptive and neutral. The build rejects a hostile note, and it rejects a
 note that pairs a guarded problem name with a claim verb. The generator copies the curated
 status onto the family record. It does not invent one.
+
+## AlphaProof Nexus records
+
+`data/alphaproof.json` is generated from the pinned results repository. Do not
+hand-edit Lean rows, counts, or the six OEIS entries that are not in that
+repository. Curated community status stays on the OpenAI Math family files
+under `data/curated/`. The daily sync does not write that status.

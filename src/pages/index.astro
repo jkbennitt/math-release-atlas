@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { atlas, dateRange, shortSha } from "../lib/atlas";
+import { atlas, dateRange, shortSha, type AlphaProofRecord } from "../lib/atlas";
 import { leanLabel, leanRank } from "../lib/lean";
 import { lensCounts, lensLabel } from "../lib/lenses";
 
@@ -9,19 +9,53 @@ const counts = atlas.counts;
 const generated = atlas.generated_at.slice(0, 10);
 const base = import.meta.env.BASE_URL;
 const lenses = lensCounts(atlas.families);
+const alphaproof = atlas.alphaproof;
+const sources = atlas.sources.sources;
+const openaiSource = sources.find((item) => item.id === "openai-math");
+const apnSource = sources.find((item) => item.id === "alphaproof-nexus");
+const oeisGap = alphaproof.gaps.find((gap) => gap.id === "oeis-count");
+const attemptedGap = alphaproof.gaps.find((gap) => gap.id === "erdos-attempted");
+const totalRows = counts.families + alphaproof.counts.lean_files;
 ---
 
 <Base
   title="Math Release Atlas"
-  description="Unofficial table of result families from the public math manuscript catalogue, with Lean status and links to the upstream PDFs."
+  description="Unofficial table of the OpenAI Math catalogue and the AlphaProof Nexus Lean files, with links back to each pinned upstream commit."
 >
   <h1>Result families</h1>
   <p class="lede">
-    A receipted index of the families in the upstream manuscript catalogue. Each result title
+    A receipted index of two pinned upstream catalogues. Each OpenAI Math result title
     opens that family's page. The row still quotes the catalogue and links to its PDFs. Lean
-    badges repeat the upstream review status. They are not peer review, and they are not
-    laboratory results.
+    badges on those rows repeat the upstream review status. They are not peer review, and they are not
+    laboratory results. AlphaProof Nexus rows link to the Lean file deposited upstream.
+    This atlas did not run Lean.
   </p>
+  <div class="source-grid">
+    <section class="source-card">
+      <h2>OpenAI Math</h2>
+      <p>
+        {counts.families} families and {counts.manuscripts} manuscripts at
+        <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
+        Source id <code>openai-math</code>.
+      </p>
+      {openaiSource && <p class="meta">{openaiSource.license}. Sync: {openaiSource.sync}.</p>}
+    </section>
+    <section class="source-card">
+      <h2>AlphaProof Nexus</h2>
+      <p>
+        {alphaproof.counts.lean_files} Lean files
+        ({alphaproof.counts.erdos} Erdős, {alphaproof.counts.oeis_files} OEIS files,
+        {alphaproof.counts.stacks} Stacks, {alphaproof.counts.ai_collaborator} AI collaborator)
+        at <a href={`${apnSource?.repo}/commit/${alphaproof.source.commit}`}><code>{shortSha(alphaproof.source.commit)}</code></a>.
+      </p>
+      <p class="meta">
+        OEIS paper count {oeisGap?.paper_count}/{oeisGap?.paper_attempted}. Repository files {oeisGap?.repo_files}.
+        Gap label: {oeisGap?.label}. Status {oeisGap?.status}.
+        Attempted label: {attemptedGap?.label}. Status {attemptedGap?.status}.
+      </p>
+      <p class="meta"><a href={`${base}source/alphaproof-nexus/`}>Source page</a></p>
+    </section>
+  </div>
   <div class="stats">
     <div class="stat"><b>{counts.families}</b><span>families</span></div>
     <div class="stat"><b>{counts.manuscripts}</b><span>manuscripts</span></div>
@@ -67,6 +101,14 @@ const lenses = lensCounts(atlas.families);
       </select>
     </label>
     <label>
+      Source
+      <select id="source-filter">
+        <option value="">All sources</option>
+        <option value="openai-math">OpenAI Math ({counts.families})</option>
+        <option value="alphaproof-nexus">AlphaProof Nexus ({alphaproof.counts.lean_files})</option>
+      </select>
+    </label>
+    <label>
       Lean status
       <select id="lean-filter">
         <option value="">All statuses</option>
@@ -77,7 +119,7 @@ const lenses = lensCounts(atlas.families);
     </label>
     <button id="filter-reset" type="button">Reset</button>
   </div>
-  <p id="shown-count" class="shown">Showing {counts.families} of {counts.families}</p>
+  <p id="shown-count" class="shown">Showing {totalRows} of {totalRows}</p>
   <noscript><p>Search and sorting need JavaScript. The full table is still listed below.</p></noscript>
 
   <div class="table-scroll">
@@ -85,6 +127,7 @@ const lenses = lensCounts(atlas.families);
       <caption class="meta">All result families in catalogue order, with upstream links.</caption>
       <thead>
         <tr>
+          <th scope="col" data-sort="source" aria-sort="none"><button type="button" data-sort="source">Source</button></th>
           <th scope="col" data-sort="id" aria-sort="ascending"><button type="button" data-sort="id">ID</button></th>
           <th scope="col" data-sort="title" aria-sort="none"><button type="button" data-sort="title">Result</button></th>
           <th scope="col" data-sort="area" aria-sort="none"><button type="button" data-sort="area">Subject</button></th>
@@ -99,6 +142,7 @@ const lenses = lensCounts(atlas.families);
           return (
             <tr
               id={`f-${family.id}`}
+              data-source="openai-math"
               data-id={family.id}
               data-title={family.title}
               data-area={family.areas.join(", ")}
@@ -109,6 +153,7 @@ const lenses = lensCounts(atlas.families);
               data-date={dates[0]}
               data-manuscripts={family.manuscripts.length}
             >
+              <td data-label="Source"><a href={`${base}source/`}>openai-math</a></td>
               <td class="id">{family.id}</td>
               <td>
                 <p class="title">
@@ -182,6 +227,39 @@ const lenses = lensCounts(atlas.families);
             </tr>
           );
         })}
+        {alphaproof.records.map((record: AlphaProofRecord) => (
+          <tr
+            id={`apn-${record.anchor}`}
+            data-source="alphaproof-nexus"
+            data-id={record.anchor}
+            data-title={record.statement}
+            data-area={record.category}
+            data-areas={record.category}
+            data-lean="deposited"
+            data-lean-rank="3"
+            data-lenses=""
+            data-date={alphaproof.commit_date}
+            data-manuscripts={record.natural_language_proofs.length}
+          >
+            <td data-label="Source"><a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>alphaproof-nexus</a></td>
+            <td class="id">{record.anchor}</td>
+            <td>
+              <p class="title">
+                <a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>{record.statement}</a>
+              </p>
+              {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
+              <p class="meta">Per-row provenance: {record.provenance}</p>
+              <p class="meta"><a href={record.url}>{record.path}</a></p>
+              {record.natural_language_proofs.map((item) => (
+                <p class="meta"><a href={item.url}>{item.path}</a></p>
+              ))}
+            </td>
+            <td data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
+            <td data-label="Lean"><span class="badge deposited">Deposited</span></td>
+            <td data-label="Manuscripts">{record.natural_language_proofs.length}</td>
+            <td data-label="Dates">{alphaproof.commit_date}</td>
+          </tr>
+        ))}
       </tbody>
     </table>
   </div>

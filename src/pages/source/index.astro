@@ -1,0 +1,50 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, shortSha } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Base
+  title="Sources · Math Release Atlas"
+  description="The two pinned catalogues in this unofficial atlas, with commits, licenses, and sync methods."
+>
+  <article class="prose">
+    <h1>Sources</h1>
+    <p>
+      Each record on this site carries a source id. Family pages stay at <code>/f/&lt;id&gt;/</code>.
+      The AlphaProof Nexus rows live on the source page below.
+    </p>
+    <ul>
+      {
+        atlas.sources.sources.map((source) => (
+          <li>
+            <strong>{source.name}</strong>
+            <span class="meta"> {source.id}</span>
+            <p>
+              {source.org}. Repository <a href={source.repo}>{source.repo}</a>. Commit{" "}
+              <a href={`${source.repo}/commit/${source.commit}`}>
+                <code>{shortSha(source.commit)}</code>
+              </a>
+              .
+            </p>
+            <p class="meta">
+              License: {source.license}. Sync: {source.sync}.
+              {source.paper ? (
+                <>
+                  {" "}
+                  Paper: <a href={source.paper}>{source.paper}</a>.
+                </>
+              ) : null}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+    <p>
+      <a href={`${base}source/alphaproof-nexus/`}>AlphaProof Nexus counts and scope notes</a>
+      ·
+      <a href={`${base}source/cross/`}>Cross-source problem ids</a>
+    </p>
+  </article>
+</Base>

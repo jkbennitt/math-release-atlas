@@ -16,7 +16,16 @@ from pathlib import Path
 
 import yaml
 
+import alphaproof
 import atlaslib
+from alphaproof import (
+    ALPHAPROOF_JSON,
+    SOURCES_JSON,
+    assert_alphaproof,
+    assert_cross_source,
+    catalogue_extras,
+    verify_recorded_alphaproof,
+)
 from atlaslib import (
     CAUTIONS_JSON,
     COMMUNITY_STATUSES,
@@ -34,6 +43,7 @@ from atlaslib import (
     check_preview_source,
     check_social_preview,
     denylist_hit,
+    bare_result_claims,
     exempt_upstream_text,
     assert_merged_catalogue,
     assert_sha_is_ancestor,
@@ -73,10 +83,22 @@ def check_source() -> list[str]:
         curated = load_curated(CURATED_DIR)
         upstream = read_json(UPSTREAM_JSON)
         families = read_json(FAMILIES_JSON)
+        alphaproof_payload = read_json(ALPHAPROOF_JSON)
+        extras = catalogue_extras(upstream, alphaproof_payload)
         assert_counts(upstream)
         assert_upstream_digest(upstream)
         assert_counts(families)
-        assert_merged_catalogue(upstream, families, curated, cautions)
+        assert_alphaproof(alphaproof_payload)
+        assert_cross_source(
+            upstream["upstream"]["commit"],
+            alphaproof_payload["source"]["commit"],
+            upstream["families"],
+            alphaproof_payload["records"],
+            families["cross"],
+        )
+        if read_json(SOURCES_JSON) != extras["sources"]:
+            raise AtlasError("sources.json does not match the source registry")
+        assert_merged_catalogue(upstream, families, curated, cautions, extras)
     except AtlasError as exc:
         failures.append(str(exc))
         failures.extend(check_authored())
@@ -497,6 +519,87 @@ def _git(repo: Path, *args: str) -> str:
         check=True,
     )
     return result.stdout.strip()
+
+
+def alphaproof_self_test() -> list[str]:
+    """The AlphaProof parser counts files it can see and does not invent the rest."""
+    failures: list[str] = []
+    deposited = alphaproof.erdos_statement(741, "i", None)
+    if bare_result_claims(deposited):
+        failures.append("a deposited-file sentence was flagged")
+    if not bare_result_claims("The agent solved Erdős #12."):
+        failures.append("a bare solved claim was accepted")
+    if not bare_result_claims("This proves the OEIS conjecture."):
+        failures.append("a bare proves claim was accepted")
+    quoted = f'<blockquote data-upstream="abstract">{alphaproof.ABSTRACT_CLAIM}</blockquote>'
+    exempted = exempt_upstream_text(quoted, {alphaproof.ABSTRACT_CLAIM})
+    if bare_result_claims(exempted):
+        failures.append("an exact upstream quotation was flagged")
+    if not bare_result_claims(quoted):
+        failures.append("the same quotation was exempt outside the element")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        (repo / "APNOutputs" / "ErdosProblems").mkdir(parents=True)
+        (repo / "APNOutputs" / "OEIS").mkdir(parents=True)
+        (repo / "APNOutputs" / "AICollaborator" / "AlgebraicGeometry").mkdir(parents=True)
+        (repo / "NaturalLanguageProofs" / "ErdosProblems").mkdir(parents=True)
+        (repo / "NaturalLanguageProofs" / "AICollaborator").mkdir(parents=True)
+        (repo / ".github" / "workflows").mkdir(parents=True)
+        (repo / "APNOutputs" / "ErdosProblems" / "erdos_741.parts.i.lean").write_text("theorem\n", encoding="utf-8")
+        (repo / "APNOutputs" / "ErdosProblems" / "erdos_26.variants.tenenbaum.lean").write_text("theorem\n", encoding="utf-8")
+        (repo / "APNOutputs" / "OEIS" / "oeis_51293_conjecture_0.lean").write_text("theorem\n", encoding="utf-8")
+        (repo / "APNOutputs" / "AICollaborator" / "AlgebraicGeometry" / "hilbert_functions_1.lean").write_text(
+            "theorem\n", encoding="utf-8"
+        )
+        (repo / "NaturalLanguageProofs" / "ErdosProblems" / "erdos741i.pdf").write_bytes(b"%PDF")
+        (repo / "NaturalLanguageProofs" / "ErdosProblems" / "erdos26.pdf").write_bytes(b"%PDF")
+        (repo / "NaturalLanguageProofs" / "AICollaborator" / "hilbert.pdf").write_bytes(b"%PDF")
+        (repo / "erdos_problems_attempted.txt").write_text("erdos_1\nerd os_2\n", encoding="utf-8")
+        (repo / "lean-toolchain").write_text("leanprover/lean4:v4.27.0\n", encoding="utf-8")
+        (repo / ".github" / "workflows" / "lean_action_ci.yml").write_text(
+            "uses: leanprover/lean-action@v1\n", encoding="utf-8"
+        )
+        payload = alphaproof.build_alphaproof(repo, "b" * 40)
+        counts = payload["counts"]
+        if (counts["erdos"], counts["oeis_files"], counts["stacks"], counts["ai_collaborator"]) != (2, 1, 0, 1):
+            failures.append(f"fixture counts were {counts}")
+        if len(payload["records"]) != 4:
+            failures.append("fixture invented or dropped a Lean file")
+        by_anchor = {record["anchor"]: record for record in payload["records"]}
+        row = by_anchor["erdos-741-part-i"]
+        if not row["natural_language_proofs"] or "upper density" not in row["scope_notes"][0]:
+            failures.append("741(i) lost its PDF or its scope note")
+        if "solved" in row["statement"] or "proves" in row["statement"]:
+            failures.append("741(i) statement overclaims")
+        if by_anchor["erdos-26-variant-tenenbaum"]["scope_notes"][0].count("†") != 1:
+            failures.append("26 lost the dagger scope note")
+        if payload["gaps"][0]["label"] != "not in repo / unexplained":
+            failures.append("OEIS gap label changed")
+        if payload["gaps"][0]["absent"] != 43 or "missing_entries" in payload["gaps"][0]:
+            failures.append("OEIS gap invented the absent files")
+        if payload["gaps"][1]["label"] != "352 vs 353":
+            failures.append("attempted-count label changed")
+        if any(record["provenance"] != "MISSING" for record in payload["records"]):
+            failures.append("fixture assigned per-row provenance")
+        families = [
+            {"id": "021", "lean": {"comparators": [{"declarations": ["erdos_970_quadratic"]}]}},
+            {"id": "100", "title": "The geometric case of the Erdős similarity conjecture"},
+        ]
+        joined = alphaproof.cross_source(families, payload["records"])
+        if joined["shared"]:
+            failures.append(f"titles or an unmatched number joined: {joined['shared']}")
+        overlap = [
+            {"id": "050", "lean": {"comparators": [{"declarations": ["erdos_741_main"]}]}},
+        ]
+        shared = alphaproof.cross_source(overlap, payload["records"])["shared"]
+        if len(shared) != 1 or shared[0]["number"] != 741 or shared[0]["openai_families"] != ["050"]:
+            failures.append(f"an explicit shared number was not joined: {shared}")
+    recorded = read_json(ALPHAPROOF_JSON)
+    if recorded["counts"]["erdos"] != 9 or recorded["counts"]["oeis_files"] != 38:
+        failures.append("recorded AlphaProof counts are not the pinned file counts")
+    if recorded["counts"]["stacks"] != 11 or recorded["counts"]["ai_collaborator"] != 13:
+        failures.append("recorded Stacks or AI collaborator counts drifted")
+    return failures
 
 
 def ancestry_self_test() -> list[str]:
@@ -1046,6 +1149,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         failures.append("a zero-width character hid a denylist token")
     if not denylist_hit(stem[:3] + soft + stem[3:]):
         failures.append("a soft hyphen hid a denylist token")
+    failures.extend(alphaproof_self_test())
     failures.extend(ancestry_self_test())
 
     def missing_source() -> None:
@@ -1580,6 +1684,7 @@ def main() -> int:
     if args.verify_upstream:
         try:
             verify_recorded_upstream()
+            verify_recorded_alphaproof()
         except AtlasError as exc:
             failures.append(str(exc))
         except subprocess.CalledProcessError as exc:

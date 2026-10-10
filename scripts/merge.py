@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import sys
 
+from alphaproof import ALPHAPROOF_JSON, SOURCES_JSON, catalogue_extras
 from atlaslib import (
     CAUTIONS_JSON,
     CURATED_DIR,
@@ -22,12 +23,18 @@ from atlaslib import (
 def main() -> int:
     if not UPSTREAM_JSON.is_file():
         raise AtlasError("data/upstream.json is missing; run scripts/sync.py")
+    upstream = read_json(UPSTREAM_JSON)
+    alphaproof = read_json(ALPHAPROOF_JSON)
+    extras = catalogue_extras(upstream, alphaproof)
+    registry = extras["sources"]
     merged = merge_data(
-        read_json(UPSTREAM_JSON),
+        upstream,
         load_curated(CURATED_DIR),
         load_cautions(CAUTIONS_JSON),
+        extras,
     )
     write_json(FAMILIES_JSON, merged)
+    write_json(SOURCES_JSON, registry)
     print(f"wrote {FAMILIES_JSON.relative_to(FAMILIES_JSON.parents[1])}")
     return 0
 

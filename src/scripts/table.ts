@@ -1,4 +1,4 @@
-type SortKey = "id" | "title" | "area" | "lean" | "date" | "manuscripts";
+type SortKey = "id" | "title" | "area" | "lean" | "date" | "manuscripts" | "source";
 
 function compare(left: HTMLTableRowElement, right: HTMLTableRowElement, key: SortKey): number {
   switch (key) {
@@ -14,6 +14,8 @@ function compare(left: HTMLTableRowElement, right: HTMLTableRowElement, key: Sor
       return (left.dataset.date ?? "").localeCompare(right.dataset.date ?? "");
     case "manuscripts":
       return Number(left.dataset.manuscripts) - Number(right.dataset.manuscripts);
+    case "source":
+      return (left.dataset.source ?? "").localeCompare(right.dataset.source ?? "");
     default: {
       const exhaustive: never = key;
       return exhaustive;
@@ -29,6 +31,7 @@ function isSortKey(value: string): value is SortKey {
     case "lean":
     case "date":
     case "manuscripts":
+    case "source":
       return true;
     default:
       return false;
@@ -42,8 +45,9 @@ export function mountTable(): void {
   const area = document.querySelector<HTMLSelectElement>("#area-filter");
   const lens = document.querySelector<HTMLSelectElement>("#lens-filter");
   const lean = document.querySelector<HTMLSelectElement>("#lean-filter");
+  const source = document.querySelector<HTMLSelectElement>("#source-filter");
   const shown = document.querySelector<HTMLElement>("#shown-count");
-  if (!table || !tbody || !search || !area || !lens || !lean || !shown) {
+  if (!table || !tbody || !search || !area || !lens || !lean || !source || !shown) {
     return;
   }
 
@@ -55,6 +59,7 @@ export function mountTable(): void {
     const areaValue = area.value;
     const lensValue = lens.value;
     const leanValue = lean.value;
+    const sourceValue = source.value;
     let visible = 0;
     for (const row of tbody.querySelectorAll<HTMLTableRowElement>("tr")) {
       const areas = (row.dataset.areas ?? "").split("|");
@@ -63,7 +68,8 @@ export function mountTable(): void {
       const matchesArea = areaValue === "" || areas.includes(areaValue);
       const matchesLens = lensValue === "" || lenses.includes(lensValue);
       const matchesLean = leanValue === "" || row.dataset.lean === leanValue;
-      const keep = matchesQuery && matchesArea && matchesLens && matchesLean;
+      const matchesSource = sourceValue === "" || row.dataset.source === sourceValue;
+      const keep = matchesQuery && matchesArea && matchesLens && matchesLean && matchesSource;
       row.hidden = !keep;
       if (keep) {
         visible += 1;
@@ -105,12 +111,14 @@ export function mountTable(): void {
   area.addEventListener("change", apply);
   lens.addEventListener("change", apply);
   lean.addEventListener("change", apply);
+  source.addEventListener("change", apply);
   const reset = document.querySelector<HTMLButtonElement>("#filter-reset");
   reset?.addEventListener("click", () => {
     search.value = "";
     area.value = "";
     lens.value = "";
     lean.value = "";
+    source.value = "";
     apply();
   });
   sort();

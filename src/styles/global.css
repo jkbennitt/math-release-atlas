@@ -202,9 +202,29 @@ th button {
   font-size: 0.78rem;
   line-height: 1.4;
 }
-.badge.main-result-formalized { background: var(--formal); }
-.badge.comparator-challenge-only { background: var(--comparator); }
-.badge.none { background: var(--none); }
+.badge.main-result-formalized, .badge.deposited { background: var(--formal); }
+.badge.comparator-challenge-only, .badge.partial { background: var(--comparator); }
+.badge.none, .badge.missing { background: var(--none); }
+.source-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin: 0 0 1.2rem;
+}
+.source-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.85rem 0.95rem;
+}
+.source-card h2 {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  margin: 0 0 0.35rem;
+}
+@media (max-width: 800px) {
+  .source-grid { grid-template-columns: 1fr; }
+}
 .review {
   display: block;
   margin-top: 0.3rem;
