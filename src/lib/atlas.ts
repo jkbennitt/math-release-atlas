@@ -79,6 +79,23 @@ export interface Family {
   cited_by: CitationIn[];
 }
 
+export interface PreviewTile {
+  value: string;
+  label: string;
+}
+
+export interface PreviewBinding {
+  value: string;
+  path: string[];
+}
+
+export interface SourcePreview {
+  fragment: string;
+  tiles: PreviewTile[];
+  detail: string;
+  bindings: PreviewBinding[];
+}
+
 export interface SourceInfo {
   id: string;
   name: string;
@@ -88,6 +105,7 @@ export interface SourceInfo {
   paper: string | null;
   license: string;
   sync: string;
+  preview: SourcePreview;
   also?: AlsoRepo[];
 }
 
@@ -240,10 +258,15 @@ export interface AnthropicSource extends SourceInfo {
   also: AlsoRepo[];
 }
 
+export interface AnthropicQuotation {
+  text: string;
+  source: string;
+}
+
 export interface AnthropicData {
   source: AnthropicSource;
   check_wording: string;
-  quotations: string[];
+  quotations: AnthropicQuotation[];
   counts: {
     releases: number;
     new_results: number;

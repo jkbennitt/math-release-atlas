@@ -37,36 +37,86 @@ def oeis_preview_phrase(oeis_files: int, paper_count: int, status: str) -> str:
     return f"OEIS {oeis_files} of {paper_count} in paper ({status})"
 
 
-def preview_alt(
-    families: int,
-    manuscripts: int,
-    lean_files: int = 0,
-    oeis_files: int = 0,
-    oeis_paper: int = 0,
-    oeis_status: str = "",
-    anthropic_files: int = 0,
-    anthropic_new: int = 0,
-    anthropic_formalizations: int = 0,
-) -> str:
+def join_series(items: list[str], conjunction: str) -> str:
+    """Oxford join. One list order is used by the card, the alt text, and the social text."""
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} {conjunction} {items[1]}"
+    return ", ".join(items[:-1]) + f", {conjunction} " + items[-1]
+
+
+def affiliation_sentence(orgs: list[str]) -> str:
+    """Unaffiliated footer. Orgs come from the source registry, in registry order."""
+    unique: list[str] = []
+    for org in orgs:
+        if org not in unique:
+            unique.append(org)
+    if not unique:
+        raise AtlasError("preview affiliation has no organizations")
+    return f"Unofficial, not affiliated with {join_series(unique, 'or')}."
+
+
+def preview_entry(source: dict[str, Any]) -> dict[str, Any]:
+    """One registered source, shaped for the card and the alt text."""
+    preview = source.get("preview")
+    if not isinstance(preview, dict):
+        raise AtlasError(f"{source.get('id', 'source')} has no preview")
+    tiles = preview.get("tiles")
+    bindings = preview.get("bindings")
+    fragment = preview.get("fragment")
+    if not isinstance(fragment, str) or not fragment:
+        raise AtlasError(f"{source.get('id', 'source')} preview has no fragment")
+    if not isinstance(tiles, list) or not tiles:
+        raise AtlasError(f"{source.get('id', 'source')} preview has no tiles")
+    if not isinstance(bindings, list) or not bindings:
+        raise AtlasError(f"{source.get('id', 'source')} preview has no bindings")
+    return {
+        "id": source["id"],
+        "name": source["name"],
+        "org": source["org"],
+        "fragment": fragment,
+        "tiles": tiles,
+        "detail": str(preview.get("detail") or ""),
+        "bindings": bindings,
+    }
+
+
+def preview_entries(sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not sources:
+        raise AtlasError("preview has no sources")
+    return [preview_entry(source) for source in sources]
+
+
+def preview_alt(entries: list[dict[str, Any]]) -> str:
     """Sentence on the card image and in og:image:alt. Keep it free of claim verbs."""
-    sentence = (
-        f"Math Release Atlas: {families} result families and {manuscripts} manuscripts "
-        "from the OpenAI Math catalogue"
+    if not entries:
+        raise AtlasError("preview has no sources")
+    body = ", plus ".join(str(entry["fragment"]) for entry in entries)
+    return (
+        f"Math Release Atlas: {body}. "
+        f"{affiliation_sentence([str(entry['org']) for entry in entries])}"
     )
-    if lean_files:
-        sentence += f", plus {lean_files} Lean files from AlphaProof Nexus"
-        if oeis_paper and oeis_status:
-            sentence += f", {oeis_preview_phrase(oeis_files, oeis_paper, oeis_status)}"
-    if anthropic_files:
-        noun = "formalization" if anthropic_formalizations == 1 else "formalizations"
-        sentence += (
-            f", plus {anthropic_files} Lean files from Anthropic "
-            f"({anthropic_new} new results, {anthropic_formalizations} {noun})"
-        )
-        sentence += ". Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."
-    else:
-        sentence += ". Unofficial, not affiliated with OpenAI or Google DeepMind."
-    return sentence
+
+
+def resolve_preview_path(root: dict[str, Any], path: list[str]) -> Any:
+    """Walk a catalogue path. A list step selects the object whose id is that step."""
+    current: Any = root
+    for key in path:
+        if isinstance(current, list):
+            matches = [
+                item for item in current if isinstance(item, dict) and item.get("id") == key
+            ]
+            if len(matches) != 1:
+                raise KeyError(key)
+            current = matches[0]
+        elif isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            raise KeyError(key)
+    return current
 
 LENS_ORDER = (
     "condensed-matter",
@@ -2333,7 +2383,7 @@ def check_social_preview(
     html_text: str,
     label: str,
     prefix: str,
-    counts: dict[str, Any] | None = None,
+    entries: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     """Fail when a built page cannot produce a large-image link preview."""
     tags = social_meta(html_text)
@@ -2399,18 +2449,8 @@ def check_social_preview(
         failures.append(f"{label} twitter:image does not match og:image")
     if tags["canonical"].strip() and properties.get("og:url", "").strip() and tags["canonical"] != properties.get("og:url"):
         failures.append(f"{label} canonical does not match og:url")
-    if counts is not None and properties.get("og:image:alt", "").strip():
-        expected = preview_alt(
-            int(counts["families"]),
-            int(counts["manuscripts"]),
-            int(counts.get("lean_files") or 0),
-            int(counts.get("oeis_files") or 0),
-            int(counts.get("oeis_paper") or 0),
-            str(counts.get("oeis_status") or ""),
-            int(counts.get("anthropic_files") or 0),
-            int(counts.get("anthropic_new") or 0),
-            int(counts.get("anthropic_formalizations") or 0),
-        )
+    if entries is not None and properties.get("og:image:alt", "").strip():
+        expected = preview_alt(entries)
         if properties.get("og:image:alt") != expected:
             failures.append(f"{label} og:image:alt does not match the catalogue counts")
         twitter_alt = names.get("twitter:image:alt", "")
@@ -2467,62 +2507,117 @@ def check_named_previews(dist: Path) -> list[str]:
     return failures
 
 
+def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
+    """Every registered source is on the card and the alt text, and its figures match the data."""
+    failures: list[str] = []
+    sources = (catalog.get("sources") or {}).get("sources")
+    if not isinstance(sources, list) or not sources:
+        return ["source registry is empty"]
+    try:
+        entries = preview_entries(sources)
+    except AtlasError as exc:
+        return [str(exc)]
+    bound_values: dict[str, set[str]] = {}
+    for entry in entries:
+        bound: set[str] = set()
+        for binding in entry["bindings"]:
+            if not isinstance(binding, dict):
+                failures.append(f"{entry['id']} has a preview binding that is not an object")
+                continue
+            value = binding.get("value")
+            path = binding.get("path")
+            if not isinstance(value, str) or not isinstance(path, list) or not path:
+                failures.append(f"{entry['id']} has an incomplete preview binding")
+                continue
+            bound.add(value)
+            try:
+                resolved = resolve_preview_path(catalog, [str(step) for step in path])
+            except KeyError:
+                failures.append(f"{entry['id']} preview path {'/'.join(str(step) for step in path)} is missing")
+                continue
+            if str(resolved) != value:
+                failures.append(
+                    f"{entry['id']} preview value {value} disagrees with {'/'.join(str(step) for step in path)}"
+                )
+        bound_values[entry["id"]] = bound
+        if entry["name"] not in entry["fragment"]:
+            failures.append(f"preview fragment omits {entry['name']}")
+        for tile in entry["tiles"]:
+            if not isinstance(tile, dict) or not tile.get("value") or not tile.get("label"):
+                failures.append(f"{entry['id']} has an incomplete preview tile")
+                continue
+            if str(tile["value"]) not in bound:
+                failures.append(f"{entry['id']} tile {tile['value']} is not bound to the catalogue")
+            for number in re.findall(r"\d+", f"{tile['value']} {tile['label']} {entry['detail']}"):
+                if number not in bound:
+                    failures.append(f"{entry['id']} shows {number}, which is not in the catalogue")
+    if failures:
+        return failures
+    try:
+        alt = preview_alt(entries)
+    except AtlasError as exc:
+        return [str(exc)]
+    for entry in entries:
+        if entry["name"] not in alt:
+            failures.append(f"alt text omits {entry['name']}")
+        if entry["org"] not in alt:
+            failures.append(f"alt text omits {entry['org']}")
+    try:
+        from alphaproof import derived_source_previews
+    except ImportError as exc:
+        return [f"preview derivation is unavailable: {exc}"]
+    derived = derived_source_previews(catalog)
+    for source in sources:
+        expected = derived.get(source["id"])
+        if expected is None:
+            continue
+        if source.get("preview") != expected:
+            failures.append(f"{source['id']} preview disagrees with the catalogue counts")
+    try:
+        import og_card
+    except ImportError as exc:
+        return failures + [f"preview card is unavailable: {exc}"]
+    drawn = og_card.planned_text(entries)
+    for entry in entries:
+        if entry["name"] not in drawn:
+            failures.append(f"preview card omits {entry['name']}")
+        for tile in entry["tiles"]:
+            if tile["value"] not in drawn or tile["label"] not in drawn:
+                failures.append(f"preview card omits {entry['id']} {tile['label']}")
+        if entry["detail"] and entry["detail"] not in " ".join(drawn):
+            failures.append(f"preview card omits the {entry['id']} detail")
+    try:
+        og_card.render(entries)
+    except SystemExit as exc:
+        failures.append(f"preview card does not fit: {exc}")
+    return failures
+
+
 def check_link_previews(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(path for path in dist.rglob("*.html") if path.is_file())
     prefix = published_prefix()
     if not prefix:
         failures.append("astro.config.mjs is missing site or base")
-    counts = None
+    entries = None
     if FAMILIES_JSON.is_file():
         try:
             catalog = read_json(FAMILIES_JSON)
-            counts = dict(catalog["counts"])
-            alphaproof_snapshot = catalog.get("alphaproof") or {}
-            alphaproof_counts = alphaproof_snapshot.get("counts") or {}
-            lean_files = alphaproof_counts.get("lean_files")
-            if isinstance(lean_files, int):
-                counts["lean_files"] = lean_files
-            oeis_files = alphaproof_counts.get("oeis_files")
-            if isinstance(oeis_files, int):
-                counts["oeis_files"] = oeis_files
-            oeis_gap = next(
-                (
-                    gap
-                    for gap in alphaproof_snapshot.get("gaps") or []
-                    if isinstance(gap, dict) and gap.get("id") == "oeis-count"
-                ),
-                None,
-            )
-            if isinstance(oeis_gap, dict):
-                paper_count = oeis_gap.get("paper_count")
-                oeis_status = oeis_gap.get("status")
-                if isinstance(paper_count, int):
-                    counts["oeis_paper"] = paper_count
-                if isinstance(oeis_status, str):
-                    counts["oeis_status"] = oeis_status
-            anthropic_counts = (catalog.get("anthropic") or {}).get("counts") or {}
-            anthropic_files = anthropic_counts.get("lean_files")
-            anthropic_new = anthropic_counts.get("new_results")
-            anthropic_formalizations = anthropic_counts.get("formalizations")
-            if isinstance(anthropic_files, int):
-                counts["anthropic_files"] = anthropic_files
-            if isinstance(anthropic_new, int):
-                counts["anthropic_new"] = anthropic_new
-            if isinstance(anthropic_formalizations, int):
-                counts["anthropic_formalizations"] = anthropic_formalizations
-        except (OSError, json.JSONDecodeError, KeyError, TypeError):
-            failures.append("catalogue counts are unreadable for the preview check")
+            sources = catalog["sources"]["sources"]
+            entries = preview_entries(sources)
+            failures.extend(preview_disagreements(catalog))
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, AtlasError) as exc:
+            failures.append(f"catalogue preview is unreadable: {exc}")
     for page in pages:
         label = page.relative_to(dist).as_posix()
-        failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, counts))
+        failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, entries))
     failures.extend(check_preview_image(dist))
     failures.extend(check_named_previews(dist))
     return failures
 
 
 def check_preview_source() -> list[str]:
-    """Preview tags are emitted once, from the layout, and the card reads the counts."""
+    """Preview tags are emitted once, from the layout, and the card loops the registry."""
     failures: list[str] = []
     layout = (ROOT / "src" / "layouts" / "Base.astro").read_text(encoding="utf-8")
     if 'property="og:image"' not in layout or 'name="twitter:card"' not in layout:
@@ -2534,10 +2629,24 @@ def check_preview_source() -> list[str]:
         if "og:image" in text or "twitter:card" in text:
             failures.append(f"{path.relative_to(ROOT)} duplicates preview tags")
     card = (ROOT / "scripts" / "og_card.py").read_text(encoding="utf-8")
-    if 'counts["families"]' not in card or 'counts["manuscripts"]' not in card:
-        failures.append("preview card does not read catalogue counts")
-    if 'payload["anthropic"]' not in card:
-        failures.append("preview card does not read the Anthropic counts")
+    if "for entry in entries" not in card:
+        failures.append("preview card does not loop registered sources")
+    if 'payload["sources"]["sources"]' not in card:
+        failures.append("preview card does not read the source registry")
+    for banned in ("AlphaProof", "Anthropic", "OpenAI", "zeta23", "3sum-apsp"):
+        if banned in card:
+            failures.append(f"preview card hardcodes {banned}")
+    social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
+    if "source.preview.fragment" not in social or "source.org" not in social:
+        failures.append("social alt text does not read each source preview")
+    if ", plus " not in social or "not affiliated with" not in social:
+        failures.append("social alt text does not use the shared preview sentence")
+    for banned in ("AlphaProof", "Anthropic", "OpenAI"):
+        if banned in social:
+            failures.append(f"social alt text hardcodes {banned}")
+    package = (ROOT / "package.json").read_text(encoding="utf-8")
+    if "scripts/og_card.py" not in package:
+        failures.append("the build does not regenerate og.png")
     for name in (
         "AtlasCardSerif-Regular.ttf",
         "AtlasCardSerif-Bold.ttf",
@@ -2546,6 +2655,11 @@ def check_preview_source() -> list[str]:
     ):
         if not (ROOT / "scripts" / "fonts" / name).is_file():
             failures.append(f"missing preview font file {name}")
+    if FAMILIES_JSON.is_file():
+        try:
+            failures.extend(preview_disagreements(read_json(FAMILIES_JSON)))
+        except (OSError, json.JSONDecodeError, AtlasError) as exc:
+            failures.append(f"catalogue preview is unreadable: {exc}")
     return failures
 
 
@@ -2832,8 +2946,23 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     if anthropic["identifiers"]["method"] not in detail_text:
         failures.append("Anthropic page is missing the identifier method")
     for quotation in anthropic["quotations"]:
-        if quotation not in detail_text:
+        if isinstance(quotation, str):
+            text, source = quotation, ""
+        elif isinstance(quotation, dict):
+            text = quotation.get("text")
+            source = quotation.get("source")
+        else:
+            failures.append("Anthropic quotation is not text")
+            continue
+        if not isinstance(text, str) or text not in detail_text:
             failures.append("Anthropic page is missing an upstream quotation")
+        if not isinstance(source, str) or not source or source not in detail_text:
+            failures.append("Anthropic page is missing the source of a quotation")
+    flt_section = _element_inner(detail_raw, "fermat-last-theorem")
+    if flt_section is None:
+        failures.append("Anthropic page is missing the Fermat section")
+    elif "not a new result" not in _visible_text(flt_section):
+        failures.append("Anthropic page does not say the Fermat release is not a new result")
     for release in releases:
         row = _element_inner(home_raw, f"an-{release['id']}")
         if row is None:
@@ -2913,6 +3042,10 @@ def check_dist(dist: Path) -> list[str]:
         for item in (catalog.get(source_key) or {}).get("quotations") or []:
             if isinstance(item, str) and item:
                 quotations.add(item)
+            elif isinstance(item, dict):
+                text = item.get("text")
+                if isinstance(text, str) and text:
+                    quotations.add(text)
     prepared = "\n".join(
         prepare_built_page(path, dist, catalog["families"], quotations) for path in pages
     )

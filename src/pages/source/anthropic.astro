@@ -54,7 +54,10 @@ function gapBadgeClass(status: string): string {
     <p>These sentences are the sources’ wording, quoted here.</p>
     {
       record.quotations.map((quotation) => (
-        <blockquote data-upstream="quotation">{quotation}</blockquote>
+        <blockquote data-upstream="quotation">
+          {quotation.text}
+          <span class="meta"> Source: {quotation.source}.</span>
+        </blockquote>
       ))
     }
 
@@ -103,7 +106,7 @@ function gapBadgeClass(status: string): string {
             {release.gaps.map((gap) => (
               <li id={`gap-${gap.id}`}>
                 <span class={`badge ${gapBadgeClass(gap.status)}`}>{gap.status}</span>
-                {" "}Label: {gap.label}.
+                {" "}Label: {gap.label.endsWith(".") ? gap.label : gap.label + "."}
               </li>
             ))}
           </ul>

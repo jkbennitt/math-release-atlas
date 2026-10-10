@@ -67,6 +67,10 @@ jobs:
           if [ "$install" -eq 0 ]; then
             npm run build >> /tmp/build.log 2>&1
             build=$?
+            if [ "$build" -eq 0 ] && { [ ! -s public/og.png ] || [ ! -s dist/og.png ]; }; then
+              echo "og.png was not regenerated" >> /tmp/build.log
+              build=1
+            fi
           else
             build=$install
           fi

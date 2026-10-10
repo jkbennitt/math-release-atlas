@@ -19690,7 +19690,37 @@
         "paper": null,
         "license": "Apache-2.0",
         "sync": "sparse-fetch",
-        "commit": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb"
+        "commit": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
+        "preview": {
+          "fragment": "372 result families and 719 manuscripts from the OpenAI Math catalogue",
+          "tiles": [
+            {
+              "value": "372",
+              "label": "result families"
+            },
+            {
+              "value": "719",
+              "label": "manuscripts"
+            }
+          ],
+          "detail": "",
+          "bindings": [
+            {
+              "value": "372",
+              "path": [
+                "counts",
+                "families"
+              ]
+            },
+            {
+              "value": "719",
+              "path": [
+                "counts",
+                "manuscripts"
+              ]
+            }
+          ]
+        }
       },
       {
         "id": "alphaproof-nexus",
@@ -19700,7 +19730,107 @@
         "paper": "https://arxiv.org/abs/2605.22763",
         "license": "Apache-2.0 code; CC-BY 4.0 other materials; OEIS-derived material CC BY-SA 4.0",
         "sync": "tree-snapshot",
-        "commit": "0647711a71183c1ea492ad60860776617ce1ea88"
+        "commit": "0647711a71183c1ea492ad60860776617ce1ea88",
+        "preview": {
+          "fragment": "71 Lean files from AlphaProof Nexus, OEIS 38 of 44 in paper (PARTIAL), attempted list MATCH, per-row provenance MISSING",
+          "tiles": [
+            {
+              "value": "71",
+              "label": "Lean files"
+            },
+            {
+              "value": "PARTIAL",
+              "label": "OEIS 38 of 44"
+            },
+            {
+              "value": "MATCH",
+              "label": "attempted list"
+            },
+            {
+              "value": "MISSING",
+              "label": "provenance"
+            }
+          ],
+          "detail": "Erdos 9, Stacks 11, AI collaborator 13",
+          "bindings": [
+            {
+              "value": "71",
+              "path": [
+                "alphaproof",
+                "counts",
+                "lean_files"
+              ]
+            },
+            {
+              "value": "PARTIAL",
+              "path": [
+                "alphaproof",
+                "gaps",
+                "oeis-count",
+                "status"
+              ]
+            },
+            {
+              "value": "MATCH",
+              "path": [
+                "alphaproof",
+                "gaps",
+                "erdos-attempted",
+                "status"
+              ]
+            },
+            {
+              "value": "MISSING",
+              "path": [
+                "alphaproof",
+                "gaps",
+                "per-row-provenance",
+                "status"
+              ]
+            },
+            {
+              "value": "38",
+              "path": [
+                "alphaproof",
+                "counts",
+                "oeis_files"
+              ]
+            },
+            {
+              "value": "44",
+              "path": [
+                "alphaproof",
+                "gaps",
+                "oeis-count",
+                "paper_count"
+              ]
+            },
+            {
+              "value": "9",
+              "path": [
+                "alphaproof",
+                "counts",
+                "erdos"
+              ]
+            },
+            {
+              "value": "11",
+              "path": [
+                "alphaproof",
+                "counts",
+                "stacks"
+              ]
+            },
+            {
+              "value": "13",
+              "path": [
+                "alphaproof",
+                "counts",
+                "ai_collaborator"
+              ]
+            }
+          ]
+        }
       },
       {
         "id": "anthropic",
@@ -19717,7 +19847,63 @@
             "repo": "https://github.com/anthropics/fermats-last-theorem",
             "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
           }
-        ]
+        ],
+        "preview": {
+          "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)",
+          "tiles": [
+            {
+              "value": "61238",
+              "label": "Lean files"
+            },
+            {
+              "value": "3",
+              "label": "releases"
+            },
+            {
+              "value": "2",
+              "label": "new results"
+            },
+            {
+              "value": "1",
+              "label": "formalization"
+            }
+          ],
+          "detail": "",
+          "bindings": [
+            {
+              "value": "61238",
+              "path": [
+                "anthropic",
+                "counts",
+                "lean_files"
+              ]
+            },
+            {
+              "value": "3",
+              "path": [
+                "anthropic",
+                "counts",
+                "releases"
+              ]
+            },
+            {
+              "value": "2",
+              "path": [
+                "anthropic",
+                "counts",
+                "new_results"
+              ]
+            },
+            {
+              "value": "1",
+              "path": [
+                "anthropic",
+                "counts",
+                "formalizations"
+              ]
+            }
+          ]
+        }
       }
     ]
   },
@@ -21349,7 +21535,7 @@
   },
   "anthropic": {
     "schema_version": 1,
-    "generated_at": "2026-10-10T19:33:16+00:00",
+    "generated_at": "2026-10-10T20:10:50+00:00",
     "source": {
       "id": "anthropic",
       "name": "Anthropic",
@@ -21369,9 +21555,18 @@
     },
     "check_wording": "Lean files deposited upstream. This atlas did not run Lean.",
     "quotations": [
-      "Proof discovered autonomously by Claude (Anthropic); verified and communicated by the listed authors.",
-      "Claude, an AI model developed by Anthropic, discovered the algorithm that refutes the 3SUM, APSP, and Exact Triangle hypotheses.",
-      "The authors take full responsibility for this paper."
+      {
+        "text": "Proof discovered autonomously by Claude (Anthropic); verified and communicated by the listed authors.",
+        "source": "zeta arXiv comment"
+      },
+      {
+        "text": "Claude, an AI model developed by Anthropic, discovered the algorithm that refutes the 3SUM, APSP, and Exact Triangle hypotheses.",
+        "source": "3SUM paper"
+      },
+      {
+        "text": "The authors take full responsibility for this paper.",
+        "source": "3SUM paper"
+      }
     ],
     "counts": {
       "releases": 3,
@@ -21392,7 +21587,7 @@
         "kind": "new-result",
         "kind_label": "New result",
         "title": "More than two thirds of the zeta zeros are simple and on the critical line",
-        "statement": "Lean files deposited upstream for a zero-density bound on the Riemann zeta function. It is not the Riemann Hypothesis.",
+        "statement": "Lean files deposited upstream for a lower bound on the proportion of zeta zeros that are simple and on the critical line (more than two thirds). It is not the Riemann Hypothesis.",
         "repo": "https://github.com/anthropics/formal-math",
         "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
         "commit_date": "2026-10-05",
@@ -21472,7 +21667,7 @@
           }
         ],
         "scope_notes": [
-          "Subject: a zero-density bound for the Riemann zeta function. It is not the Riemann Hypothesis.",
+          "Subject: a lower bound on the proportion of zeta zeros that are simple and on the critical line (more than two thirds). It is not the Riemann Hypothesis.",
           "formalization.yaml says Claude wrote the Lean code. It names Ralph Furman as a reviewer of the challenge module and Levent Alpöge as an author of the paper.",
           "Annotated tag v1.0 peels to 3635e74826a4c1fcece7d1cd2b6fa75e43a00510. File counts here are from e1a4e6508154ea59f030480661590a9fe3018011, not from that tag."
         ],
@@ -21624,7 +21819,7 @@
           {
             "id": "flt-module-count",
             "status": "NOTED",
-            "label": "README says 60475 modules; the tree has 60478 .lean files (3 more). Paths outside Theorems, P2M, and Definitions: FinalCheck.lean, lakefile.lean, verification/comparator/Challenge.lean, verification/comparator/Solution.lean."
+            "label": "README says 60475 modules, which is the 60474 files under Theorems, P2M, and Definitions plus FinalCheck.lean. The tree has 60478 .lean files. The 3 extra .lean files are lakefile.lean, verification/comparator/Challenge.lean, and verification/comparator/Solution.lean. They are not package modules. The README says Challenge.lean is not part of the package."
           }
         ]
       }
@@ -21644,6 +21839,6 @@
       "All releases: 2 new results.",
       "All releases: 1 formalization."
     ],
-    "snapshot_digest": "6a5e5058c719650d216e39942003b642c38ea9b1d43cef5dd63b23c5c53f15b8"
+    "snapshot_digest": "f4c3e0ed551670824ac611b3299220b734fb4690c9e15382b2c288e865a59b54"
   }
 }

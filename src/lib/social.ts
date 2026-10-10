@@ -5,46 +5,44 @@ export const PREVIEW_IMAGE = "og.png";
 export const PREVIEW_WIDTH = 1200;
 export const PREVIEW_HEIGHT = 630;
 
-// The dist check requires this sentence to match preview_alt() in scripts/atlaslib.py.
-export function previewImageAlt(
-  families: number,
-  manuscripts: number,
-  leanFiles = 0,
-  oeisFiles = 0,
-  oeisPaper = 0,
-  oeisStatus = "",
-  anthropicFiles = 0,
-  anthropicNew = 0,
-  anthropicFormalizations = 0,
-): string {
-  const catalogue = `${SITE_NAME}: ${families} result families and ${manuscripts} manuscripts from the OpenAI Math catalogue`;
-  const second = leanFiles > 0 ? `, plus ${leanFiles} Lean files from AlphaProof Nexus` : "";
-  const oeis =
-    leanFiles > 0 && oeisPaper > 0 && oeisStatus
-      ? `, OEIS ${oeisFiles} of ${oeisPaper} in paper (${oeisStatus})`
-      : "";
-  const noun = anthropicFormalizations === 1 ? "formalization" : "formalizations";
-  const third = anthropicFiles
-    ? `, plus ${anthropicFiles} Lean files from Anthropic (${anthropicNew} new results, ${anthropicFormalizations} ${noun})`
-    : "";
-  const affiliation = anthropicFiles
-    ? "Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."
-    : "Unofficial, not affiliated with OpenAI or Google DeepMind.";
-  return `${catalogue}${second}${oeis}${third}. ${affiliation}`;
+interface PreviewEntry {
+  fragment: string;
+  org: string;
+}
+
+// Keep this join identical to join_series() / affiliation_sentence() / preview_alt()
+// in scripts/atlaslib.py. The dist check fails when the built alt text differs.
+function joinSeries(items: string[], conjunction: string): string {
+  if (items.length === 1) {
+    return items[0];
+  }
+  if (items.length === 2) {
+    return `${items[0]} ${conjunction} ${items[1]}`;
+  }
+  return `${items.slice(0, -1).join(", ")}, ${conjunction} ${items[items.length - 1]}`;
+}
+
+function affiliation(orgs: string[]): string {
+  const unique: string[] = [];
+  for (const org of orgs) {
+    if (!unique.includes(org)) {
+      unique.push(org);
+    }
+  }
+  return `Unofficial, not affiliated with ${joinSeries(unique, "or")}.`;
+}
+
+export function previewImageAlt(entries: PreviewEntry[]): string {
+  const body = entries.map((entry) => entry.fragment).join(", plus ");
+  return `${SITE_NAME}: ${body}. ${affiliation(entries.map((entry) => entry.org))}`;
 }
 
 export function previewAltFromCatalogue(): string {
-  const oeis = atlas.alphaproof.gaps.find((gap) => gap.id === "oeis-count");
   return previewImageAlt(
-    atlas.counts.families,
-    atlas.counts.manuscripts,
-    atlas.alphaproof.counts.lean_files,
-    atlas.alphaproof.counts.oeis_files,
-    oeis?.paper_count ?? 0,
-    oeis?.status ?? "",
-    atlas.anthropic.counts.lean_files,
-    atlas.anthropic.counts.new_results,
-    atlas.anthropic.counts.formalizations,
+    atlas.sources.sources.map((source) => ({
+      fragment: source.preview.fragment,
+      org: source.org,
+    })),
   );
 }
 

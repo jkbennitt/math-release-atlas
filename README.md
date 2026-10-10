@@ -33,19 +33,20 @@ link-preview card, and writes `dist/`.
 
 The shared layout emits the page title and description as Open Graph and
 Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
-`/math-release-atlas/`. `scripts/og_card.py` reads the family and manuscript
-counts from `data/families.json`, the AlphaProof Lean-file counts, and the
-Anthropic Lean-file counts from the same file, and writes `public/og.png` at
-1200×630.
-Astro copies that file into `dist/`. The card names the sources and those
-counts, including the OEIS file count against the paper count and that gap's
-status, and shows per-row provenance as missing. When Anthropic counts are
-present, a second line gives the three release sizes. The image spells Erdos
-in ASCII because the card fonts have an empty box for ő. The alt text is the
-same sentence as `preview_alt()` in `scripts/atlaslib.py` and
-`previewImageAlt` in `src/lib/social.ts`: unofficial, not affiliated with
-OpenAI, Google DeepMind, or Anthropic. The dist check fails if any built page
-is missing `og:image` or `twitter:card`, or if `og:image` is not absolute.
+`/math-release-atlas/`. `npm run build` and the daily sync both run
+`scripts/og_card.py`, which reads the source registry in `data/families.json`
+and writes `public/og.png` at 1200×630. Astro copies that file into `dist/`.
+The card loops every registered source. Each source's counts, and the
+AlphaProof statuses PARTIAL, MATCH, and MISSING, are derived when the
+catalogue is merged. Adding or removing a source, or a count changing on
+sync, updates the card, the alt text, and the social text without an edit to
+the card. The image spells Erdos in ASCII because the card fonts have an
+empty box for ő. The alt text is the same sentence as `preview_alt()` in
+`scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`:
+unofficial, not affiliated with the organizations named on the registry. The
+check fails if the card, the alt text, or the social text omits a registered
+source or disagrees with the catalogue counts. It also fails if any built
+page is missing `og:image` or `twitter:card`, or if `og:image` is not absolute.
 Package version 0.4.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
@@ -279,14 +280,17 @@ are MORE THAN PAPER. Each gap row is checked on its own, and a zero or
 negative shortfall is not rendered as Absent.
 `erdos_problems_attempted.txt` lists 353 entries, matching the paper.
 `wc -l` reports 352 because that file has no trailing newline. The
-cross-source page lists a problem only when both catalogues name that
-number. At these pinned commits that list is empty. Per-row provenance is
+cross-source page lists a problem only when the same Erdős problem number
+is named by more than one catalogue. At these pinned commits that list is
+empty. Per-row provenance is
 `MISSING`.
 
 The Anthropic page is three releases, not one row per Lean file. zeta23 and
 3sum-apsp are new results. Fermat's Last Theorem is a formalization of a
 known theorem, and its badge says Formalization. The zeta release is a
-zero-density bound. It is not the Riemann Hypothesis. Real-number inputs and
+lower bound on the proportion of zeta zeros that are simple and on the
+critical line (more than two thirds). It is not the Riemann Hypothesis.
+Real-number inputs and
 some running-time claims in the 3SUM and APSP paper are not formalized.
 File counts come from the pinned trees. The Fermat README's module count and
 the `.lean` file count are both shown when they differ. The identifier scan

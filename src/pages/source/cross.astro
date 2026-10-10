@@ -4,17 +4,18 @@ import { atlas } from "../../lib/atlas";
 
 const base = import.meta.env.BASE_URL;
 const joined = atlas.cross;
+const catalogueCount = atlas.sources.sources.length;
 ---
 
 <Base
   title="Cross-source problem ids · Math Release Atlas"
-  description="Erdős problem numbers named by the first two catalogues, and Anthropic identifiers compared with both."
+  description={`Erdős problem numbers named by more than one of ${catalogueCount} catalogues, and identifiers compared across them.`}
 >
   <article class="prose">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>Cross-source problem ids</h1>
     <p>
-      A row appears here only when both catalogues name the same Erdős problem number.
+      A row appears here only when the same Erdős problem number is named by more than one of the {catalogueCount} catalogues.
       The number has to appear as <code>erdos_&lt;digits&gt;</code>, <code>Erdos&lt;digits&gt;</code>,
       or an <code>erdosproblems.com</code> path. Titles are not compared.
     </p>

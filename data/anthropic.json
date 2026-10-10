@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-10T19:33:16+00:00",
+  "generated_at": "2026-10-10T20:10:50+00:00",
   "source": {
     "id": "anthropic",
     "name": "Anthropic",
@@ -20,9 +20,18 @@
   },
   "check_wording": "Lean files deposited upstream. This atlas did not run Lean.",
   "quotations": [
-    "Proof discovered autonomously by Claude (Anthropic); verified and communicated by the listed authors.",
-    "Claude, an AI model developed by Anthropic, discovered the algorithm that refutes the 3SUM, APSP, and Exact Triangle hypotheses.",
-    "The authors take full responsibility for this paper."
+    {
+      "text": "Proof discovered autonomously by Claude (Anthropic); verified and communicated by the listed authors.",
+      "source": "zeta arXiv comment"
+    },
+    {
+      "text": "Claude, an AI model developed by Anthropic, discovered the algorithm that refutes the 3SUM, APSP, and Exact Triangle hypotheses.",
+      "source": "3SUM paper"
+    },
+    {
+      "text": "The authors take full responsibility for this paper.",
+      "source": "3SUM paper"
+    }
   ],
   "counts": {
     "releases": 3,
@@ -43,7 +52,7 @@
       "kind": "new-result",
       "kind_label": "New result",
       "title": "More than two thirds of the zeta zeros are simple and on the critical line",
-      "statement": "Lean files deposited upstream for a zero-density bound on the Riemann zeta function. It is not the Riemann Hypothesis.",
+      "statement": "Lean files deposited upstream for a lower bound on the proportion of zeta zeros that are simple and on the critical line (more than two thirds). It is not the Riemann Hypothesis.",
       "repo": "https://github.com/anthropics/formal-math",
       "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
       "commit_date": "2026-10-05",
@@ -123,7 +132,7 @@
         }
       ],
       "scope_notes": [
-        "Subject: a zero-density bound for the Riemann zeta function. It is not the Riemann Hypothesis.",
+        "Subject: a lower bound on the proportion of zeta zeros that are simple and on the critical line (more than two thirds). It is not the Riemann Hypothesis.",
         "formalization.yaml says Claude wrote the Lean code. It names Ralph Furman as a reviewer of the challenge module and Levent Alpöge as an author of the paper.",
         "Annotated tag v1.0 peels to 3635e74826a4c1fcece7d1cd2b6fa75e43a00510. File counts here are from e1a4e6508154ea59f030480661590a9fe3018011, not from that tag."
       ],
@@ -275,7 +284,7 @@
         {
           "id": "flt-module-count",
           "status": "NOTED",
-          "label": "README says 60475 modules; the tree has 60478 .lean files (3 more). Paths outside Theorems, P2M, and Definitions: FinalCheck.lean, lakefile.lean, verification/comparator/Challenge.lean, verification/comparator/Solution.lean."
+          "label": "README says 60475 modules, which is the 60474 files under Theorems, P2M, and Definitions plus FinalCheck.lean. The tree has 60478 .lean files. The 3 extra .lean files are lakefile.lean, verification/comparator/Challenge.lean, and verification/comparator/Solution.lean. They are not package modules. The README says Challenge.lean is not part of the package."
         }
       ]
     }
@@ -295,5 +304,5 @@
     "All releases: 2 new results.",
     "All releases: 1 formalization."
   ],
-  "snapshot_digest": "6a5e5058c719650d216e39942003b642c38ea9b1d43cef5dd63b23c5c53f15b8"
+  "snapshot_digest": "f4c3e0ed551670824ac611b3299220b734fb4690c9e15382b2c288e865a59b54"
 }

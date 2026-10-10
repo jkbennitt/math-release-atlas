@@ -43,7 +43,7 @@ PINNED_ZETA_TAG = "v1.0"
 PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "6a5e5058c719650d216e39942003b642c38ea9b1d43cef5dd63b23c5c53f15b8"
+PINNED_ANTHROPIC_DIGEST = "f4c3e0ed551670824ac611b3299220b734fb4690c9e15382b2c288e865a59b54"
 
 RELEASE_IDS = ("zeta23", "3sum-apsp", "fermat-last-theorem")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp")
@@ -85,7 +85,13 @@ THREESUM_DISCOVERY = (
     "the 3SUM, APSP, and Exact Triangle hypotheses."
 )
 THREESUM_RESPONSIBILITY = "The authors take full responsibility for this paper."
-QUOTATIONS = (ZETA_ARXIV_COMMENT, THREESUM_DISCOVERY, THREESUM_RESPONSIBILITY)
+ZETA_QUOTE_SOURCE = "zeta arXiv comment"
+THREESUM_QUOTE_SOURCE = "3SUM paper"
+QUOTATIONS = (
+    {"text": ZETA_ARXIV_COMMENT, "source": ZETA_QUOTE_SOURCE},
+    {"text": THREESUM_DISCOVERY, "source": THREESUM_QUOTE_SOURCE},
+    {"text": THREESUM_RESPONSIBILITY, "source": THREESUM_QUOTE_SOURCE},
+)
 
 ERDOS_RE = re.compile(
     r"erdos[_-]?(?P<num>\d+)|erdosproblems\.com/(?:problem/)?(?P<url>\d+)",
@@ -97,7 +103,49 @@ STACKS_RE = re.compile(
     re.IGNORECASE,
 )
 README_MODULES_RE = re.compile(r"All ([\d,]+) modules of this repository built")
+CHALLENGE_NOT_PACKAGE_RE = re.compile(r"Challenge\.lean`?[^.]*is not part of the package")
+# FinalCheck.lean sits outside Theorems, P2M, and Definitions and is still a package module.
+PACKAGE_ROOT_FILES = ("FinalCheck.lean",)
 APACHE_MARKERS = ("Apache License", "Version 2.0")
+ZETA_SUBJECT = (
+    "a lower bound on the proportion of zeta zeros that are simple and on the critical line "
+    "(more than two thirds)"
+)
+NOT_RH = "It is not the Riemann Hypothesis."
+
+
+def anthropic_preview(payload: dict[str, Any]) -> dict[str, Any]:
+    """Card facts for this source. Every number is taken from the snapshot counts."""
+    counts = payload["counts"]
+    name = payload["source"]["name"]
+    lean = int(counts["lean_files"])
+    releases = int(counts["releases"])
+    new_results = int(counts["new_results"])
+    formalizations = int(counts["formalizations"])
+    release_noun = "release" if releases == 1 else "releases"
+    result_noun = "new result" if new_results == 1 else "new results"
+    formalization_noun = "formalization" if formalizations == 1 else "formalizations"
+    fragment = (
+        f"{lean} Lean files from {name} "
+        f"({releases} {release_noun}, {new_results} {result_noun}, "
+        f"{formalizations} {formalization_noun})"
+    )
+    return {
+        "fragment": fragment,
+        "tiles": [
+            {"value": str(lean), "label": "Lean files"},
+            {"value": str(releases), "label": release_noun},
+            {"value": str(new_results), "label": result_noun},
+            {"value": str(formalizations), "label": formalization_noun},
+        ],
+        "detail": "",
+        "bindings": [
+            {"value": str(lean), "path": ["anthropic", "counts", "lean_files"]},
+            {"value": str(releases), "path": ["anthropic", "counts", "releases"]},
+            {"value": str(new_results), "path": ["anthropic", "counts", "new_results"]},
+            {"value": str(formalizations), "path": ["anthropic", "counts", "formalizations"]},
+        ],
+    }
 
 
 def snapshot_body(payload: dict[str, Any]) -> dict[str, Any]:
@@ -186,12 +234,54 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
     ]
 
 
-def module_count_label(readme_modules: int, lean_files: int, excluded: list[str]) -> str:
-    extra = lean_files - readme_modules
-    names = ", ".join(excluded) if excluded else "none"
+def _oxford(paths: list[str]) -> str:
+    if not paths:
+        return "none"
+    if len(paths) == 1:
+        return paths[0]
+    if len(paths) == 2:
+        return f"{paths[0]} and {paths[1]}"
+    return ", ".join(paths[:-1]) + ", and " + paths[-1]
+
+
+def module_count_label(readme_modules: int, classified: dict[str, Any], readme_text: str) -> str:
+    """Explain the README module count from the tree.
+
+    The README count is the files under Theorems, P2M, and Definitions plus
+    FinalCheck.lean. Remaining .lean files, including lakefile.lean and the
+    comparator files, are not package modules. The Challenge.lean sentence is
+    copied only when the README states it.
+    """
+    package_dirs = (
+        classified["theorem_files"] + classified["proof_files"] + classified["definition_files"]
+    )
+    other = list(classified["other_lean_files"])
+    package_other = [path for path in other if path in PACKAGE_ROOT_FILES]
+    non_package = [path for path in other if path not in PACKAGE_ROOT_FILES]
+    package_total = package_dirs + len(package_other)
+    included = _oxford(package_other)
+    extra_names = _oxford(non_package)
+    challenge_note = ""
+    if any(path.endswith("Challenge.lean") for path in non_package) and CHALLENGE_NOT_PACKAGE_RE.search(
+        readme_text
+    ):
+        challenge_note = " The README says Challenge.lean is not part of the package."
+    if package_total == readme_modules:
+        return (
+            f"README says {readme_modules} modules, which is the {package_dirs} files under "
+            f"Theorems, P2M, and Definitions plus {included}. "
+            f"The tree has {classified['lean_files']} .lean files. "
+            f"The {len(non_package)} extra .lean files are {extra_names}. "
+            f"They are not package modules.{challenge_note}"
+        )
     return (
-        f"README says {readme_modules} modules; the tree has {lean_files} .lean files ({extra} more). "
-        f"Paths outside Theorems, P2M, and Definitions: {names}."
+        f"README says {readme_modules} modules. "
+        f"Files under Theorems, P2M, and Definitions: {package_dirs}. "
+        f"Other .lean files treated as package modules: {included}. "
+        f"Those total {package_total}, which does not equal the README count. "
+        f"The tree has {classified['lean_files']} .lean files. "
+        f"The {len(non_package)} .lean files outside that package count are {extra_names}. "
+        f"They are not package modules.{challenge_note}"
     )
 
 
@@ -298,7 +388,7 @@ def _zeta_notes(yaml_text: str, tag: dict[str, str], commit: str) -> list[str]:
         if marker not in yaml_text:
             raise AtlasError(f"zeta23 formalization.yaml is missing {marker}")
     return [
-        "Subject: a zero-density bound for the Riemann zeta function. It is not the Riemann Hypothesis.",
+        f"Subject: {ZETA_SUBJECT}. {NOT_RH}",
         (
             "formalization.yaml says Claude wrote the Lean code. It names Ralph Furman as a reviewer "
             "of the challenge module and Levent Alpöge as an author of the paper."
@@ -429,8 +519,7 @@ def assemble(
             "kind_label": "New result",
             "title": "More than two thirds of the zeta zeros are simple and on the critical line",
             "statement": (
-                "Lean files deposited upstream for a zero-density bound on the Riemann zeta function. "
-                "It is not the Riemann Hypothesis."
+                f"Lean files deposited upstream for {ZETA_SUBJECT}. {NOT_RH}"
             ),
             "repo": FORMAL_MATH_WEB,
             "commit": fm_commit,
@@ -593,8 +682,8 @@ def assemble(
                     "status": "NOTED",
                     "label": module_count_label(
                         readme_modules,
-                        flt_counts["lean_files"],
-                        flt_counts["other_lean_files"],
+                        flt_counts,
+                        files["flt:README.md"],
                     ),
                 }
             ],
@@ -661,9 +750,11 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
         raise AtlasError("Anthropic count lines drifted")
     if payload["check_wording"] != CHECK_WORDING:
         raise AtlasError("Anthropic check wording drifted")
-    for quotation in QUOTATIONS:
-        if quotation not in payload["quotations"]:
-            raise AtlasError("Anthropic quotation list drifted")
+    if payload["quotations"] != [dict(item) for item in QUOTATIONS]:
+        raise AtlasError("Anthropic quotation list drifted")
+    for quotation in payload["quotations"]:
+        if not quotation.get("text") or not quotation.get("source"):
+            raise AtlasError("Anthropic quotation is missing text or a source")
     identifiers = payload["identifiers"]
     if identifiers["method"] != IDENTIFIER_METHOD:
         raise AtlasError("Anthropic identifier method drifted")
@@ -713,6 +804,15 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
         raise AtlasError("pinned 3sum toolchain drifted")
     if by_id["fermat-last-theorem"]["lean_toolchain"] != "leanprover/lean4:v4.33.1":
         raise AtlasError("pinned Fermat toolchain drifted")
+    module_label = by_id["fermat-last-theorem"]["gaps"][0]["label"]
+    if "(3 more)" in module_label or "Paths outside" in module_label:
+        raise AtlasError(f"pinned Fermat module label still mixes the extra files: {module_label}")
+    if "not package modules" not in module_label or "FinalCheck.lean" not in module_label:
+        raise AtlasError(f"pinned Fermat module label drifted: {module_label}")
+    if "zero-density" in by_id["zeta23"]["statement"] or "zero-density" in " ".join(
+        by_id["zeta23"]["scope_notes"]
+    ):
+        raise AtlasError("pinned zeta wording still says zero-density")
     digest = snapshot_digest(payload)
     if not PINNED_ANTHROPIC_DIGEST:
         raise AtlasError(f"fill the pinned Anthropic digest: {digest}")
