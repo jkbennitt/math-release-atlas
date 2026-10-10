@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from atlaslib import (
+    FLT_PREVIEW_NOTE,
     ROOT,
     AtlasError,
     git,
@@ -128,7 +129,8 @@ def anthropic_preview(payload: dict[str, Any]) -> dict[str, Any]:
     fragment = (
         f"{lean} Lean files from {name} "
         f"({releases} {release_noun}, {new_results} {result_noun}, "
-        f"{formalizations} {formalization_noun})"
+        f"{formalizations} {formalization_noun}). "
+        f"{FLT_PREVIEW_NOTE}"
     )
     return {
         "fragment": fragment,
@@ -138,7 +140,7 @@ def anthropic_preview(payload: dict[str, Any]) -> dict[str, Any]:
             {"value": str(new_results), "label": result_noun},
             {"value": str(formalizations), "label": formalization_noun},
         ],
-        "detail": "",
+        "detail": f"{FLT_PREVIEW_NOTE}.",
         "bindings": [
             {"value": str(lean), "path": ["anthropic", "counts", "lean_files"]},
             {"value": str(releases), "path": ["anthropic", "counts", "releases"]},

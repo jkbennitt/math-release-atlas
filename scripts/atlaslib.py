@@ -30,6 +30,14 @@ OPENAI_SOURCE_ID = "openai-math"
 PREVIEW_IMAGE_NAME = "og.png"
 PREVIEW_WIDTH = 1200
 PREVIEW_HEIGHT = 630
+# ASCII apostrophe (U+0027). The card fonts have no glyph for U+2019.
+FLT_PREVIEW_NOTE = "Fermat's Last Theorem: Formalization, not a new result"
+RIEMANN_SENTENCE = "It is not the Riemann Hypothesis."
+PINNED_SOURCE_ORGS = {
+    "openai-math": "OpenAI",
+    "alphaproof-nexus": "Google DeepMind",
+    "anthropic": "Anthropic",
+}
 
 
 def oeis_preview_phrase(oeis_files: int, paper_count: int, status: str) -> str:
@@ -2465,13 +2473,32 @@ def png_dimensions(data: bytes) -> tuple[int, int] | None:
     return struct.unpack(">II", data[16:24])
 
 
-def check_preview_image(dist: Path) -> list[str]:
+def check_preview_image(dist: Path, catalog: dict[str, Any] | None = None) -> list[str]:
+    """dist/og.png must be the card rendered from the registry, byte for byte."""
     path = dist / PREVIEW_IMAGE_NAME
     if not path.is_file():
         return ["built site is missing og.png"]
-    size = png_dimensions(path.read_bytes())
+    data = path.read_bytes()
+    size = png_dimensions(data)
     if size != (PREVIEW_WIDTH, PREVIEW_HEIGHT):
         return [f"og.png is {size}, expected {PREVIEW_WIDTH}x{PREVIEW_HEIGHT}"]
+    if catalog is None:
+        if not FAMILIES_JSON.is_file():
+            return ["og.png cannot be checked without the catalogue"]
+        try:
+            catalog = read_json(FAMILIES_JSON)
+        except (OSError, json.JSONDecodeError) as exc:
+            return [f"og.png cannot be checked: {exc}"]
+    try:
+        # og_card imports atlaslib. A local import avoids a cycle at load time.
+        import og_card
+
+        entries = preview_entries(catalog["sources"]["sources"])
+        expected = og_card.png_bytes(og_card.render(entries))
+    except (KeyError, TypeError, AtlasError, SystemExit, ImportError, OSError) as exc:
+        return [f"og.png could not be rendered from the registry: {exc}"]
+    if data != expected:
+        return ["og.png does not match the card rendered from the registry"]
     return []
 
 
@@ -2504,6 +2531,23 @@ def check_named_previews(dist: Path) -> list[str]:
         descriptions.append(description)
     if len(titles) == 3 and (len(set(titles)) != 3 or len(set(descriptions)) != 3):
         failures.append("home, graph, and status share a preview title or description")
+    return failures
+
+
+def formalization_note_failures(
+    fragment: str,
+    detail: str,
+    alt: str,
+    drawn: str | None = None,
+) -> list[str]:
+    """The Fermat release is a formalization. The card and the alt text say so."""
+    failures: list[str] = []
+    if "\u2019" in fragment or "\u2019" in detail:
+        failures.append("formalization note uses a curly apostrophe")
+    if FLT_PREVIEW_NOTE not in fragment or FLT_PREVIEW_NOTE not in alt:
+        failures.append("alt text omits the formalization note")
+    if FLT_PREVIEW_NOTE not in detail or (drawn is not None and FLT_PREVIEW_NOTE not in drawn):
+        failures.append("preview card omits the formalization note")
     return failures
 
 
@@ -2562,14 +2606,34 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
             failures.append(f"alt text omits {entry['name']}")
         if entry["org"] not in alt:
             failures.append(f"alt text omits {entry['org']}")
+    pinned_orgs: list[str] = []
+    for source in sources:
+        source_id = str(source.get("id"))
+        expected_org = PINNED_SOURCE_ORGS.get(source_id)
+        if expected_org is None:
+            failures.append(f"{source_id} has no pinned organization")
+            continue
+        pinned_orgs.append(expected_org)
+        if source.get("org") != expected_org:
+            failures.append(
+                f"{source_id} organization is {source.get('org')!r}, expected {expected_org!r}"
+            )
+    if len(pinned_orgs) == len(sources):
+        expected_line = affiliation_sentence(pinned_orgs)
+        if expected_line not in alt:
+            failures.append(f"affiliation line does not pin {expected_line}")
+    for entry in entries:
+        if entry["id"] == "anthropic":
+            failures.extend(formalization_note_failures(entry["fragment"], entry["detail"], alt, None))
     try:
         from alphaproof import derived_source_previews
     except ImportError as exc:
-        return [f"preview derivation is unavailable: {exc}"]
+        return failures + [f"preview derivation is unavailable: {exc}"]
     derived = derived_source_previews(catalog)
     for source in sources:
         expected = derived.get(source["id"])
         if expected is None:
+            failures.append(f"{source['id']} has no preview derivation")
             continue
         if source.get("preview") != expected:
             failures.append(f"{source['id']} preview disagrees with the catalogue counts")
@@ -2584,8 +2648,11 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
         for tile in entry["tiles"]:
             if tile["value"] not in drawn or tile["label"] not in drawn:
                 failures.append(f"preview card omits {entry['id']} {tile['label']}")
-        if entry["detail"] and entry["detail"] not in " ".join(drawn):
+        drawn_text = " ".join(drawn)
+        if entry["detail"] and entry["detail"] not in drawn_text:
             failures.append(f"preview card omits the {entry['id']} detail")
+        if entry["id"] == "anthropic" and FLT_PREVIEW_NOTE not in drawn_text:
+            failures.append("preview card omits the formalization note")
     try:
         og_card.render(entries)
     except SystemExit as exc:
@@ -2600,6 +2667,7 @@ def check_link_previews(dist: Path) -> list[str]:
     if not prefix:
         failures.append("astro.config.mjs is missing site or base")
     entries = None
+    catalog = None
     if FAMILIES_JSON.is_file():
         try:
             catalog = read_json(FAMILIES_JSON)
@@ -2611,7 +2679,7 @@ def check_link_previews(dist: Path) -> list[str]:
     for page in pages:
         label = page.relative_to(dist).as_posix()
         failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, entries))
-    failures.extend(check_preview_image(dist))
+    failures.extend(check_preview_image(dist, catalog))
     failures.extend(check_named_previews(dist))
     return failures
 
@@ -2790,8 +2858,91 @@ def check_cross_source_page(cross_html: str, joined: dict[str, Any]) -> list[str
     return failures
 
 
+def _badge_text(fragment: str) -> str | None:
+    """Status lives in the badge span. Row text that repeats it is not the status."""
+    match = re.search(
+        r"<span\b[^>]*\bclass\s*=\s*['\"][^'\"]*\bbadge\b[^'\"]*['\"][^>]*>(.*?)</span>",
+        fragment,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if match is None:
+        return None
+    return _visible_text(match.group(1))
+
+
+_GAP_LI_RE = re.compile(
+    r"<li id=\{`gap-\$\{(\w+)\?\.id\}`\}>(.*?)</li>",
+    re.DOTALL,
+)
+_GAP_BADGE_CLASS = {
+    "PARTIAL": "partial",
+    "MATCH": "match",
+    "MORE THAN PAPER": "more-than-paper",
+    "MISSING": "missing",
+}
+
+
+def alphaproof_badge_class(status: str | None) -> str:
+    """Same class names as gapBadgeClass in alphaproof-nexus.astro."""
+    if status is None:
+        return ""
+    if status in _GAP_BADGE_CLASS:
+        return _GAP_BADGE_CLASS[status]
+    return re.sub(r"[^a-z0-9]+", "-", status.lower()).strip("-")
+
+
+def _render_gap_li(var: str, body: str, gap: dict[str, Any]) -> str:
+    class_expr = "class={`badge ${gapBadgeClass(" + var + "?.status)}`}"
+    if class_expr not in body:
+        raise AtlasError(f"{var} gap template is missing the badge class")
+    rendered = body.replace(class_expr, f'class="badge {alphaproof_badge_class(gap.get("status"))}"', 1)
+    absent_expr = (
+        "{"
+        + var
+        + " && "
+        + var
+        + ".absent !== undefined && "
+        + var
+        + ".absent > 0 ? <> Absent {"
+        + var
+        + ".absent}.</> : null}"
+    )
+    if absent_expr in rendered:
+        absent = gap.get("absent")
+        replacement = f" Absent {absent}." if isinstance(absent, int) and absent > 0 else ""
+        rendered = rendered.replace(absent_expr, replacement)
+    # The build drops a newline plus the eight-space indent, and keeps {" "}.
+    rendered = rendered.replace('{" "}', "\x00")
+
+    def field(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name not in gap:
+            raise AtlasError(f"{var} gap template reads missing field {name}")
+        value = gap[name]
+        return "" if value is None else str(value)
+
+    rendered = re.sub(r"\{" + re.escape(var) + r"\??\.(\w+)\}", field, rendered)
+    if "{" in rendered or "}" in rendered:
+        raise AtlasError(f"{var} gap template was not fully rendered")
+    rendered = re.sub(r"\n[ \t]{0,8}", "", rendered).replace("\x00", " ").strip()
+    gap_id = gap.get("id")
+    if not isinstance(gap_id, str) or not gap_id:
+        raise AtlasError(f"{var} gap is missing an id")
+    return f'<li id="gap-{gap_id}">{rendered}</li>'
+
+
+def render_alphaproof_gap_rows(gaps_by_role: dict[str, dict[str, Any]]) -> str:
+    """Fill the three gap rows from src/pages/source/alphaproof-nexus.astro."""
+    page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
+    found = {match.group(1): match.group(2) for match in _GAP_LI_RE.finditer(page)}
+    expected = ("oeis", "attempted", "provenance")
+    if set(found) != set(expected):
+        raise AtlasError(f"AlphaProof gap template rows are {sorted(found)}")
+    return "\n".join(_render_gap_li(var, found[var], gaps_by_role[var]) for var in expected)
+
+
 def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str]:
-    """Each gap's status and label must appear inside its own row."""
+    """Each gap's badge span is its status, and its label is inside its own row."""
     failures: list[str] = []
     for gap in gaps:
         gap_id = gap.get("id")
@@ -2806,8 +2957,9 @@ def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str
         visible = _visible_text(fragment)
         status = gap.get("status")
         label = gap.get("label")
-        if not isinstance(status, str) or status not in visible:
-            failures.append(f"{element_id} is missing status {status!r}")
+        shown = _badge_text(fragment)
+        if not isinstance(status, str) or shown != status:
+            failures.append(f"{element_id} badge is {shown!r}, expected status {status!r}")
         if not isinstance(label, str) or label not in visible:
             failures.append(f"{element_id} is missing label {label!r}")
         if "absent" not in gap:
@@ -2867,6 +3019,27 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
             if line not in count_rows:
                 failures.append(f"AlphaProof counts list is missing {line!r}")
     failures.extend(check_gap_elements(detail_raw, alphaproof["gaps"]))
+    try:
+        by_id = {gap["id"]: gap for gap in alphaproof["gaps"]}
+        rendered_rows = render_alphaproof_gap_rows(
+            {
+                "oeis": by_id["oeis-count"],
+                "attempted": by_id["erdos-attempted"],
+                "provenance": by_id["per-row-provenance"],
+            }
+        )
+    except (KeyError, AtlasError) as exc:
+        failures.append(f"AlphaProof gap template did not render: {exc}")
+    else:
+        for gap in alphaproof["gaps"]:
+            element_id = f"gap-{gap['id']}"
+            built = _element_inner(detail_raw, element_id)
+            rendered = _element_inner(rendered_rows, element_id)
+            if built is None or rendered is None:
+                failures.append(f"{element_id} is not on the built page and the template")
+                continue
+            if _badge_text(built) != _badge_text(rendered) or _visible_text(built) != _visible_text(rendered):
+                failures.append(f"{element_id} does not match the page template")
     for phrase in (
         "Lean file deposited upstream; upstream CI builds it. This atlas did not run Lean.",
         alphaproof["paper"]["abstract_claim"],
@@ -2899,6 +3072,16 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         if family.get("source") != OPENAI_SOURCE_ID:
             failures.append(f"family {family['id']} source is {family.get('source')}")
     return failures
+
+
+def check_riemann_sentence(detail_html: str) -> list[str]:
+    """The zeta section must say this is not the Riemann Hypothesis."""
+    section = _element_inner(detail_html, "zeta23")
+    if section is None:
+        return ["Anthropic page is missing the zeta23 section"]
+    if RIEMANN_SENTENCE not in _visible_text(section):
+        return ["Anthropic page does not say it is not the Riemann Hypothesis"]
+    return []
 
 
 def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
@@ -2963,6 +3146,7 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         failures.append("Anthropic page is missing the Fermat section")
     elif "not a new result" not in _visible_text(flt_section):
         failures.append("Anthropic page does not say the Fermat release is not a new result")
+    failures.extend(check_riemann_sentence(detail_raw))
     for release in releases:
         row = _element_inner(home_raw, f"an-{release['id']}")
         if row is None:

@@ -19849,7 +19849,7 @@
           }
         ],
         "preview": {
-          "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)",
+          "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization). Fermat's Last Theorem: Formalization, not a new result",
           "tiles": [
             {
               "value": "61238",
@@ -19868,7 +19868,7 @@
               "label": "formalization"
             }
           ],
-          "detail": "",
+          "detail": "Fermat's Last Theorem: Formalization, not a new result.",
           "bindings": [
             {
               "value": "61238",
