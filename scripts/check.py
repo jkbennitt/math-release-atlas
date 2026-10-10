@@ -18,6 +18,7 @@ import yaml
 
 import alphaproof
 import atlaslib
+import og_card
 from alphaproof import (
     ALPHAPROOF_JSON,
     SOURCES_JSON,
@@ -583,10 +584,51 @@ def alphaproof_self_test() -> list[str]:
         matched = alphaproof.attempted_count_gap(353, 352)
         if matched["status"] != "MATCH" or matched["label"] != "353 listed, matching the paper":
             failures.append(f"a matching attempted list stayed partial: {matched}")
-        if alphaproof.oeis_count_gap(44)["status"] != "MATCH":
-            failures.append("OEIS status stayed PARTIAL when no files are absent")
-        if alphaproof.oeis_count_gap(38)["status"] != "PARTIAL":
-            failures.append("OEIS status was not PARTIAL while files are absent")
+        for repo_files, status in ((38, "PARTIAL"), (44, "MATCH"), (50, "MORE THAN PAPER")):
+            gap = alphaproof.oeis_count_gap(repo_files)
+            if gap["status"] != status or gap["absent"] != 44 - repo_files:
+                failures.append(f"OEIS status for {repo_files} files was {gap['status']}")
+            phrase = atlaslib.oeis_preview_phrase(repo_files, gap["paper_count"], gap["status"])
+            if phrase != f"OEIS {repo_files} of 44 in paper ({status})":
+                failures.append(f"preview phrase for {status} was {phrase}")
+            if phrase not in preview_alt(372, 719, 71, repo_files, 44, gap["status"]):
+                failures.append(f"alt text dropped {status}")
+            texts = atlaslib.gap_status_texts([gap])
+            if texts != [status, gap["label"]]:
+                failures.append(f"page check texts for {status} were {texts}")
+            if status != "PARTIAL" and "PARTIAL" in texts:
+                failures.append(f"page check required PARTIAL for {repo_files} files")
+            try:
+                image = og_card.render(
+                    372,
+                    719,
+                    71,
+                    9,
+                    repo_files,
+                    44,
+                    gap["status"],
+                    11,
+                    13,
+                    "MISSING",
+                    "per-row provenance",
+                )
+            except SystemExit as exc:
+                failures.append(f"preview card rejected {status}: {exc}")
+            else:
+                if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
+                    failures.append(f"preview card for {status} is {image.size}")
+        social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
+        if "in paper (${oeisStatus})" not in social:
+            failures.append("social alt text does not render the OEIS status")
+        badge_page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
+        for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
+            if f'case "{status}":' not in badge_page:
+                failures.append(f"source page badge does not handle {status}")
+        page_check = inspect.getsource(atlaslib.check_alphaproof_pages)
+        if '"PARTIAL"' in page_check:
+            failures.append("AlphaProof page check still requires the literal PARTIAL")
+        if "gap_status_texts" not in page_check:
+            failures.append("AlphaProof page check does not use derived gap statuses")
         if any(record["provenance"] != "MISSING" for record in payload["records"]):
             failures.append("fixture assigned per-row provenance")
         families = [

@@ -13,6 +13,9 @@
   --deposited: #1d4e89;
   --comparator: #3d4c73;
   --none: #6a6258;
+  /* White on #146c43 is 6.45:1. White on #9a3412 is 7.31:1. */
+  --match: #146c43;
+  --more-than-paper: #9a3412;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -206,7 +209,8 @@ th button {
 .badge.main-result-formalized { background: var(--formal); }
 .badge.deposited { background: var(--deposited); }
 .badge.comparator-challenge-only, .badge.partial { background: var(--comparator); }
-.badge.match { background: var(--ink); }
+.badge.match { background: var(--match); }
+.badge.more-than-paper { background: var(--more-than-paper); }
 .badge.none, .badge.missing { background: var(--none); }
 .source-grid {
   display: grid;

@@ -9,6 +9,23 @@ const commit = record.source.commit;
 const oeis = record.gaps.find((gap) => gap.id === "oeis-count");
 const attempted = record.gaps.find((gap) => gap.id === "erdos-attempted");
 const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
+
+function gapBadgeClass(status: string | undefined): string {
+  switch (status) {
+    case "PARTIAL":
+      return "partial";
+    case "MATCH":
+      return "match";
+    case "MORE THAN PAPER":
+      return "more-than-paper";
+    case "MISSING":
+      return "missing";
+    case undefined:
+      return "";
+    default:
+      return status.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+}
 ---
 
 <Base
@@ -46,17 +63,17 @@ const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
     <h2>Gaps</h2>
     <ul>
       <li>
-        <span class={`badge ${oeis?.status?.toLowerCase() ?? ""}`}>{oeis?.status}</span>
+        <span class={`badge ${gapBadgeClass(oeis?.status)}`}>{oeis?.status}</span>
         {" "}OEIS paper count {oeis?.paper_count}/{oeis?.paper_attempted}. Repository Lean files {oeis?.repo_files}.
         Absent {oeis?.absent}. Label: {oeis?.label}.
       </li>
       <li>
-        <span class={`badge ${attempted?.status?.toLowerCase() ?? ""}`}>{attempted?.status}</span>
+        <span class={`badge ${gapBadgeClass(attempted?.status)}`}>{attempted?.status}</span>
         {" "}Paper attempted {attempted?.paper_attempted}. Newline count in erdos_problems_attempted.txt:
         {attempted?.repo_newlines}. Non-empty lines: {attempted?.repo_entries}. Label: {attempted?.label}.
       </li>
       <li>
-        <span class="badge missing">{provenance?.status}</span>
+        <span class={`badge ${gapBadgeClass(provenance?.status)}`}>{provenance?.status}</span>
         {" "}{provenance?.label}: {provenance?.status}. The repository has no per-file agent record.
       </li>
     </ul>
