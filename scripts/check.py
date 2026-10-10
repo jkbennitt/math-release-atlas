@@ -63,8 +63,10 @@ from atlaslib import (
     exempt_index_rows,
     load_cautions,
     load_community_schema,
+    check_math_lens_sources,
     load_curated,
     load_status_approvals,
+    parse_catalogue_lens,
     materialize_upstream,
     merge_data,
     parse_contents,
@@ -119,6 +121,7 @@ def check_source() -> list[str]:
         for lens in item["lenses"]:
             if not lens["source"].strip():
                 failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
+    failures.extend(check_math_lens_sources(families["families"]))
     failures.extend(check_status_vocabulary())
     failures.extend(check_status_approvals(curated))
     failures.extend(check_codeowners())
@@ -1662,6 +1665,50 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("missing source", missing_source)
     if message:
         failures.append(message)
+
+    pinned = "a" * 40
+
+    def catalogue_lens_missing_why() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": " ",
+                "source": f"https://example.com/{pinned}",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    def catalogue_lens_missing_source() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": "The deposited file names a number.",
+                "source": " ",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    def catalogue_lens_unpinned_source() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": "The deposited file names a number.",
+                "source": "https://example.com/file",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    for label, func in (
+        ("catalogue lens missing why", catalogue_lens_missing_why),
+        ("catalogue lens missing source", catalogue_lens_missing_source),
+        ("catalogue lens unpinned source", catalogue_lens_unpinned_source),
+    ):
+        message = expect_error(label, func)
+        if message:
+            failures.append(message)
     message = expect_error("curated solved", solved_curated)
     if message:
         failures.append(message)

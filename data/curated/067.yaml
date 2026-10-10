@@ -1,0 +1,8 @@
+id: "067"
+lenses:
+  - tag: algebraic-geometry
+    why: "The upstream overview treats the Campana-Peternell conjecture for projective Fano sixfolds."
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L208"
+community:
+  status: claimed
+  evidence: []

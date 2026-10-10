@@ -1,4 +1,4 @@
-import type { Family } from "./atlas";
+import type { LensNote } from "./atlas";
 
 export const LENS_TAGS = [
   "condensed-matter",
@@ -8,6 +8,10 @@ export const LENS_TAGS = [
   "quantum-information",
   "gravity-qft",
   "computation-hardness",
+  "number-theory",
+  "combinatorics",
+  "algebraic-geometry",
+  "analysis",
 ] as const;
 
 export type LensTag = (typeof LENS_TAGS)[number];
@@ -31,6 +35,10 @@ export function isLensTag(tag: string): tag is LensTag {
     case "quantum-information":
     case "gravity-qft":
     case "computation-hardness":
+    case "number-theory":
+    case "combinatorics":
+    case "algebraic-geometry":
+    case "analysis":
       return true;
     default:
       return false;
@@ -53,6 +61,14 @@ export function lensLabel(tag: LensTag): string {
       return "Gravity and quantum field theory";
     case "computation-hardness":
       return "Computation and hardness";
+    case "number-theory":
+      return "Number theory";
+    case "combinatorics":
+      return "Combinatorics";
+    case "algebraic-geometry":
+      return "Algebraic geometry";
+    case "analysis":
+      return "Analysis";
     default: {
       const exhaustive: never = tag;
       return exhaustive;
@@ -126,10 +142,10 @@ export function communityLabelFor(status: string | null | undefined): string {
   return communityLabel(value);
 }
 
-export function lensCounts(families: Family[]): { tag: LensTag; count: number }[] {
+export function lensCounts(records: { lenses: LensNote[] }[]): { tag: LensTag; count: number }[] {
   const counts = new Map<LensTag, number>(LENS_TAGS.map((tag) => [tag, 0]));
-  for (const family of families) {
-    for (const lens of family.lenses) {
+  for (const record of records) {
+    for (const lens of record.lenses) {
       if (!isLensTag(lens.tag)) {
         continue;
       }

@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
@@ -11,6 +12,27 @@ if (!dist) {
 
 const BASE = "/math-release-atlas";
 const WIDTHS = [1024, 390];
+
+function lensTagPages() {
+  const root = join(dist, "lens");
+  let names = [];
+  try {
+    names = readdirSync(root, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+  } catch {
+    names = [];
+  }
+  return names.map((name) => ({ path: `/lens/${name}/`, name: `lens-${name}` }));
+}
+
+const lensRoutes = lensTagPages();
+if (lensRoutes.length === 0) {
+  console.error("layout check found no lens tag pages");
+  process.exit(1);
+}
+
 const PAGES = [
   { path: "/", name: "home" },
   { path: "/source/", name: "source" },
@@ -19,6 +41,10 @@ const PAGES = [
   { path: "/source/cross/", name: "cross" },
   { path: "/about/", name: "about" },
   { path: "/status/", name: "status" },
+  { path: "/f/001/", name: "family-001" },
+  { path: "/lens/", name: "lenses" },
+  ...lensRoutes,
+  { path: "/graph/", name: "graph" },
 ];
 const TYPES = {
   ".html": "text/html; charset=utf-8",

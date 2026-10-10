@@ -1,0 +1,16 @@
+records:
+  "zeta23":
+    lenses:
+      - tag: number-theory
+        why: "The deposited challenge file states claims about zeros of the Riemann zeta function and Dirichlet L-functions on the critical line."
+        source: "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/Challenge.lean"
+  "3sum-apsp":
+    lenses:
+      - tag: computation-hardness
+        why: "The deposited EndStatement file states word-RAM running-time claims for subquadratic 3SUM and subcubic APSP."
+        source: "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/EndStatement.lean"
+  "fermat-last-theorem":
+    lenses:
+      - tag: number-theory
+        why: "The deposited theorem file states Fermat's Last Theorem for exponents at least 3 and imports Mathlib's number-theory FLT module."
+        source: "https://github.com/anthropics/fermats-last-theorem/blob/6e837e75355538c7f80bab5b956861e86c4eacc2/Theorems/Thm_fermat_last_theorem.lean"

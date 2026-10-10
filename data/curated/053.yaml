@@ -1,0 +1,8 @@
+id: "053"
+lenses:
+  - tag: algebraic-geometry
+    why: "The upstream overview treats a tautological relation on a moduli space of stable pointed curves."
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L182"
+community:
+  status: claimed
+  evidence: []

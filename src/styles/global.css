@@ -252,6 +252,9 @@ table[data-family-table] td,
 .badge.none, .badge.missing, .badge.not-in-comparator { background: var(--none); }
 .badge.new-result { background: var(--match); }
 .badge.formalization { background: #5c3d6e; }
+.badge.source-openai { background: var(--formal); }
+.badge.source-alphaproof { background: var(--deposited); }
+.badge.source-anthropic { background: var(--comparator); }
 .badge.not-formalized { background: var(--more-than-paper); }
 .badge.noted { background: var(--comparator); }
 .source-grid {
@@ -309,6 +312,7 @@ a.tag:hover { text-decoration: underline; }
 }
 .lens-index, .lens-families { padding-left: 1.15rem; }
 .lens-index li, .lens-families li { margin: 0.55rem 0; }
+.lens-page a, .family a, .family .notes { overflow-wrap: anywhere; }
 .family code, .provenance code, .lens-page code {
   font-family: var(--mono);
   font-size: 0.86em;

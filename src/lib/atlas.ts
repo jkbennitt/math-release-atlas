@@ -131,6 +131,7 @@ export interface AlphaProofRecord {
   scope_notes: string[];
   natural_language_proofs: NaturalLanguageProof[];
   provenance: string;
+  lenses: LensNote[];
 }
 
 export interface AlphaProofGap {
@@ -252,6 +253,7 @@ export interface AnthropicRelease {
   axioms?: string[];
   scope_notes: string[];
   gaps: AnthropicGap[];
+  lenses: LensNote[];
 }
 
 export interface AnthropicSource extends SourceInfo {

@@ -3,6 +3,7 @@ import Base from "../../layouts/Base.astro";
 import { atlas, formatIso, shortSha, type Family } from "../../lib/atlas";
 import { communityLabelFor, lensLabelFor } from "../../lib/lenses";
 import { leanLabel } from "../../lib/lean";
+import { openaiDirectLinks } from "../../lib/rows";
 
 export function getStaticPaths() {
   return atlas.families.map((family) => ({
@@ -21,6 +22,7 @@ const status = family.community?.status ?? "claimed";
 const statusLabel = communityLabelFor(status);
 const history = family.community?.history ?? [];
 const commit = family.upstream_sha;
+const direct = openaiDirectLinks(family);
 ---
 
 <Base
@@ -30,7 +32,16 @@ const commit = family.upstream_sha;
   <article class="family">
     <p class="meta"><a href={`${base}#f-${family.id}`}>Back to the table</a></p>
     <h1 data-upstream="title">{family.title}</h1>
-    <p class="meta">Family {family.id}. Source <a href={`${base}source/`}>{family.source}</a>.</p>
+    <p class="meta">
+      Family {family.id}. Source <a href={`${base}source/`}>{family.source}</a>.
+      {" "}
+      {direct.map((link, index) => (
+        <>
+          {index > 0 ? " · " : null}
+          <a class="direct-upstream" href={link.href}>{link.label}</a>
+        </>
+      ))}
+    </p>
 
     <h2>Subject areas</h2>
     <ul>

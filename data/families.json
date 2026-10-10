@@ -124,9 +124,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L78"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "032",
@@ -185,9 +195,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": "BSD for low Selmer corank — not full BSD.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L80"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "006",
@@ -281,9 +301,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": "Zero-free region Re s > 7/8 ('quasi-Riemann hypothesis') — not the Riemann Hypothesis.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L82"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "023",
@@ -353,9 +383,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L84"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "006",
@@ -412,9 +452,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L86"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -452,9 +502,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L88"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "002",
@@ -520,9 +580,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L90"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -561,9 +631,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L92"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -614,9 +694,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L94"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -661,9 +751,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L96"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "004",
@@ -722,9 +822,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L98"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -774,9 +884,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L100"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -818,9 +938,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L102"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "003",
@@ -907,9 +1037,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L104"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -960,9 +1100,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L106"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1014,9 +1164,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L108"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "003",
@@ -1064,9 +1224,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L110"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1104,9 +1274,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L112"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1144,9 +1324,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L114"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "002",
@@ -1192,9 +1382,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L116"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1238,9 +1438,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L118"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1271,9 +1481,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L120"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1310,9 +1530,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L122"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -1361,9 +1591,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L124"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "011",
@@ -1416,9 +1656,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L126"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1455,9 +1705,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L128"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1496,9 +1756,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L130"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1537,9 +1807,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L132"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1577,9 +1857,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L134"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "003",
@@ -1630,9 +1920,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L136"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1663,9 +1963,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "number-theory",
+          "why": "The upstream overview places this family in the Number theory section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L138"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -1724,9 +2034,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": "Hodge for CM abelian varieties — not the full Hodge conjecture.",
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the rational Hodge conjecture for CM abelian varieties.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L142"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "001",
@@ -1805,9 +2125,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Campana's orbifold Iitaka conjecture for varieties.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L144"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "034",
@@ -1955,9 +2285,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats log abundance and Iitaka fibrations.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L146"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "033",
@@ -2039,9 +2379,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats threefold log abundance.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L148"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2093,9 +2443,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats minimal models of projective klt pairs.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L150"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "033",
@@ -2159,9 +2519,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats singular complex algebraic klt germs.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L152"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -2199,9 +2569,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Fujita's freeness conjecture for a smooth projective complex variety.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L154"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -2275,9 +2655,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Nagata's conjecture and Seshadri constants on projective varieties.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L156"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2308,9 +2698,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Bloch's conjecture on degree-zero zero-cycles of a complex surface.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L158"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2381,9 +2781,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview says every complex K3 surface in this entry is Oka, including nonprojective surfaces.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L162"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "060",
@@ -2421,9 +2831,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats fixed-determinant moduli spaces.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L164"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2454,9 +2874,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the equivariant cohomological Hikita conjecture for quivers.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L166"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2555,9 +2985,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats an integral complex affine fourfold and affine fibrations.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L170"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -2595,9 +3035,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats a singular normal affine complex surface and its tangent sheaf.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L172"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2657,9 +3107,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats a polynomial in four complex variables and the stable coordinate conjecture.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L174"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "047",
@@ -2705,9 +3165,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats ample rank-two bundles on the product of two projective lines.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L176"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2837,9 +3307,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats a tautological relation on a moduli space of stable pointed curves.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L182"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2870,9 +3350,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats smooth complex cubic fourfolds and a geometric K3 category.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L184"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2910,9 +3400,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Bridgeland stability on smooth projective complex threefolds.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L186"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -2971,9 +3471,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats termination of fourfold minimal model programs.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L188"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "034",
@@ -3038,9 +3548,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Campana's abelianity conjecture for special varieties.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L190"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "033",
@@ -3112,9 +3632,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats semialgebraic universal covers of projective complex varieties.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L192"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "034",
@@ -3264,9 +3794,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview classifies smooth connected complex projective contact manifolds in this entry.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L198"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3297,9 +3837,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the generalized Mukai conjecture for Fano manifolds.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L200"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3377,9 +3927,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats Virasoro constraints for complete intersections and projective bundles.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L204"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3425,9 +3985,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats bounded klt complements for Fano contractions.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L206"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "036",
@@ -3478,9 +4048,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the Campana-Peternell conjecture for projective Fano sixfolds.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L208"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3553,9 +4133,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the anticanonical bundle of a smooth complex projective variety.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L210"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3586,9 +4176,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "algebraic-geometry",
+          "why": "The upstream overview treats the quantum geometric Langlands equivalence for a complex algebraic group on a projective curve.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L212"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3632,9 +4232,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L216"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3694,9 +4304,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L218"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3740,9 +4360,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L220"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "166",
@@ -3787,9 +4417,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L222"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "077",
@@ -3842,9 +4482,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L224"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -3902,9 +4552,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L226"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "144",
@@ -3949,9 +4609,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L228"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "074",
@@ -4008,9 +4678,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L230"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "077",
@@ -4067,9 +4747,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L232"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "078",
@@ -4121,9 +4811,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L234"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4162,9 +4862,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L236"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4217,9 +4927,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L238"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4256,9 +4976,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L240"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4302,9 +5032,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L242"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4348,9 +5088,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L244"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -4381,9 +5131,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Real and complex analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L246"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -8094,9 +8854,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L391"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8135,9 +8905,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L393"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8195,9 +8975,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L395"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8243,9 +9033,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L397"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8286,9 +9086,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L399"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "160",
@@ -8341,9 +9151,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L401"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "159",
@@ -8394,9 +9214,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L403"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8454,9 +9284,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L405"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8487,9 +9327,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L407"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8542,9 +9392,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L409"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8575,9 +9435,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L411"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -8635,9 +9505,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L413"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8674,9 +9554,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L415"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8713,9 +9603,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L417"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8764,9 +9664,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L419"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -8804,9 +9714,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L421"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8877,9 +9797,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L423"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8918,9 +9848,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L425"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -8971,9 +9911,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L427"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9033,9 +9983,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L429"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -9087,9 +10047,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L431"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "175",
@@ -9140,9 +10110,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L433"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9173,9 +10153,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L435"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9219,9 +10209,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L437"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9258,9 +10258,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L439"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9299,9 +10309,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L441"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9352,9 +10372,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L443"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "003",
@@ -9398,9 +10428,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L445"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9446,9 +10486,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L447"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "170",
@@ -9499,9 +10549,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L449"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9545,9 +10605,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L451"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "175",
@@ -9607,9 +10677,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L453"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9646,9 +10726,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L455"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9685,9 +10775,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L457"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9726,9 +10826,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L459"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9765,9 +10875,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L461"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -9804,9 +10924,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "combinatorics",
+          "why": "The upstream overview places this family in the Combinatorics section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L463"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17033,9 +18163,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L740"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": [
         {
@@ -17079,9 +18219,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L742"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17134,9 +18284,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L744"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [
         {
           "to": "322",
@@ -17213,9 +18373,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L746"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17254,9 +18424,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L748"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17295,9 +18475,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L750"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17336,9 +18526,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L752"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17377,9 +18577,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L754"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17421,9 +18631,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L756"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17547,9 +18767,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L758"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -17580,9 +18810,19 @@
       "upstream_sha": "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb",
       "source": "openai-math",
       "caution": null,
-      "lenses": [],
+      "lenses": [
+        {
+          "tag": "analysis",
+          "why": "The upstream overview places this family in the Functional analysis section.",
+          "source": "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L760"
+        }
+      ],
       "related": [],
-      "community": null,
+      "community": {
+        "status": "claimed",
+        "evidence": [],
+        "history": []
+      },
       "cites": [],
       "cited_by": []
     },
@@ -20015,7 +21255,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in AICollaborator file 57.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "combinatorics",
+            "why": "The deposited Lean file is Ben Green's Open Problem 57, in the AdditiveCombinatorics folder, about convex combinations on a finite abelian group.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AdditiveCombinatorics/57.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_1.lean",
@@ -20040,7 +21287,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_1.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_2.lean",
@@ -20065,7 +21319,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_2.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_3.lean",
@@ -20090,7 +21351,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_3.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_4.lean",
@@ -20115,7 +21383,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_4.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_5.lean",
@@ -20140,7 +21415,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_5.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_7.lean",
@@ -20165,7 +21447,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_7.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_8.lean",
@@ -20190,7 +21479,14 @@
             "sha256": "fd368b619922e24153911cadfb95bc5a9cc0aa022b924e7cad22819fd3913bf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_8.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/Graphs/GraphConjecture2.lean",
@@ -20209,7 +21505,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in AICollaborator file GraphConjecture2.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "combinatorics",
+            "why": "The deposited Lean file is Written on the Wall II, Conjecture 2, and opens on SimpleGraph.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/Graphs/GraphConjecture2.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/Graphs/bipartite_graph_reconstruction_conjecture_2.lean",
@@ -20234,7 +21537,14 @@
             "sha256": "c2b8922bc3959d0b16e0541d509f9056545b3647f573da39943bac7ce2cfaaf6"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "combinatorics",
+            "why": "The deposited Lean file is named as the bipartite graph reconstruction conjecture and opens on SimpleGraph.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/Graphs/bipartite_graph_reconstruction_conjecture_2.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/Optimization/LastIterateConvergence.lean",
@@ -20253,7 +21563,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in AICollaborator file LastIterateConvergence.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/AICollaborator/QuantumOptics/35.lean",
@@ -20272,7 +21583,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in AICollaborator file 35.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "quantum-information",
+            "why": "The deposited Lean file is Open Quantum Problem 35 on absolutely maximally entangled pure states.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/QuantumOptics/35.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/AICollaborator/QuantumOptics/MonochromaticQuantumGraph.lean",
@@ -20291,7 +21609,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in AICollaborator file MonochromaticQuantumGraph.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "quantum-information",
+            "why": "The deposited Lean file studies monochromatic quantum graphs whose quantum-optics motivation is multipartite GHZ-type states.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/QuantumOptics/MonochromaticQuantumGraph.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_12.parts.i.lean",
@@ -20316,7 +21641,8 @@
             "sha256": "2165f6786e7910bf0655a36c0fb345fcf15c4428c95abe6d2655ab6ec1f40117"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_12.parts.ii.lean",
@@ -20341,7 +21667,8 @@
             "sha256": "79841e1a68adb697a5c0711bbbd12e4eb5eef74243528704aa847392da17cfdf"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_125.variants.positive_lower_density.lean",
@@ -20368,7 +21695,8 @@
             "sha256": "09ae6a9792a4c71cba4af5382bc478887d3dea9844e20a88086bd3bbd1f8fd09"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_138.variants.difference.lean",
@@ -20395,7 +21723,8 @@
             "sha256": "bae9beb93c0c87e0e7d70a9744073a01421d85925e9b4530405d1cfc5d445df1"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_152.lean",
@@ -20420,7 +21749,8 @@
             "sha256": "ec57666d3b8c052c560848f7bd8501f34ad0fcbc00c1be7c7a9010c0c274aa86"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_26.variants.tenenbaum.lean",
@@ -20447,7 +21777,8 @@
             "sha256": "11f699568a86c074d32fd3e0529766ab63f6f0eefaae15c16c9a3d062f5bd929"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_741.parts.i.lean",
@@ -20474,7 +21805,8 @@
             "sha256": "62860c9e101e00969b0eed6429bc8514c7917bf7a8b8226e2bd3c7e7c7bfa164"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_741.parts.ii.lean",
@@ -20499,7 +21831,8 @@
             "sha256": "d77702d120c9bc7703d8273275e2868c9b6d2e6e828382dac264103adad319b4"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/ErdosProblems/erdos_846.lean",
@@ -20524,7 +21857,8 @@
             "sha256": "5bc626735f861e310b8c62e467973c3762d48df8c3edc3737924b7799efe7a15"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/A224515_conjecture_existence.lean",
@@ -20543,7 +21877,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file A224515_conjecture_existence.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/A309132_conjecture_carmichael.lean",
@@ -20562,7 +21897,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file A309132_conjecture_carmichael.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/A382590_conjecture_kth_prime_factor_is_eventually_periodic.lean",
@@ -20581,7 +21917,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file A382590_conjecture_kth_prime_factor_is_eventually_periodic.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/a091669_conjecture_primitive_root.lean",
@@ -20600,7 +21937,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file a091669_conjecture_primitive_root.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/a325046_odd_terms_at_k_times_k_plus_1.lean",
@@ -20619,7 +21957,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file a325046_odd_terms_at_k_times_k_plus_1.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_103311_conjecture_0.lean",
@@ -20638,7 +21977,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_103311_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_108_conjecture_2.lean",
@@ -20657,7 +21997,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_108_conjecture_2.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_113254_conjecture_0.lean",
@@ -20676,7 +22017,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_113254_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_175386_conjecture_0.lean",
@@ -20695,7 +22037,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_175386_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_194806_conjecture_0.lean",
@@ -20714,7 +22057,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_194806_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_227582_conjecture_0.lean",
@@ -20733,7 +22077,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_227582_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_228143_conjecture_1.lean",
@@ -20752,7 +22097,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_228143_conjecture_1.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_243106_conjecture_0.lean",
@@ -20771,7 +22117,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_243106_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_248802_conjecture_0.lean",
@@ -20790,7 +22137,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_248802_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_248802_conjecture_4.lean",
@@ -20809,7 +22157,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_248802_conjecture_4.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_256012_conjecture_0.lean",
@@ -20828,7 +22177,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_256012_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_267581_conjecture_0.lean",
@@ -20847,7 +22197,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_267581_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_271591_conjecture_0.lean",
@@ -20866,7 +22217,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_271591_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_278070_conjecture_0.lean",
@@ -20885,7 +22237,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_278070_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_282779_conjecture_0.lean",
@@ -20904,7 +22257,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_282779_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_289411_conjecture_0.lean",
@@ -20923,7 +22277,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_289411_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_2897_conjecture_0.lean",
@@ -20942,7 +22297,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_2897_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_306424_conjecture_0.lean",
@@ -20961,7 +22317,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_306424_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_307865_conjecture_0.lean",
@@ -20980,7 +22337,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_307865_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_323557_conjecture_0.lean",
@@ -20999,7 +22357,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_323557_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_340737_conjecture_0.lean",
@@ -21018,7 +22377,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_340737_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_341254_conjecture_0.lean",
@@ -21037,7 +22397,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_341254_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_363347_conjecture_2.lean",
@@ -21056,7 +22417,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_363347_conjecture_2.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_372761_conjecture_2.lean",
@@ -21075,7 +22437,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_372761_conjecture_2.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_51293_conjecture_0.lean",
@@ -21100,7 +22463,8 @@
             "sha256": "8f464238427f434c377101fa5ac4ccb4864af62ac74bd733b4947a1c3e6247bd"
           }
         ],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_62567_conjecture_0.lean",
@@ -21119,7 +22483,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_62567_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_A028859_conjecture_1.lean",
@@ -21138,7 +22503,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_A028859_conjecture_1.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_A258667_conjecture_0.lean",
@@ -21157,7 +22523,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_A258667_conjecture_0.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_a211417_conjecture_specific.lean",
@@ -21176,7 +22543,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_a211417_conjecture_specific.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_a237271_conjecture_2.lean",
@@ -21195,7 +22563,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_a237271_conjecture_2.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_a300997_finite_difference_is_one_or_two.lean",
@@ -21214,7 +22583,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_a300997_finite_difference_is_one_or_two.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_a363102_conjecture_1.lean",
@@ -21233,7 +22603,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_a363102_conjecture_1.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/OEIS/oeis_a368692_conjecture_integrality.lean",
@@ -21252,7 +22623,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in OEIS file oeis_a368692_conjecture_integrality.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean",
@@ -21271,7 +22643,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically irreducible algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean",
@@ -21290,7 +22669,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically irreducible algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean",
@@ -21309,7 +22695,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file AlgebrasOverFields_geometrically_irreducible_tfae.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically irreducible algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean",
@@ -21328,7 +22721,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically irreducible algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/AlgebrasOverFields_unique_minimal_prime_of_tensor_product_of_separably_closed.lean",
@@ -21347,7 +22747,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file AlgebrasOverFields_unique_minimal_prime_of_tensor_product_of_separably_closed.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean",
@@ -21366,7 +22767,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically reduced algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean",
@@ -21385,7 +22793,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file GeometricallyReduced_isReduced_tensorProduct_of_separable.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically reduced algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean",
@@ -21404,7 +22819,14 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": [
+          {
+            "tag": "algebraic-geometry",
+            "why": "The deposited Lean file is named as a lemma about geometrically reduced algebras.",
+            "source": "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean"
+          }
+        ]
       },
       {
         "id": "APNOutputs/StacksProject/NormalRings_NormalDomain_powerSeries.lean",
@@ -21423,7 +22845,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file NormalRings_NormalDomain_powerSeries.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/StacksProject/NormalRings_normalRing_characterization.lean",
@@ -21442,7 +22865,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file NormalRings_normalRing_characterization.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       },
       {
         "id": "APNOutputs/StacksProject/Separability_exists_isPurelyInseparable_isSeparablyGenerated_of_essFiniteType.lean",
@@ -21461,7 +22885,8 @@
         "statement": "Lean proof file deposited upstream for the formal statement in StacksProject file Separability_exists_isPurelyInseparable_isSeparablyGenerated_of_essFiniteType.lean.",
         "scope_notes": [],
         "natural_language_proofs": [],
-        "provenance": "MISSING"
+        "provenance": "MISSING",
+        "lenses": []
       }
     ],
     "snapshot_digest": "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
@@ -21677,6 +23102,13 @@
             "status": "NOT IN COMPARATOR",
             "label": "bandwidth-one ceiling is a separate topic and is not a comparator configuration"
           }
+        ],
+        "lenses": [
+          {
+            "tag": "number-theory",
+            "why": "The deposited challenge file states claims about zeros of the Riemann zeta function and Dirichlet L-functions on the critical line.",
+            "source": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/Challenge.lean"
+          }
         ]
       },
       {
@@ -21750,6 +23182,13 @@
             "status": "NOT FORMALIZED",
             "label": "real-number inputs and some running-time claims are not formalized"
           }
+        ],
+        "lenses": [
+          {
+            "tag": "computation-hardness",
+            "why": "The deposited EndStatement file states word-RAM running-time claims for subquadratic 3SUM and subcubic APSP.",
+            "source": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/EndStatement.lean"
+          }
         ]
       },
       {
@@ -21820,6 +23259,13 @@
             "id": "flt-module-count",
             "status": "NOTED",
             "label": "README says 60475 modules, which is the 60474 files under Theorems, P2M, and Definitions plus FinalCheck.lean. The tree has 60478 .lean files. The 3 extra .lean files are lakefile.lean, verification/comparator/Challenge.lean, and verification/comparator/Solution.lean. They are not package modules. The README says Challenge.lean is not part of the package."
+          }
+        ],
+        "lenses": [
+          {
+            "tag": "number-theory",
+            "why": "The deposited theorem file states Fermat's Last Theorem for exponents at least 3 and imports Mathlib's number-theory FLT module.",
+            "source": "https://github.com/anthropics/fermats-last-theorem/blob/6e837e75355538c7f80bab5b956861e86c4eacc2/Theorems/Thm_fermat_last_theorem.lean"
           }
         ]
       }
