@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import copy
 import inspect
 import json
 import os
@@ -13,6 +14,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from PIL import Image
 
 import yaml
 
@@ -673,47 +676,60 @@ def alphaproof_self_test() -> list[str]:
         if pinned_attempted["label"] != "353 listed, matching the paper" or pinned_attempted["status"] != "MATCH":
             failures.append(f"pinned attempted gap moved: {pinned_attempted}")
 
-        def gap_row(gap: dict, shown: str, absent_sentence: str = "") -> str:
-            extra = f" {absent_sentence}" if absent_sentence else ""
-            return (
-                f'<li id="gap-{gap["id"]}"><span class="badge">{shown}</span>{extra} '
-                f"Label: {gap['label']}.</li>"
+        pinned_gaps = [pinned_oeis, pinned_attempted, provenance_gap]
+
+        def rendered_gaps(oeis: dict, attempted: dict, provenance: dict) -> str:
+            return atlaslib.render_alphaproof_gap_rows(
+                {"oeis": oeis, "attempted": attempted, "provenance": provenance}
             )
 
-        aligned = "".join(
-            [
-                gap_row(pinned_oeis, pinned_oeis["status"], "Absent 6."),
-                gap_row(pinned_attempted, pinned_attempted["status"]),
-                gap_row(provenance_gap, provenance_gap["status"]),
-            ]
-        )
-        pinned_gaps = [pinned_oeis, pinned_attempted, provenance_gap]
+        aligned = rendered_gaps(pinned_oeis, pinned_attempted, provenance_gap)
+        if "The repository has no per-file agent record." not in aligned:
+            failures.append("gap rows were not rendered from the AlphaProof page template")
         if atlaslib.check_gap_elements(aligned, pinned_gaps):
             failures.append(f"aligned gap rows failed: {atlaslib.check_gap_elements(aligned, pinned_gaps)}")
-        swapped = "".join(
-            [
-                gap_row(pinned_oeis, pinned_attempted["status"], "Absent 6."),
-                gap_row(pinned_attempted, pinned_oeis["status"]),
-                gap_row(provenance_gap, provenance_gap["status"]),
-            ]
+        swapped_badge = aligned.replace(
+            '<span class="badge missing">MISSING</span>',
+            '<span class="badge partial">PARTIAL</span>',
+            1,
         )
-        if not atlaslib.check_gap_elements(swapped, pinned_gaps):
-            failures.append("swapped gap badges passed the row check")
-        for gap, shown in (
-            (alphaproof.oeis_count_gap(44), "MATCH"),
-            (alphaproof.oeis_count_gap(50), "MORE THAN PAPER"),
-            (alphaproof.attempted_count_gap(354, 354), "MORE THAN PAPER"),
+        if ": MISSING" not in swapped_badge:
+            failures.append("provenance fixture lost the repeated status")
+        if not atlaslib.check_gap_elements(swapped_badge, pinned_gaps):
+            failures.append("a swapped provenance badge passed because the row repeats : MISSING")
+        template_cases = (
+            (alphaproof.oeis_count_gap(44), pinned_attempted, provenance_gap),
+            (alphaproof.oeis_count_gap(50), pinned_attempted, provenance_gap),
+            (pinned_oeis, alphaproof.attempted_count_gap(354, 354), provenance_gap),
+        )
+        for oeis_gap, attempted_gap, provenance in template_cases:
+            page = rendered_gaps(oeis_gap, attempted_gap, provenance)
+            gaps = [oeis_gap, attempted_gap, provenance]
+            problems = atlaslib.check_gap_elements(page, gaps)
+            if problems:
+                failures.append(f"template row for {oeis_gap['status']} / {attempted_gap['status']} failed: {problems}")
+            for gap in (oeis_gap, attempted_gap):
+                row = atlaslib._element_inner(page, f"gap-{gap['id']}")
+                if row is None:
+                    failures.append(f"template is missing gap-{gap['id']}")
+                    continue
+                if gap["status"] != "PARTIAL" and "Absent" in atlaslib._visible_text(row):
+                    failures.append(f"the page template rendered Absent for {gap['status']}")
+            if oeis_gap["status"] in ("MATCH", "MORE THAN PAPER") and f">{oeis_gap['status']}</span>" not in page:
+                failures.append(f"template badge did not show {oeis_gap['status']}")
+            if attempted_gap["status"] == "MORE THAN PAPER" and ">MORE THAN PAPER</span>" not in page:
+                failures.append("template badge did not show MORE THAN PAPER for the attempted list")
+        match_gap = alphaproof.oeis_count_gap(44)
+        match_page = rendered_gaps(match_gap, pinned_attempted, provenance_gap)
+        leaked = match_page.replace(
+            f"Label: {match_gap['label']}.",
+            f"Absent 0. Label: {match_gap['label']}.",
+            1,
+        )
+        if "Absent 0." not in leaked or not atlaslib.check_gap_elements(
+            leaked, [match_gap, pinned_attempted, provenance_gap]
         ):
-            row = gap_row(gap, shown)
-            if atlaslib.check_gap_elements(row, [gap]):
-                failures.append(f"row for {gap['status']} failed: {atlaslib.check_gap_elements(row, [gap])}")
-            if "Absent" in row:
-                failures.append(f"zero or negative Absent was rendered for {gap['status']}")
-            if "absent" not in gap:
-                continue
-            leaked = gap_row(gap, shown, "Absent 0." if gap["absent"] == 0 else f"Absent {gap['absent']}.")
-            if not atlaslib.check_gap_elements(leaked, [gap]):
-                failures.append(f"Absent leak passed for {gap['status']}")
+            failures.append("Absent leak passed for a MATCH row rendered from the page template")
         social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
         if "source.preview.fragment" not in social:
             failures.append("social alt text does not render each source preview")
@@ -1012,6 +1028,34 @@ def anthropic_self_test() -> list[str]:
     )
     if "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)" not in anthropic_preview["fragment"]:
         failures.append(f"Anthropic preview fragment was {anthropic_preview['fragment']}")
+    if atlaslib.FLT_PREVIEW_NOTE not in anthropic_preview["fragment"] or atlaslib.FLT_PREVIEW_NOTE not in anthropic_preview["detail"]:
+        failures.append(f"Anthropic preview omitted the formalization note: {anthropic_preview}")
+    if "\u2019" in anthropic_preview["fragment"] or "\u2019" in anthropic_preview["detail"]:
+        failures.append("Anthropic preview uses a curly apostrophe")
+    omitted = atlaslib.formalization_note_failures(
+        "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization)",
+        "",
+        "Math Release Atlas: 61238 Lean files from Anthropic.",
+        "",
+    )
+    if not any("omits the formalization note" in item for item in omitted):
+        failures.append("a preview without the formalization note was accepted")
+    curly = atlaslib.FLT_PREVIEW_NOTE.replace("'", "\u2019")
+    curly_note = atlaslib.formalization_note_failures(curly, curly, f"alt {curly}", curly)
+    if not any("curly apostrophe" in item for item in curly_note):
+        failures.append("a curly apostrophe in the formalization note was accepted")
+    outside = (
+        "<p>It is not the Riemann Hypothesis.</p>"
+        '<section id="zeta23"><p>A lower bound on zeta zeros.</p></section>'
+    )
+    if not atlaslib.check_riemann_sentence(outside):
+        failures.append("the Riemann Hypothesis sentence outside the zeta section was accepted")
+    deleted = '<section id="zeta23"><p>It is the Riemann Hypothesis.</p></section>'
+    if not atlaslib.check_riemann_sentence(deleted):
+        failures.append("deleting the Riemann Hypothesis sentence was accepted")
+    kept = f'<section id="zeta23"><p>{atlaslib.RIEMANN_SENTENCE}</p></section>'
+    if atlaslib.check_riemann_sentence(kept):
+        failures.append(f"the Riemann Hypothesis sentence was rejected: {atlaslib.check_riemann_sentence(kept)}")
     entries = [
         {
             "name": "OpenAI Math",
@@ -1939,6 +1983,53 @@ def preview_self_test() -> list[str]:
         failures.append("a preview alt without the Anthropic counts was accepted")
     if "Anthropic" in preview_alt(openai_only):
         failures.append("preview alt named Anthropic without a registered source")
+    catalog = read_json(FAMILIES_JSON)
+    entries = atlaslib.preview_entries(catalog["sources"]["sources"])
+    image = og_card.render(entries)
+    blob = og_card.png_bytes(image)
+    if og_card.png_bytes(og_card.render(entries)) != blob:
+        failures.append("preview card png is not deterministic")
+    with tempfile.TemporaryDirectory() as tmp:
+        dist = Path(tmp)
+        (dist / "og.png").write_bytes(blob)
+        matched = atlaslib.check_preview_image(dist, catalog)
+        if matched:
+            failures.append(f"the rendered card was rejected: {matched}")
+        blank = Image.new("RGB", (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT), (255, 255, 255))
+        (dist / "og.png").write_bytes(og_card.png_bytes(blank))
+        blank_failures = atlaslib.check_preview_image(dist, catalog)
+        if not any("does not match" in item for item in blank_failures):
+            failures.append(f"a blank og.png was accepted: {blank_failures}")
+        stale = image.copy()
+        stale.putpixel((8, 8), (1, 2, 3))
+        (dist / "og.png").write_bytes(og_card.png_bytes(stale))
+        if not atlaslib.check_preview_image(dist, catalog):
+            failures.append("a stale og.png was accepted")
+    unchecked = copy.deepcopy(catalog)
+    unchecked["sources"]["sources"].append(
+        {
+            "id": "unchecked",
+            "name": "Unchecked",
+            "org": "Unchecked Org",
+            "preview": {
+                "fragment": "99999 notes from Unchecked",
+                "tiles": [{"value": "99999", "label": "notes"}],
+                "detail": "",
+                "bindings": [{"value": "99999", "path": ["unchecked", "notes"]}],
+            },
+        }
+    )
+    unchecked["unchecked"] = {"notes": 99999}
+    unchecked_failures = atlaslib.preview_disagreements(unchecked)
+    if not any("no preview derivation" in item for item in unchecked_failures):
+        failures.append(f"a source counted as 99999 with no derivation was accepted: {unchecked_failures}")
+    renamed = copy.deepcopy(catalog)
+    for source in renamed["sources"]["sources"]:
+        if source["id"] == "openai-math":
+            source["org"] = "OpenAI Inc"
+    renamed_failures = atlaslib.preview_disagreements(renamed)
+    if not any("expected 'OpenAI'" in item for item in renamed_failures):
+        failures.append(f"renaming OpenAI in the affiliation line was accepted: {renamed_failures}")
     return failures
 
 

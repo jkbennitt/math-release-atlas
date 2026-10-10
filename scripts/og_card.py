@@ -10,6 +10,7 @@ preview_alt() and does not need that spelling.
 
 from __future__ import annotations
 
+import io
 import json
 from typing import Any
 
@@ -239,13 +240,20 @@ def render(entries: list[dict[str, Any]]) -> Image.Image:
     return image
 
 
+def png_bytes(image: Image.Image) -> bytes:
+    """The bytes public/og.png and dist/og.png must share. optimize=True is part of the pin."""
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
+
+
 def main() -> int:
     payload = json.loads(FAMILIES_JSON.read_text(encoding="utf-8"))
     entries = preview_entries(payload["sources"]["sources"])
     image = render(entries)
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)
-    image.save(dest, format="PNG", optimize=True)
+    dest.write_bytes(png_bytes(image))
     return 0
 
 

@@ -43,11 +43,17 @@ sync, updates the card, the alt text, and the social text without an edit to
 the card. The image spells Erdos in ASCII because the card fonts have an
 empty box for ő. The alt text is the same sentence as `preview_alt()` in
 `scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`:
-unofficial, not affiliated with the organizations named on the registry. The
-check fails if the card, the alt text, or the social text omits a registered
-source or disagrees with the catalogue counts. It also fails if any built
-page is missing `og:image` or `twitter:card`, or if `og:image` is not absolute.
-Package version 0.4.0.
+unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic. Those
+organization names are pinned, so renaming one fails the check. The Anthropic
+panel and the alt text add Fermat's Last Theorem: Formalization, not a new
+result, with an ASCII apostrophe, because the card font has no curly
+apostrophe. The check fails if the card, the alt text, or the social text
+omits a registered source, omits that formalization note, disagrees with the
+catalogue counts, or skips a source that has no derivation. The built
+`og.png` must match a fresh render byte for byte, so a blank or stale image
+of the right size fails. It also fails if any built page is missing
+`og:image` or `twitter:card`, or if `og:image` is not absolute.
+Package version 0.4.1.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:

@@ -291,7 +291,11 @@ def alphaproof_preview(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def derived_source_previews(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Recompute previews from catalogue counts. A source that brings its own preview is left alone."""
+    """Recompute previews from catalogue counts.
+
+    Every registered source needs an entry here. A source that is missing is
+    not left to its own preview: the disagreement check fails closed.
+    """
     sources = catalog["sources"]["sources"]
     by_id = {source["id"]: source for source in sources}
     derived: dict[str, dict[str, Any]] = {}
