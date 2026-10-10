@@ -53,7 +53,7 @@ catalogue counts, or skips a source that has no derivation. The built
 `og.png` must match a fresh render byte for byte, so a blank or stale image
 of the right size fails. It also fails if any built page is missing
 `og:image` or `twitter:card`, or if `og:image` is not absolute.
-Package version 0.4.2.
+Package version 0.4.3.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:

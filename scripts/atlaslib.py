@@ -3282,12 +3282,12 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     apn_phrases = [
         f"Repository {apn_source['repo']}",
         f"{apn_commit} ({apn_commit[:12]})",
+        f"{catalog['alphaproof']['upstream_ci']}. ",
     ]
     if apn_intro is None:
         failures.append("AlphaProof page is missing its intro")
-    else:
-        for phrase in missing_spaced_phrases(apn_intro.group(1), apn_phrases):
-            failures.append(f"AlphaProof intro is missing spaced text {phrase!r}")
+    for phrase in missing_spaced_phrases(apn_html, apn_phrases):
+        failures.append(f"AlphaProof page is missing spaced text {phrase!r}")
     anthropic_html = anthropic_path.read_text(encoding="utf-8")
     anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p>(.*?)</p>", anthropic_html, re.DOTALL)
     an_commit = str(anthropic_source["commit"])
@@ -3329,7 +3329,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
 
 
 def check_home_layout(dist: Path) -> list[str]:
-    """The home table fits a 1024px viewport, and the intro is not run together."""
+    """Home, source, cross, about, and status fit at 1024px and 390px."""
     script = ROOT / "scripts" / "layout_check.mjs"
     if not script.is_file():
         return ["home layout check is missing"]

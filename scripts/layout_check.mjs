@@ -10,7 +10,16 @@ if (!dist) {
 }
 
 const BASE = "/math-release-atlas";
-const VIEWPORT_WIDTH = 1024;
+const WIDTHS = [1024, 390];
+const PAGES = [
+  { path: "/", name: "home" },
+  { path: "/source/", name: "source" },
+  { path: "/source/alphaproof-nexus/", name: "alphaproof" },
+  { path: "/source/anthropic/", name: "anthropic" },
+  { path: "/source/cross/", name: "cross" },
+  { path: "/about/", name: "about" },
+  { path: "/status/", name: "status" },
+];
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -94,6 +103,19 @@ async function measure(page) {
     const resultCell = table?.querySelector("tbody tr td:nth-child(3)") ?? null;
     const idBox = idCell?.getBoundingClientRect();
     const resultBox = resultCell?.getBoundingClientRect();
+    const headers = table === null ? [] : [...table.querySelectorAll("thead th")].map((cell) => {
+      const button = cell.querySelector("button");
+      const target = button ?? cell;
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      const cellBox = cell.getBoundingClientRect();
+      const textBox = target.getBoundingClientRect();
+      return {
+        text: (target.textContent ?? "").trim(),
+        lines: range.getClientRects().length,
+        overflow: textBox.right - cellBox.right,
+      };
+    });
     return {
       pageOverflow: root.scrollWidth - root.clientWidth,
       scrollerOverflow: scroller === null ? -1 : scroller.scrollWidth - scroller.clientWidth,
@@ -104,14 +126,18 @@ async function measure(page) {
       resultWidth: resultBox?.width ?? 0,
       resultRight: resultBox?.right ?? 0,
       clientWidth: root.clientWidth,
+      headers,
     };
   });
 }
 
-function layoutFailures(label, metrics) {
+function layoutFailures(label, metrics, table) {
   const failures = [];
   if (metrics.pageOverflow > 1) {
-    failures.push(`${label}: home page overflows horizontally by ${metrics.pageOverflow}px`);
+    failures.push(`${label}: page overflows horizontally by ${metrics.pageOverflow}px`);
+  }
+  if (!table) {
+    return failures;
   }
   if (metrics.scrollerOverflow > 1) {
     failures.push(`${label}: home table overflows its container by ${metrics.scrollerOverflow}px`);
@@ -127,6 +153,16 @@ function layoutFailures(label, metrics) {
       `${label}: ID column is ${Math.round(metrics.idWidth)}px and result is ${Math.round(metrics.resultWidth)}px`,
     );
   }
+  for (const header of metrics.headers) {
+    if (header.lines > 1) {
+      failures.push(`${label}: ${header.text} header wraps onto ${header.lines} lines`);
+    }
+    if (header.overflow > 1) {
+      failures.push(
+        `${label}: ${header.text} header overflows its cell by ${Math.round(header.overflow)}px`,
+      );
+    }
+  }
   return failures;
 }
 
@@ -138,23 +174,40 @@ const failures = [];
 let browser;
 try {
   browser = await launchChrome();
-  const page = await browser.newPage({ viewport: { width: VIEWPORT_WIDTH, height: 900 } });
-  const response = await page.goto(`http://127.0.0.1:${port}${BASE}/`, { waitUntil: "networkidle" });
-  if (response === null || !response.ok()) {
-    failures.push(`home page did not load (${response?.status() ?? "no response"})`);
-  } else {
-    await page.locator("[data-family-table]").waitFor();
-    const intro = (await page.locator("p.provenance").innerText()).replace(/\s+/g, " ").trim();
-    if (!introPattern.test(intro) || /progress\.Generated|from[0-9a-f]|PDF·|map·/.test(intro)) {
-      failures.push(`snapshot intro runs together: ${intro}`);
-    }
-    failures.push(...layoutFailures("1024px", await measure(page)));
-    await page.evaluate(() => {
-      for (const item of document.querySelectorAll("details")) {
-        item.open = true;
+  const page = await browser.newPage({ viewport: { width: WIDTHS[0], height: 900 } });
+  for (const width of WIDTHS) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const route of PAGES) {
+      const label = `${route.name} at ${width}px`;
+      const response = await page.goto(`http://127.0.0.1:${port}${BASE}${route.path}`, {
+        waitUntil: "networkidle",
+      });
+      if (response === null || !response.ok()) {
+        failures.push(`${label} did not load (${response?.status() ?? "no response"})`);
+        continue;
       }
-    });
-    failures.push(...layoutFailures("1024px with disclosures open", await measure(page)));
+      const home = route.name === "home";
+      if (home) {
+        await page.locator("[data-family-table]").waitFor();
+        if (width === 1024) {
+          const intro = (await page.locator("p.provenance").innerText()).replace(/\s+/g, " ").trim();
+          if (!introPattern.test(intro) || /progress\.Generated|from[0-9a-f]|PDF·|map·/.test(intro)) {
+            failures.push(`snapshot intro runs together: ${intro}`);
+          }
+        }
+      }
+      failures.push(...layoutFailures(label, await measure(page), home && width === 1024));
+      if (home) {
+        await page.evaluate(() => {
+          for (const item of document.querySelectorAll("details")) {
+            item.open = true;
+          }
+        });
+        failures.push(
+          ...layoutFailures(`${label} with disclosures open`, await measure(page), width === 1024),
+        );
+      }
+    }
   }
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
