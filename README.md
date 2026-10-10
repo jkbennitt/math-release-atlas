@@ -22,8 +22,19 @@ npm run dev
 Open the URL Astro prints. Pages are served under `/math-release-atlas/`,
 the path GitHub Pages uses for this repository.
 
-`npm run build` merges curated notes, checks counts and wording, and writes
-`dist/`.
+`npm run build` merges curated notes, checks counts and wording, draws the
+link-preview card, and writes `dist/`.
+
+## Link previews
+
+The shared layout emits the page title and description as Open Graph and
+Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
+`/math-release-atlas/`. `scripts/og_card.py` reads the family and manuscript
+counts from `data/families.json` and writes `public/og.png` at 1200×630.
+Astro copies that file into `dist/`. The card names the atlas and those
+counts, and it says the atlas is unofficial. It does not say OpenAI endorses
+it. The dist check fails if any built page is missing `og:image` or
+`twitter:card`, or if `og:image` is not absolute. Package version 0.2.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -54,6 +65,14 @@ already on main does not count as an edit of the sync branch. A missing
 comparison ref stops the job instead of updating the open pull request. It never
 merges that pull request. The site updates only after the pull request is
 merged and the Pages workflow runs.
+
+The publish job pushes and opens the pull request with the default
+`GITHUB_TOKEN`. GitHub creates Build and Guard runs for that pull request and
+leaves them waiting for approval, so the pull request shows no status checks.
+A push from that token does not start workflows at all. After the push, the
+same job starts Build (`ci.yml`) and Guard (`guard.yml`) with
+`workflow_dispatch` on the sync branch. That event runs the workflows and
+attaches the checks to the commit. No personal access token is required.
 
 If the parsed family and manuscript counts disagree with the count sentence
 in the upstream README, the pull request is still opened and the check fails.

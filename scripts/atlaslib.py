@@ -7,6 +7,7 @@ import html
 import json
 import os
 import re
+import struct
 import subprocess
 import tempfile
 import unicodedata
@@ -25,6 +26,16 @@ CURATED_DIR = ROOT / "data" / "curated"
 CAUTIONS_JSON = ROOT / "data" / "fixed-cautions.json"
 UPSTREAM_URL = "https://github.com/openai/math.git"
 UPSTREAM_WEB = "https://github.com/openai/math"
+PREVIEW_IMAGE_NAME = "og.png"
+PREVIEW_WIDTH = 1200
+PREVIEW_HEIGHT = 630
+
+
+def preview_alt(families: int, manuscripts: int) -> str:
+    """Sentence on the card image and in og:image:alt. Keep it free of claim verbs."""
+    return (
+        f"Math Release Atlas: {families} result families and {manuscripts} manuscripts. Unofficial."
+    )
 
 LENS_ORDER = (
     "condensed-matter",
@@ -2186,11 +2197,243 @@ def check_status_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
     return failures
 
 
+_ATTR_RE = re.compile(r"""([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""")
+_META_RE = re.compile(r"<meta\b([^>]*)>", re.IGNORECASE)
+_LINK_RE = re.compile(r"<link\b([^>]*)>", re.IGNORECASE)
+_TITLE_RE = re.compile(r"<title>([^<]*)</title>", re.IGNORECASE)
+
+
+def published_prefix() -> str:
+    """Absolute origin plus the Pages base path, with a trailing slash."""
+    text = (ROOT / "astro.config.mjs").read_text(encoding="utf-8")
+    site = re.search(r'site:\s*"([^"]+)"', text)
+    base = re.search(r'base:\s*"([^"]+)"', text)
+    if site is None or base is None:
+        return ""
+    return f"{site.group(1).rstrip('/')}/{base.group(1).strip('/')}/"
+
+
+def preview_image_url(prefix: str) -> str:
+    return f"{prefix}{PREVIEW_IMAGE_NAME}"
+
+
+def _tag_attrs(blob: str) -> dict[str, str]:
+    attrs: dict[str, str] = {}
+    for match in _ATTR_RE.finditer(blob):
+        value = match.group(2) if match.group(2) is not None else match.group(3)
+        attrs[match.group(1).lower()] = html.unescape(value)
+    return attrs
+
+
+def social_meta(html_text: str) -> dict[str, Any]:
+    properties: dict[str, str] = {}
+    names: dict[str, str] = {}
+    for match in _META_RE.finditer(html_text):
+        attrs = _tag_attrs(match.group(1))
+        content = attrs.get("content", "")
+        if "property" in attrs:
+            properties[attrs["property"]] = content
+        if "name" in attrs:
+            names[attrs["name"]] = content
+    canonical = ""
+    for match in _LINK_RE.finditer(html_text):
+        attrs = _tag_attrs(match.group(1))
+        if attrs.get("rel") == "canonical":
+            canonical = attrs.get("href", "")
+            break
+    title_match = _TITLE_RE.search(html_text)
+    title = html.unescape(title_match.group(1)).strip() if title_match else ""
+    return {"properties": properties, "names": names, "canonical": canonical, "title": title}
+
+
+def _absolute_failure(url: str, label: str, field: str, prefix: str) -> str | None:
+    if not url.lower().startswith("https://"):
+        return f"{label} {field} is not absolute"
+    if not prefix or not url.startswith(prefix):
+        return f"{label} {field} is missing the site base path"
+    return None
+
+
+def check_social_preview(
+    html_text: str,
+    label: str,
+    prefix: str,
+    counts: dict[str, Any] | None = None,
+) -> list[str]:
+    """Fail when a built page cannot produce a large-image link preview."""
+    tags = social_meta(html_text)
+    properties: dict[str, str] = tags["properties"]
+    names: dict[str, str] = tags["names"]
+    failures: list[str] = []
+    required_properties = (
+        "og:title",
+        "og:description",
+        "og:url",
+        "og:type",
+        "og:site_name",
+        "og:image",
+        "og:image:width",
+        "og:image:height",
+        "og:image:alt",
+    )
+    for key in required_properties:
+        if not properties.get(key, "").strip():
+            failures.append(f"{label} is missing {key}")
+    for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image"):
+        if not names.get(key, "").strip():
+            failures.append(f"{label} is missing {key}")
+    image = properties.get("og:image", "").strip()
+    image_failure = _absolute_failure(image, label, "og:image", prefix) if image else None
+    if image_failure:
+        failures.append(image_failure)
+    elif image and prefix and image != preview_image_url(prefix):
+        failures.append(f"{label} og:image is not the shared preview")
+    for field, url in (
+        ("og:url", properties.get("og:url", "").strip()),
+        ("twitter:image", names.get("twitter:image", "").strip()),
+        ("canonical", tags["canonical"].strip()),
+    ):
+        if not url:
+            if field == "canonical":
+                failures.append(f"{label} is missing canonical")
+            continue
+        failure = _absolute_failure(url, label, field, prefix)
+        if failure:
+            failures.append(failure)
+    if names.get("twitter:card", "").strip() and names.get("twitter:card") != "summary_large_image":
+        failures.append(f"{label} twitter:card is not summary_large_image")
+    if properties.get("og:type", "").strip() and properties.get("og:type") != "website":
+        failures.append(f"{label} og:type is not website")
+    if properties.get("og:site_name", "").strip() and properties.get("og:site_name") != "Math Release Atlas":
+        failures.append(f"{label} og:site_name is not the atlas name")
+    if properties.get("og:image:width", "").strip() and properties.get("og:image:width") != str(PREVIEW_WIDTH):
+        failures.append(f"{label} og:image:width is not {PREVIEW_WIDTH}")
+    if properties.get("og:image:height", "").strip() and properties.get("og:image:height") != str(PREVIEW_HEIGHT):
+        failures.append(f"{label} og:image:height is not {PREVIEW_HEIGHT}")
+    title = tags["title"]
+    if properties.get("og:title", "").strip() and properties.get("og:title") != title:
+        failures.append(f"{label} og:title does not match the page title")
+    description = names.get("description", "")
+    if properties.get("og:description", "").strip() and properties.get("og:description") != description:
+        failures.append(f"{label} og:description does not match the page description")
+    if names.get("twitter:title", "").strip() and names.get("twitter:title") != title:
+        failures.append(f"{label} twitter:title does not match the page title")
+    if names.get("twitter:description", "").strip() and names.get("twitter:description") != description:
+        failures.append(f"{label} twitter:description does not match the page description")
+    if names.get("twitter:image", "").strip() and image and names.get("twitter:image") != image:
+        failures.append(f"{label} twitter:image does not match og:image")
+    if tags["canonical"].strip() and properties.get("og:url", "").strip() and tags["canonical"] != properties.get("og:url"):
+        failures.append(f"{label} canonical does not match og:url")
+    if counts is not None and properties.get("og:image:alt", "").strip():
+        expected = preview_alt(int(counts["families"]), int(counts["manuscripts"]))
+        if properties.get("og:image:alt") != expected:
+            failures.append(f"{label} og:image:alt does not match the catalogue counts")
+        twitter_alt = names.get("twitter:image:alt", "")
+        if twitter_alt and twitter_alt != expected:
+            failures.append(f"{label} twitter:image:alt does not match the catalogue counts")
+    return failures
+
+
+def png_dimensions(data: bytes) -> tuple[int, int] | None:
+    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", data[16:24])
+
+
+def check_preview_image(dist: Path) -> list[str]:
+    path = dist / PREVIEW_IMAGE_NAME
+    if not path.is_file():
+        return ["built site is missing og.png"]
+    size = png_dimensions(path.read_bytes())
+    if size != (PREVIEW_WIDTH, PREVIEW_HEIGHT):
+        return [f"og.png is {size}, expected {PREVIEW_WIDTH}x{PREVIEW_HEIGHT}"]
+    return []
+
+
+def check_named_previews(dist: Path) -> list[str]:
+    """Home, graph, and status each carry their own title and description."""
+    expected = {
+        "index.html": "Math Release Atlas",
+        "graph/index.html": "Citation graph",
+        "status/index.html": "Community status",
+    }
+    failures: list[str] = []
+    titles: list[str] = []
+    descriptions: list[str] = []
+    for relative, mark in expected.items():
+        path = dist / relative
+        if not path.is_file():
+            failures.append(f"missing preview page {relative}")
+            continue
+        tags = social_meta(path.read_text(encoding="utf-8"))
+        title = tags["title"]
+        description = tags["names"].get("description", "").strip()
+        if relative == "index.html":
+            if title != mark:
+                failures.append(f"{relative} preview title is {title!r}")
+        elif mark not in title:
+            failures.append(f"{relative} preview title does not name the page")
+        if not description:
+            failures.append(f"{relative} is missing a description")
+        titles.append(title)
+        descriptions.append(description)
+    if len(titles) == 3 and (len(set(titles)) != 3 or len(set(descriptions)) != 3):
+        failures.append("home, graph, and status share a preview title or description")
+    return failures
+
+
+def check_link_previews(dist: Path) -> list[str]:
+    failures: list[str] = []
+    pages = sorted(path for path in dist.rglob("*.html") if path.is_file())
+    prefix = published_prefix()
+    if not prefix:
+        failures.append("astro.config.mjs is missing site or base")
+    counts = None
+    if FAMILIES_JSON.is_file():
+        try:
+            counts = read_json(FAMILIES_JSON)["counts"]
+        except (OSError, json.JSONDecodeError, KeyError):
+            failures.append("catalogue counts are unreadable for the preview check")
+    for page in pages:
+        label = page.relative_to(dist).as_posix()
+        failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, counts))
+    failures.extend(check_preview_image(dist))
+    failures.extend(check_named_previews(dist))
+    return failures
+
+
+def check_preview_source() -> list[str]:
+    """Preview tags are emitted once, from the layout, and the card reads the counts."""
+    failures: list[str] = []
+    layout = (ROOT / "src" / "layouts" / "Base.astro").read_text(encoding="utf-8")
+    if 'property="og:image"' not in layout or 'name="twitter:card"' not in layout:
+        failures.append("layout does not emit preview tags")
+    if 'content="summary_large_image"' not in layout or 'rel="canonical"' not in layout:
+        failures.append("layout does not emit a large-image card and a canonical URL")
+    for path in (ROOT / "src" / "pages").rglob("*.astro"):
+        text = path.read_text(encoding="utf-8")
+        if "og:image" in text or "twitter:card" in text:
+            failures.append(f"{path.relative_to(ROOT)} duplicates preview tags")
+    card = (ROOT / "scripts" / "og_card.py").read_text(encoding="utf-8")
+    if 'counts["families"]' not in card or 'counts["manuscripts"]' not in card:
+        failures.append("preview card does not read catalogue counts")
+    for name in (
+        "AtlasCardSerif-Regular.ttf",
+        "AtlasCardSerif-Bold.ttf",
+        "AtlasCardSans-Regular.ttf",
+        "OFL.txt",
+    ):
+        if not (ROOT / "scripts" / "fonts" / name).is_file():
+            failures.append(f"missing preview font file {name}")
+    return failures
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
     if not pages:
         return [f"{dist} has no HTML"]
+    failures.extend(check_link_previews(dist))
     combined = "\n".join(path.read_text(encoding="utf-8") for path in pages)
     if denylist_hit(combined):
         failures.append("built site contains a denylist token")

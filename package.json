@@ -1,7 +1,7 @@
 {
   "name": "math-release-atlas",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Unofficial atlas of result families from the public math manuscript catalogue.",
   "license": "Apache-2.0",
   "type": "module",
@@ -12,9 +12,9 @@
     "merge": "python3 scripts/merge.py",
     "check": "python3 scripts/check.py --self-test --source",
     "sync": "python3 scripts/sync.py",
-    "predev": "python3 scripts/merge.py",
+    "predev": "python3 scripts/merge.py && python3 scripts/og_card.py",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
-    "prebuild": "python3 scripts/merge.py && python3 scripts/check.py --self-test --source",
+    "prebuild": "python3 scripts/merge.py && python3 scripts/check.py --self-test --source && python3 scripts/og_card.py",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build && python3 scripts/check.py --dist dist",
     "preview": "astro preview"
   },

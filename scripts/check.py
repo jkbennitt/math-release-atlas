@@ -8,6 +8,7 @@ import ast
 import inspect
 import json
 import os
+import struct
 import subprocess
 import sys
 import tempfile
@@ -30,6 +31,8 @@ from atlaslib import (
     attach_citations,
     check_authored,
     check_dist,
+    check_preview_source,
+    check_social_preview,
     denylist_hit,
     exempt_upstream_text,
     assert_merged_catalogue,
@@ -47,6 +50,9 @@ from atlaslib import (
     parse_contents,
     parse_slug_date,
     plainify,
+    png_dimensions,
+    preview_alt,
+    published_prefix,
     read_json,
     require_upstream_ancestor,
     run_git,
@@ -85,6 +91,7 @@ def check_source() -> list[str]:
     failures.extend(check_sync_does_not_write_status())
     failures.extend(check_upstream_text_is_shown())
     failures.extend(check_authored())
+    failures.extend(check_preview_source())
     return failures
 
 
@@ -196,6 +203,16 @@ def check_sync_does_not_write_status() -> list[str]:
         failures.append("sync workflow changed contents permissions")
     if workflow.count("pull-requests: write") != 1:
         failures.append("sync workflow changed pull request permissions")
+    if "actions: write" not in workflow:
+        failures.append("sync workflow cannot start other workflows")
+    if 'gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"' not in workflow:
+        failures.append("sync workflow does not start Build on the sync branch")
+    if 'gh workflow run guard.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"' not in workflow:
+        failures.append("sync workflow does not start Guard on the sync branch")
+    for name in ("ci.yml", "guard.yml"):
+        text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+        if "workflow_dispatch:" not in text:
+            failures.append(f"{name} is missing workflow_dispatch")
     if 'status == "unchanged"' not in sync and "Upstream commit is unchanged." not in sync:
         failures.append("sync.py does not exit cleanly when the commit is unchanged")
     if "return 0" not in sync:
@@ -1359,6 +1376,58 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         failures.append(merge_error)
     if not CURATED_DIR.is_dir():
         failures.append("curated directory is missing")
+    failures.extend(preview_self_test())
+    return failures
+
+
+def preview_self_test() -> list[str]:
+    """A built page fails without og:image, without twitter:card, or with a relative image."""
+    failures: list[str] = []
+    if published_prefix() != "https://jkbennitt.github.io/math-release-atlas/":
+        failures.append(f"published prefix is {published_prefix()!r}")
+    prefix = "https://jkbennitt.github.io/math-release-atlas/"
+    image = f"{prefix}og.png"
+    counts = {"families": 372, "manuscripts": 722}
+    title = "Math Release Atlas"
+    description = "Unofficial table of result families."
+    alt = preview_alt(372, 722)
+    if scan_overclaims(alt, "preview"):
+        failures.append("preview alt was flagged")
+    good = f"""
+    <title>{title}</title>
+    <meta name="description" content="{description}" />
+    <link rel="canonical" href="{prefix}" />
+    <meta property="og:title" content="{title}" />
+    <meta property="og:description" content="{description}" />
+    <meta property="og:url" content="{prefix}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Math Release Atlas" />
+    <meta property="og:image" content="{image}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{alt}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{title}" />
+    <meta name="twitter:description" content="{description}" />
+    <meta name="twitter:image" content="{image}" />
+    <meta name="twitter:image:alt" content="{alt}" />
+    """
+    if check_social_preview(good, "fixture", prefix, counts):
+        failures.append("a complete preview head was rejected")
+    missing_image = good.replace(f'<meta property="og:image" content="{image}" />', "")
+    if not any("missing og:image" in item for item in check_social_preview(missing_image, "fixture", prefix, counts)):
+        failures.append("a page missing og:image was accepted")
+    relative = good.replace(image, "/math-release-atlas/og.png")
+    if not any("og:image is not absolute" in item for item in check_social_preview(relative, "fixture", prefix, counts)):
+        failures.append("a relative og:image was accepted")
+    missing_card = good.replace('<meta name="twitter:card" content="summary_large_image" />', "")
+    if not any("missing twitter:card" in item for item in check_social_preview(missing_card, "fixture", prefix, counts)):
+        failures.append("a page missing twitter:card was accepted")
+    header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 1200, 630)
+    if png_dimensions(header + b"\x08\x02\x00\x00\x00") != (1200, 630):
+        failures.append("png header parse failed")
+    if png_dimensions(b"not a png") is not None:
+        failures.append("a non-png had dimensions")
     return failures
 
 
