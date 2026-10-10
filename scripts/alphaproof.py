@@ -145,47 +145,65 @@ ALPHAPROOF_SOURCE = {
 }
 
 
-def oeis_count_status(absent: int) -> str:
-    """Status for the paper OEIS count minus the files in the repository."""
-    if absent > 0:
+def count_gap_status(paper: int, observed: int) -> str:
+    """MATCH when the counts agree, PARTIAL when short, MORE THAN PAPER when ahead."""
+    if observed < paper:
         return "PARTIAL"
-    if absent < 0:
+    if observed > paper:
         return "MORE THAN PAPER"
     return "MATCH"
 
 
+def surplus_label(extra: int, singular: str, plural: str) -> str:
+    noun = singular if extra == 1 else plural
+    return f"repo has {extra} more {noun} than paper"
+
+
 def oeis_count_gap(repo_files: int) -> dict[str, Any]:
-    """PARTIAL only while the repository has fewer OEIS files than the paper."""
+    """Label follows the file count against the paper's proved OEIS count."""
     absent = PAPER_OEIS_PROVED - repo_files
+    status = count_gap_status(PAPER_OEIS_PROVED, repo_files)
+    if status == "PARTIAL":
+        label = OEIS_GAP_LABEL
+    elif status == "MATCH":
+        label = f"{repo_files} files, matching the paper"
+    elif status == "MORE THAN PAPER":
+        label = surplus_label(repo_files - PAPER_OEIS_PROVED, "file", "files")
+    else:
+        raise AtlasError(f"unknown OEIS count status {status}")
     return {
         "id": "oeis-count",
-        "status": oeis_count_status(absent),
+        "status": status,
         "paper_count": PAPER_OEIS_PROVED,
         "paper_attempted": PAPER_OEIS_ATTEMPTED,
         "repo_files": repo_files,
         "absent": absent,
-        "label": OEIS_GAP_LABEL,
+        "label": label,
     }
 
 
 def attempted_count_gap(entries: int, newlines: int) -> dict[str, Any]:
-    """PARTIAL only when the distinct attempted lines differ from the paper count.
+    """Status follows the distinct attempted lines against the paper count.
 
     A file with no trailing newline has one fewer newline than entries. That
     newline count is recorded and is not itself a gap.
     """
-    matched = entries == PAPER_ERDOS_ATTEMPTED
+    status = count_gap_status(PAPER_ERDOS_ATTEMPTED, entries)
+    if status == "PARTIAL":
+        label = f"{entries} listed, {PAPER_ERDOS_ATTEMPTED} in paper"
+    elif status == "MATCH":
+        label = f"{entries} listed, matching the paper"
+    elif status == "MORE THAN PAPER":
+        label = surplus_label(entries - PAPER_ERDOS_ATTEMPTED, "entry", "entries")
+    else:
+        raise AtlasError(f"unknown attempted-count status {status}")
     return {
         "id": "erdos-attempted",
-        "status": "MATCH" if matched else "PARTIAL",
+        "status": status,
         "paper_attempted": PAPER_ERDOS_ATTEMPTED,
         "repo_newlines": newlines,
         "repo_entries": entries,
-        "label": (
-            f"{entries} listed, matching the paper"
-            if matched
-            else f"{entries} listed, {PAPER_ERDOS_ATTEMPTED} in paper"
-        ),
+        "label": label,
     }
 
 
@@ -612,14 +630,11 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
             raise AtlasError(f"{record['id']} has no Erdős number")
         if record["category"] != "ErdosProblems" and record["erdos_number"] is not None:
             raise AtlasError(f"{record['id']} invented an Erdős number")
-    labels = {gap["label"] for gap in payload["gaps"]}
-    if OEIS_GAP_LABEL not in labels or PROVENANCE_GAP_LABEL not in labels:
-        raise AtlasError("AlphaProof gaps are missing a required label")
     oeis_gap = next(gap for gap in payload["gaps"] if gap["id"] == "oeis-count")
     expected_oeis = oeis_count_gap(counts["oeis_files"])
     if oeis_gap["status"] != expected_oeis["status"] or oeis_gap["paper_count"] != PAPER_OEIS_PROVED:
         raise AtlasError("OEIS paper count drifted")
-    if oeis_gap["absent"] != expected_oeis["absent"] or oeis_gap["label"] != OEIS_GAP_LABEL:
+    if oeis_gap["absent"] != expected_oeis["absent"] or oeis_gap["label"] != expected_oeis["label"]:
         raise AtlasError("OEIS paper count drifted")
     if oeis_gap["repo_files"] != counts["oeis_files"] or "entries" in oeis_gap:
         raise AtlasError("OEIS gap invented entries")
@@ -634,7 +649,7 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
     if attempted["repo_entries"] != counts["attempted_entries"]:
         raise AtlasError("attempted-count gap does not match the entry count")
     provenance = next(gap for gap in payload["gaps"] if gap["id"] == "per-row-provenance")
-    if provenance["status"] != "MISSING":
+    if provenance["status"] != "MISSING" or provenance["label"] != PROVENANCE_GAP_LABEL:
         raise AtlasError("per-row provenance is not MISSING")
     if payload["paper"]["abstract_claim"] not in payload["quotations"]:
         raise AtlasError("AlphaProof abstract quotation is not in the exemption list")

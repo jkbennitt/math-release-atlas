@@ -2626,15 +2626,35 @@ def check_cross_source_page(cross_html: str, joined: dict[str, Any]) -> list[str
     return failures
 
 
-def gap_status_texts(gaps: list[dict[str, Any]]) -> list[str]:
-    """Statuses and labels the source page must show. Nothing here is a fixed status word."""
-    texts: list[str] = []
+def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str]:
+    """Each gap's status and label must appear inside its own row."""
+    failures: list[str] = []
     for gap in gaps:
-        for key in ("status", "label"):
-            value = gap.get(key)
-            if isinstance(value, str) and value and value not in texts:
-                texts.append(value)
-    return texts
+        gap_id = gap.get("id")
+        if not isinstance(gap_id, str) or not gap_id:
+            failures.append("AlphaProof gap is missing an id")
+            continue
+        element_id = f"gap-{gap_id}"
+        fragment = _element_inner(detail_html, element_id)
+        if fragment is None:
+            failures.append(f"AlphaProof page is missing {element_id}")
+            continue
+        visible = _visible_text(fragment)
+        status = gap.get("status")
+        label = gap.get("label")
+        if not isinstance(status, str) or status not in visible:
+            failures.append(f"{element_id} is missing status {status!r}")
+        if not isinstance(label, str) or label not in visible:
+            failures.append(f"{element_id} is missing label {label!r}")
+        if "absent" not in gap:
+            continue
+        absent = gap.get("absent")
+        if isinstance(absent, int) and absent > 0:
+            if f"Absent {absent}" not in visible:
+                failures.append(f"{element_id} is missing Absent {absent}")
+        elif "Absent" in visible:
+            failures.append(f"{element_id} renders Absent without a positive shortfall")
+    return failures
 
 
 def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
@@ -2682,8 +2702,8 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         for line in expected_counts:
             if line not in count_rows:
                 failures.append(f"AlphaProof counts list is missing {line!r}")
+    failures.extend(check_gap_elements(detail_raw, alphaproof["gaps"]))
     for phrase in (
-        *gap_status_texts(alphaproof["gaps"]),
         "Lean file deposited upstream; upstream CI builds it. This atlas did not run Lean.",
         alphaproof["paper"]["abstract_claim"],
     ):

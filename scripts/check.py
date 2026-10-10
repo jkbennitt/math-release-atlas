@@ -584,20 +584,24 @@ def alphaproof_self_test() -> list[str]:
         matched = alphaproof.attempted_count_gap(353, 352)
         if matched["status"] != "MATCH" or matched["label"] != "353 listed, matching the paper":
             failures.append(f"a matching attempted list stayed partial: {matched}")
-        for repo_files, status in ((38, "PARTIAL"), (44, "MATCH"), (50, "MORE THAN PAPER")):
+        oeis_labels = {
+            38: "not in repo / unexplained",
+            44: "44 files, matching the paper",
+            45: "repo has 1 more file than paper",
+            50: "repo has 6 more files than paper",
+        }
+        oeis_statuses = {38: "PARTIAL", 44: "MATCH", 45: "MORE THAN PAPER", 50: "MORE THAN PAPER"}
+        for repo_files, status in oeis_statuses.items():
             gap = alphaproof.oeis_count_gap(repo_files)
-            if gap["status"] != status or gap["absent"] != 44 - repo_files:
-                failures.append(f"OEIS status for {repo_files} files was {gap['status']}")
+            if gap["status"] != status or gap["absent"] != 44 - repo_files or gap["label"] != oeis_labels[repo_files]:
+                failures.append(f"OEIS gap for {repo_files} files was {gap}")
+            if status != "PARTIAL" and gap["label"] == "not in repo / unexplained":
+                failures.append(f"OEIS label stayed on the absent wording for {status}")
             phrase = atlaslib.oeis_preview_phrase(repo_files, gap["paper_count"], gap["status"])
             if phrase != f"OEIS {repo_files} of 44 in paper ({status})":
                 failures.append(f"preview phrase for {status} was {phrase}")
             if phrase not in preview_alt(372, 719, 71, repo_files, 44, gap["status"]):
                 failures.append(f"alt text dropped {status}")
-            texts = atlaslib.gap_status_texts([gap])
-            if texts != [status, gap["label"]]:
-                failures.append(f"page check texts for {status} were {texts}")
-            if status != "PARTIAL" and "PARTIAL" in texts:
-                failures.append(f"page check required PARTIAL for {repo_files} files")
             try:
                 image = og_card.render(
                     372,
@@ -617,6 +621,65 @@ def alphaproof_self_test() -> list[str]:
             else:
                 if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
                     failures.append(f"preview card for {status} is {image.size}")
+        attempted_cases = (
+            (2, 2, "PARTIAL", "2 listed, 353 in paper"),
+            (353, 352, "MATCH", "353 listed, matching the paper"),
+            (354, 354, "MORE THAN PAPER", "repo has 1 more entry than paper"),
+            (360, 360, "MORE THAN PAPER", "repo has 7 more entries than paper"),
+        )
+        provenance_gap = {"id": "per-row-provenance", "status": "MISSING", "label": "per-row provenance"}
+        for entries, newlines, status, label in attempted_cases:
+            gap = alphaproof.attempted_count_gap(entries, newlines)
+            if gap["status"] != status or gap["label"] != label or gap["repo_entries"] != entries:
+                failures.append(f"attempted gap for {entries} entries was {gap}")
+        pinned_oeis = alphaproof.oeis_count_gap(38)
+        pinned_attempted = alphaproof.attempted_count_gap(353, 352)
+        if pinned_oeis["label"] != "not in repo / unexplained" or pinned_oeis["absent"] != 6:
+            failures.append(f"pinned OEIS gap moved: {pinned_oeis}")
+        if pinned_attempted["label"] != "353 listed, matching the paper" or pinned_attempted["status"] != "MATCH":
+            failures.append(f"pinned attempted gap moved: {pinned_attempted}")
+
+        def gap_row(gap: dict, shown: str, absent_sentence: str = "") -> str:
+            extra = f" {absent_sentence}" if absent_sentence else ""
+            return (
+                f'<li id="gap-{gap["id"]}"><span class="badge">{shown}</span>{extra} '
+                f"Label: {gap['label']}.</li>"
+            )
+
+        aligned = "".join(
+            [
+                gap_row(pinned_oeis, pinned_oeis["status"], "Absent 6."),
+                gap_row(pinned_attempted, pinned_attempted["status"]),
+                gap_row(provenance_gap, provenance_gap["status"]),
+            ]
+        )
+        pinned_gaps = [pinned_oeis, pinned_attempted, provenance_gap]
+        if atlaslib.check_gap_elements(aligned, pinned_gaps):
+            failures.append(f"aligned gap rows failed: {atlaslib.check_gap_elements(aligned, pinned_gaps)}")
+        swapped = "".join(
+            [
+                gap_row(pinned_oeis, pinned_attempted["status"], "Absent 6."),
+                gap_row(pinned_attempted, pinned_oeis["status"]),
+                gap_row(provenance_gap, provenance_gap["status"]),
+            ]
+        )
+        if not atlaslib.check_gap_elements(swapped, pinned_gaps):
+            failures.append("swapped gap badges passed the row check")
+        for gap, shown in (
+            (alphaproof.oeis_count_gap(44), "MATCH"),
+            (alphaproof.oeis_count_gap(50), "MORE THAN PAPER"),
+            (alphaproof.attempted_count_gap(354, 354), "MORE THAN PAPER"),
+        ):
+            row = gap_row(gap, shown)
+            if atlaslib.check_gap_elements(row, [gap]):
+                failures.append(f"row for {gap['status']} failed: {atlaslib.check_gap_elements(row, [gap])}")
+            if "Absent" in row:
+                failures.append(f"zero or negative Absent was rendered for {gap['status']}")
+            if "absent" not in gap:
+                continue
+            leaked = gap_row(gap, shown, "Absent 0." if gap["absent"] == 0 else f"Absent {gap['absent']}.")
+            if not atlaslib.check_gap_elements(leaked, [gap]):
+                failures.append(f"Absent leak passed for {gap['status']}")
         social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
         if "in paper (${oeisStatus})" not in social:
             failures.append("social alt text does not render the OEIS status")
@@ -624,11 +687,13 @@ def alphaproof_self_test() -> list[str]:
         for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
             if f'case "{status}":' not in badge_page:
                 failures.append(f"source page badge does not handle {status}")
+        if 'id={`gap-${oeis?.id}`}' not in badge_page or "oeis.absent > 0" not in badge_page:
+            failures.append("source page does not key gap rows or gate Absent")
         page_check = inspect.getsource(atlaslib.check_alphaproof_pages)
         if '"PARTIAL"' in page_check:
             failures.append("AlphaProof page check still requires the literal PARTIAL")
-        if "gap_status_texts" not in page_check:
-            failures.append("AlphaProof page check does not use derived gap statuses")
+        if "check_gap_elements" not in page_check:
+            failures.append("AlphaProof page check does not scope statuses to gap rows")
         if any(record["provenance"] != "MISSING" for record in payload["records"]):
             failures.append("fixture assigned per-row provenance")
         families = [
