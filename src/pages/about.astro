@@ -13,12 +13,16 @@ const commit = atlas.upstream.commit;
   <article class="prose">
     <h1>About</h1>
     <p>
-      Math Release Atlas is an unofficial index of two public catalogues. One is the result families
+      Math Release Atlas is an unofficial index of three public catalogues. One is the result families
       in the manuscript collection at <a href="https://github.com/openai/math">github.com/openai/math</a>.
-      The other is the Lean files in
+      Another is the Lean files in
       <a href="https://github.com/google-deepmind/alphaproof-nexus-results">github.com/google-deepmind/alphaproof-nexus-results</a>,
       read with the paper at <a href="https://arxiv.org/abs/2605.22763">arXiv 2605.22763</a>.
-      It is not affiliated with OpenAI or Google DeepMind.
+      The third is the Anthropic repositories
+      <a href="https://github.com/anthropics/formal-math">github.com/anthropics/formal-math</a>
+      and
+      <a href="https://github.com/anthropics/fermats-last-theorem">github.com/anthropics/fermats-last-theorem</a>.
+      It is not affiliated with OpenAI, Google DeepMind, or Anthropic.
     </p>
     <p>
       The upstream collection groups manuscripts into families. This site turns that catalogue into
@@ -93,12 +97,24 @@ const commit = atlas.upstream.commit;
       <a href={`${base}source/cross/`}>Cross-source problem ids</a>
     </p>
 
+    <h2>Anthropic</h2>
+    <p>
+      The third source is two repositories at their own commits. Each release is one row.
+      Fermat's Last Theorem is a formalization of a known theorem, not a new result.
+      Real-number inputs and some running-time claims in the 3SUM and APSP paper are not formalized.
+      The zeta release is a zero-density bound. It is not the Riemann Hypothesis.
+      Lean files deposited upstream. This atlas did not run Lean. Both repositories are Apache-2.0.
+    </p>
+    <p>
+      <a href={`${base}source/anthropic/`}>Anthropic source page</a>
+    </p>
+
     <h2>License</h2>
     <p>
       The atlas is released under Apache-2.0. The OpenAI Math collection is also Apache-2.0. A copy of
       that license ships in this repository as <code>UPSTREAM_LICENSE</code>.
       AlphaProof Nexus code is Apache-2.0. Its other materials are CC-BY 4.0. OEIS-derived material
-      is CC BY-SA 4.0. See <code>NOTICE</code>.
+      is CC BY-SA 4.0. The Anthropic repositories linked here are Apache-2.0. See <code>NOTICE</code>.
     </p>
     <p>
       We changed and derived these files. Titles and summaries from the upstream catalogue were

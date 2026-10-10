@@ -17,6 +17,7 @@ from pathlib import Path
 import yaml
 
 import alphaproof
+import anthropic
 import atlaslib
 import og_card
 from alphaproof import (
@@ -26,6 +27,11 @@ from alphaproof import (
     assert_cross_source,
     catalogue_extras,
     verify_recorded_alphaproof,
+)
+from anthropic import (
+    ANTHROPIC_JSON,
+    assert_anthropic,
+    verify_recorded_anthropic,
 )
 from atlaslib import (
     CAUTIONS_JSON,
@@ -85,11 +91,13 @@ def check_source() -> list[str]:
         upstream = read_json(UPSTREAM_JSON)
         families = read_json(FAMILIES_JSON)
         alphaproof_payload = read_json(ALPHAPROOF_JSON)
-        extras = catalogue_extras(upstream, alphaproof_payload)
+        anthropic_payload = read_json(ANTHROPIC_JSON)
+        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
         assert_counts(upstream)
         assert_upstream_digest(upstream)
         assert_counts(families)
         assert_alphaproof(alphaproof_payload)
+        assert_anthropic(anthropic_payload)
         assert_cross_source(
             upstream["upstream"]["commit"],
             alphaproof_payload["source"]["commit"],
@@ -875,6 +883,94 @@ def ancestry_self_test() -> list[str]:
     return failures
 
 
+def anthropic_self_test() -> list[str]:
+    """Identifier matching ignores camel-case fragments, and the formalization badge stays separate."""
+    failures: list[str] = []
+    missed = anthropic.find_identifiers("pseudoEisenstein")
+    if any(missed[key] for key in ("erdos", "oeis", "stacks")):
+        failures.append(f"pseudoEisenstein was treated as an identifier: {missed}")
+    found = anthropic.find_identifiers(
+        "pseudoEisenstein",
+        "oeis_12",
+        "A000042",
+        "erdos_7",
+        "https://stacks.math.columbia.edu/tag/00A1",
+    )
+    if found["oeis"] != ["000042", "12"] or found["erdos"] != ["7"]:
+        failures.append(f"identifier scan dropped an explicit id: {found}")
+    if "stacks.math.columbia" not in found["stacks"]:
+        failures.append(f"identifier scan dropped a Stacks URL: {found}")
+    empty = {
+        "identifiers": {"erdos": [], "oeis": [], "stacks": [], "method": anthropic.IDENTIFIER_METHOD},
+    }
+    joined = anthropic.anthropic_join(empty, {741}, set(), "pseudoEisenstein erdos_741 oeis_12")
+    if joined["shared_with_anthropic"] or joined["anthropic_empty_text"] != anthropic.ANTHROPIC_EMPTY_TEXT:
+        failures.append(f"an empty Anthropic scan still joined: {joined}")
+    overlap = {
+        "identifiers": {"erdos": ["741"], "oeis": ["12"], "stacks": [], "method": anthropic.IDENTIFIER_METHOD},
+    }
+    shared = {
+        (item["kind"], item["id"])
+        for item in anthropic.anthropic_join(overlap, {741}, set(), "oeis_12")["shared_with_anthropic"]
+    }
+    if shared != {("erdos", "741"), ("oeis", "12")}:
+        failures.append(f"Anthropic join missed an explicit id: {shared}")
+    classified = anthropic.classify_flt(
+        [
+            "Theorems/Thm_a.lean",
+            "P2M/Sol/a.lean",
+            "P2M/Util.lean",
+            "Definitions/d.lean",
+            "FinalCheck.lean",
+            "README.md",
+        ]
+    )
+    if (classified["theorem_files"], classified["proof_files"], classified["definition_files"]) != (1, 2, 1):
+        failures.append(f"Fermat path classes were {classified}")
+    if classified["other_lean_files"] != ["FinalCheck.lean"] or classified["lean_files"] != 5:
+        failures.append(f"Fermat other files were {classified}")
+    label = anthropic.module_count_label(10, 13, ["lakefile.lean"])
+    if "(3 more)" not in label or "10" not in label or "13" not in label:
+        failures.append(f"module-count label hid the difference: {label}")
+    page = (ROOT / "src" / "pages" / "source" / "anthropic.astro").read_text(encoding="utf-8")
+    for status in ("NOT IN COMPARATOR", "NOT FORMALIZED", "NOTED"):
+        if f'case "{status}":' not in page:
+            failures.append(f"Anthropic source page badge does not handle {status}")
+    if 'id={`gap-${gap.id}`}' not in page or 'id={`kind-${release.id}`}' not in page:
+        failures.append("Anthropic source page does not key gap rows or kind badges")
+    if "percolation" in page.lower():
+        failures.append("Anthropic source page names percolation")
+    social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
+    if "or Anthropic." not in social:
+        failures.append("social alt text does not name Anthropic")
+    try:
+        image = og_card.render(
+            372,
+            719,
+            71,
+            9,
+            38,
+            44,
+            "PARTIAL",
+            11,
+            13,
+            "MISSING",
+            "per-row provenance",
+            61238,
+            2,
+            1,
+            326,
+            434,
+            60478,
+        )
+    except SystemExit as exc:
+        failures.append(f"preview card rejected the Anthropic line: {exc}")
+    else:
+        if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
+            failures.append(f"Anthropic preview card is {image.size}")
+    return failures
+
+
 def expect_error(label: str, func) -> str | None:
     try:
         func()
@@ -1312,6 +1408,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     if not denylist_hit(stem[:3] + soft + stem[3:]):
         failures.append("a soft hyphen hid a denylist token")
     failures.extend(alphaproof_self_test())
+    failures.extend(anthropic_self_test())
     failures.extend(ancestry_self_test())
 
     def missing_source() -> None:
@@ -1710,6 +1807,26 @@ def preview_self_test() -> list[str]:
         failures.append("preview alt with the OEIS paper status was rejected")
     if not any("og:image:alt" in item for item in check_social_preview(good, "fixture", prefix, rich_counts)):
         failures.append("a preview alt without the OEIS paper status was accepted")
+    anthropic_counts = {
+        **rich_counts,
+        "anthropic_files": 61238,
+        "anthropic_new": 2,
+        "anthropic_formalizations": 1,
+    }
+    anthropic_alt = preview_alt(372, 719, 71, 38, 44, "PARTIAL", 61238, 2, 1)
+    if "61238 Lean files from Anthropic (2 new results, 1 formalization)" not in anthropic_alt:
+        failures.append("preview alt dropped the Anthropic counts")
+    if not anthropic_alt.endswith("Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."):
+        failures.append("preview alt dropped the Anthropic affiliation")
+    if scan_overclaims(anthropic_alt, "preview"):
+        failures.append("Anthropic preview alt was flagged")
+    anthropic_page = good.replace(alt, anthropic_alt)
+    if check_social_preview(anthropic_page, "fixture", prefix, anthropic_counts):
+        failures.append("preview alt with the Anthropic counts was rejected")
+    if not any("og:image:alt" in item for item in check_social_preview(rich_page, "fixture", prefix, anthropic_counts)):
+        failures.append("a preview alt without the Anthropic counts was accepted")
+    if "Anthropic" in preview_alt(372, 722):
+        failures.append("preview alt named Anthropic without a file count")
     return failures
 
 
@@ -1863,6 +1980,7 @@ def main() -> int:
         try:
             verify_recorded_upstream()
             verify_recorded_alphaproof()
+            verify_recorded_anthropic()
         except AtlasError as exc:
             failures.append(str(exc))
         except subprocess.CalledProcessError as exc:

@@ -20,6 +20,23 @@
       "license": "Apache-2.0 code; CC-BY 4.0 other materials; OEIS-derived material CC BY-SA 4.0",
       "sync": "tree-snapshot",
       "commit": "0647711a71183c1ea492ad60860776617ce1ea88"
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "org": "Anthropic",
+      "repo": "https://github.com/anthropics/formal-math",
+      "paper": null,
+      "license": "Apache-2.0",
+      "sync": "tree-snapshot",
+      "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+      "also": [
+        {
+          "label": "Fermat's Last Theorem",
+          "repo": "https://github.com/anthropics/fermats-last-theorem",
+          "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+        }
+      ]
     }
   ]
 }

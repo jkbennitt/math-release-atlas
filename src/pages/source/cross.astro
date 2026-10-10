@@ -8,7 +8,7 @@ const joined = atlas.cross;
 
 <Base
   title="Cross-source problem ids · Math Release Atlas"
-  description="Erdős problem numbers that both pinned catalogues name explicitly."
+  description="Erdős problem numbers named by the first two catalogues, and Anthropic identifiers compared with both."
 >
   <article class="prose">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
@@ -52,5 +52,22 @@ const joined = atlas.cross;
         ))
       }
     </ul>
+    <h2>Anthropic identifiers</h2>
+    <section id="anthropic-identifiers">
+      {
+        joined.shared_with_anthropic.length === 0 ? (
+          <p>{joined.anthropic_empty_text}</p>
+        ) : (
+          <ul>
+            {joined.shared_with_anthropic.map((item) => (
+              <li>
+                {item.kind} {item.id}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <p class="meta">{joined.anthropic_identifiers.method}</p>
+    </section>
   </article>
 </Base>

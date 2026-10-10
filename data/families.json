@@ -19701,6 +19701,23 @@
         "license": "Apache-2.0 code; CC-BY 4.0 other materials; OEIS-derived material CC BY-SA 4.0",
         "sync": "tree-snapshot",
         "commit": "0647711a71183c1ea492ad60860776617ce1ea88"
+      },
+      {
+        "id": "anthropic",
+        "name": "Anthropic",
+        "org": "Anthropic",
+        "repo": "https://github.com/anthropics/formal-math",
+        "paper": null,
+        "license": "Apache-2.0",
+        "sync": "tree-snapshot",
+        "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+        "also": [
+          {
+            "label": "Fermat's Last Theorem",
+            "repo": "https://github.com/anthropics/fermats-last-theorem",
+            "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+          }
+        ]
       }
     ]
   },
@@ -21320,6 +21337,313 @@
           "APNOutputs/ErdosProblems/erdos_846.lean"
         ]
       }
-    ]
+    ],
+    "anthropic_identifiers": {
+      "erdos": [],
+      "oeis": [],
+      "stacks": [],
+      "method": "explicit erdos_<digits>, oeis_<digits>, an OEIS A-number, or a Stacks project URL in pinned paths and in the statement files fetched for each release"
+    },
+    "shared_with_anthropic": [],
+    "anthropic_empty_text": "no shared Erdős, OEIS, or Stacks ids with OpenAI Math or AlphaProof Nexus"
+  },
+  "anthropic": {
+    "schema_version": 1,
+    "generated_at": "2026-10-10T19:33:16+00:00",
+    "source": {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "org": "Anthropic",
+      "repo": "https://github.com/anthropics/formal-math",
+      "paper": null,
+      "license": "Apache-2.0",
+      "sync": "tree-snapshot",
+      "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+      "also": [
+        {
+          "label": "Fermat's Last Theorem",
+          "repo": "https://github.com/anthropics/fermats-last-theorem",
+          "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+        }
+      ]
+    },
+    "check_wording": "Lean files deposited upstream. This atlas did not run Lean.",
+    "quotations": [
+      "Proof discovered autonomously by Claude (Anthropic); verified and communicated by the listed authors.",
+      "Claude, an AI model developed by Anthropic, discovered the algorithm that refutes the 3SUM, APSP, and Exact Triangle hypotheses.",
+      "The authors take full responsibility for this paper."
+    ],
+    "counts": {
+      "releases": 3,
+      "new_results": 2,
+      "formalizations": 1,
+      "lean_files": 61238
+    },
+    "identifiers": {
+      "erdos": [],
+      "oeis": [],
+      "stacks": [],
+      "method": "explicit erdos_<digits>, oeis_<digits>, an OEIS A-number, or a Stacks project URL in pinned paths and in the statement files fetched for each release"
+    },
+    "skipped_directories": [],
+    "releases": [
+      {
+        "id": "zeta23",
+        "kind": "new-result",
+        "kind_label": "New result",
+        "title": "More than two thirds of the zeta zeros are simple and on the critical line",
+        "statement": "Lean files deposited upstream for a zero-density bound on the Riemann zeta function. It is not the Riemann Hypothesis.",
+        "repo": "https://github.com/anthropics/formal-math",
+        "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+        "commit_date": "2026-10-05",
+        "commit_subject": "Add 3sum-apsp: formalization of \"Truly Subquadratic 3SUM and Truly Subcubic APSP via Triangles in Sparse Lopsided Graphs\" (#28)",
+        "path": "zeta23",
+        "tree_url": "https://github.com/anthropics/formal-math/tree/e1a4e6508154ea59f030480661590a9fe3018011/zeta23",
+        "license": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          },
+          {
+            "path": "zeta23/LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          }
+        ],
+        "lean_toolchain": "leanprover/lean4:v4.33.0-rc2",
+        "paper": {
+          "id": "2608.13637",
+          "title": "More than two thirds of the zeta zeros are simple and on the critical line",
+          "url": "https://arxiv.org/abs/2608.13637",
+          "v1_submitted": "2026-08-13",
+          "v2_submitted": "2026-08-19"
+        },
+        "announcement": "https://www.anthropic.com/research/riemann-zeta",
+        "announcement_date": null,
+        "tag": {
+          "name": "v1.0",
+          "tag_object": "82ee6340d6fb15d51fc73ba1ba7b8cac672a7bba",
+          "commit": "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
+        },
+        "counts": {
+          "lean_files": 326,
+          "headline_theorems": 17,
+          "xi_prime_statements": 6
+        },
+        "headline_theorems": [
+          "two_thirds_on_critical_line",
+          "two_thirds_on_critical_line_cumulative",
+          "two_thirds_simple_on_critical_line",
+          "two_thirds_simple_on_critical_line_cumulative",
+          "five_sixths_distinct",
+          "five_sixths_distinct_cumulative",
+          "montgomery_taylor_on_critical_line",
+          "montgomery_taylor_simple_on_critical_line_mult",
+          "montgomery_taylor_simple_on_critical_line_mult_cumulative",
+          "montgomery_taylor_distinct_mult",
+          "montgomery_taylor_distinct_mult_cumulative",
+          "dirichlet_two_thirds_on_critical_line",
+          "dirichlet_two_thirds_simple_on_critical_line",
+          "dirichlet_five_sixths_distinct",
+          "dirichlet_montgomery_taylor_on_critical_line",
+          "dirichlet_montgomery_taylor_simple_on_critical_line_mult",
+          "dirichlet_montgomery_taylor_distinct_mult"
+        ],
+        "xi_prime_theorems": [
+          "xiPrime_zeros_in_open_critical_strip",
+          "xiPrime_over_xi_re_pos",
+          "xiPrime_simple_zeros_on_critical_line",
+          "xiPrime_simple_zeros_on_critical_line_cumulative",
+          "xiPrime_simple_zeros_on_critical_line_quartic",
+          "xiPrime_simple_zeros_on_critical_line_quartic_cumulative"
+        ],
+        "statement_files": [
+          {
+            "path": "zeta23/Challenge.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/Challenge.lean",
+            "role": "headline statements"
+          },
+          {
+            "path": "zeta23/Challenge/XiPrime.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/Challenge/XiPrime.lean",
+            "role": "xi-prime statements"
+          }
+        ],
+        "scope_notes": [
+          "Subject: a zero-density bound for the Riemann zeta function. It is not the Riemann Hypothesis.",
+          "formalization.yaml says Claude wrote the Lean code. It names Ralph Furman as a reviewer of the challenge module and Levent Alpöge as an author of the paper.",
+          "Annotated tag v1.0 peels to 3635e74826a4c1fcece7d1cd2b6fa75e43a00510. File counts here are from e1a4e6508154ea59f030480661590a9fe3018011, not from that tag."
+        ],
+        "gaps": [
+          {
+            "id": "zeta23-pair-ceiling",
+            "status": "NOT IN COMPARATOR",
+            "label": "bandwidth-one ceiling is a separate topic and is not a comparator configuration"
+          }
+        ]
+      },
+      {
+        "id": "3sum-apsp",
+        "kind": "new-result",
+        "kind_label": "New result",
+        "title": "Truly subquadratic 3SUM and subcubic APSP",
+        "statement": "Lean files deposited upstream for headline claims about word-RAM programs. Real-number inputs and some running-time claims are not formalized.",
+        "repo": "https://github.com/anthropics/formal-math",
+        "commit": "e1a4e6508154ea59f030480661590a9fe3018011",
+        "commit_date": "2026-10-05",
+        "commit_subject": "Add 3sum-apsp: formalization of \"Truly Subquadratic 3SUM and Truly Subcubic APSP via Triangles in Sparse Lopsided Graphs\" (#28)",
+        "path": "3sum-apsp",
+        "tree_url": "https://github.com/anthropics/formal-math/tree/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp",
+        "license": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          },
+          {
+            "path": "3sum-apsp/LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          }
+        ],
+        "lean_toolchain": "leanprover/lean4:v4.33.1",
+        "paper": {
+          "id": "2610.06783",
+          "title": "Truly Subquadratic 3SUM and Truly Subcubic APSP via Triangles in Sparse Lopsided Graphs",
+          "url": "https://arxiv.org/abs/2610.06783",
+          "v1_submitted": "2026-10-05",
+          "v2_submitted": null
+        },
+        "announcement": null,
+        "announcement_date": null,
+        "tag": null,
+        "counts": {
+          "lean_files": 434,
+          "headline_theorems": 5,
+          "paper_statement_theorems": 132
+        },
+        "headline_theorems": [
+          "ThreeSumApsp.endStatement_theorem_19",
+          "ThreeSumApsp.endStatement_theorem_22_3SUM",
+          "ThreeSumApsp.endStatement_theorem_22_MinPlus",
+          "ThreeSumApsp.endStatement_theorem_22_APSP",
+          "ThreeSumApsp.endStatement_corollary_39_zeroWeight"
+        ],
+        "xi_prime_theorems": [],
+        "statement_files": [
+          {
+            "path": "3sum-apsp/EndStatement.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/EndStatement.lean",
+            "role": "headline statements"
+          },
+          {
+            "path": "3sum-apsp/comparator-endstatement.json",
+            "url": "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/comparator-endstatement.json",
+            "role": "headline comparator configuration"
+          }
+        ],
+        "scope_notes": [
+          "Real-number inputs and some running-time claims are not formalized.",
+          "No announcement on anthropic.com is recorded for this release."
+        ],
+        "gaps": [
+          {
+            "id": "3sum-not-formalized",
+            "status": "NOT FORMALIZED",
+            "label": "real-number inputs and some running-time claims are not formalized"
+          }
+        ]
+      },
+      {
+        "id": "fermat-last-theorem",
+        "kind": "formalization",
+        "kind_label": "Formalization",
+        "title": "Fermat's Last Theorem",
+        "statement": "Lean files deposited upstream for Fermat's Last Theorem. This is a formalization of a known theorem, not a new result.",
+        "repo": "https://github.com/anthropics/fermats-last-theorem",
+        "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2",
+        "commit_date": "2026-09-24",
+        "commit_subject": "Merge pull request #9 from anthropics/tianyi-ant-patch-1",
+        "path": "",
+        "tree_url": "https://github.com/anthropics/fermats-last-theorem/tree/6e837e75355538c7f80bab5b956861e86c4eacc2",
+        "license": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/anthropics/fermats-last-theorem/blob/6e837e75355538c7f80bab5b956861e86c4eacc2/LICENSE",
+            "sha256": "746bc52848eabf8765635fe532e0680756a10b18e7b3fb26e7433ab4edf34034"
+          }
+        ],
+        "lean_toolchain": "leanprover/lean4:v4.33.1",
+        "paper": null,
+        "announcement": "https://www.anthropic.com/research/formalizing-fermats-last-theorem",
+        "announcement_date": "2026-09-04",
+        "tag": null,
+        "counts": {
+          "lean_files": 60478,
+          "theorem_files": 29511,
+          "proof_files": 29513,
+          "definition_files": 1450,
+          "other_lean_files": [
+            "FinalCheck.lean",
+            "lakefile.lean",
+            "verification/comparator/Challenge.lean",
+            "verification/comparator/Solution.lean"
+          ],
+          "readme_modules": 60475
+        },
+        "headline_theorems": [
+          "fermat_last_theorem"
+        ],
+        "xi_prime_theorems": [],
+        "statement_files": [
+          {
+            "path": "Theorems/Thm_fermat_last_theorem.lean",
+            "url": "https://github.com/anthropics/fermats-last-theorem/blob/6e837e75355538c7f80bab5b956861e86c4eacc2/Theorems/Thm_fermat_last_theorem.lean",
+            "role": "theorem statement"
+          },
+          {
+            "path": "FinalCheck.lean",
+            "url": "https://github.com/anthropics/fermats-last-theorem/blob/6e837e75355538c7f80bab5b956861e86c4eacc2/FinalCheck.lean",
+            "role": "axiom guard"
+          }
+        ],
+        "axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "scope_notes": [
+          "Formalization of a known theorem, not a new result.",
+          "The README names comparator and nanoda. formalization.yaml lists the axioms propext, Classical.choice, and Quot.sound. Lean files deposited upstream. This atlas did not run Lean."
+        ],
+        "gaps": [
+          {
+            "id": "flt-module-count",
+            "status": "NOTED",
+            "label": "README says 60475 modules; the tree has 60478 .lean files (3 more). Paths outside Theorems, P2M, and Definitions: FinalCheck.lean, lakefile.lean, verification/comparator/Challenge.lean, verification/comparator/Solution.lean."
+          }
+        ]
+      }
+    ],
+    "count_lines": [
+      "zeta23: 326 Lean files.",
+      "zeta23: 17 headline theorems in the comparator configuration.",
+      "zeta23: 6 statements in the xi-prime comparator configuration.",
+      "3sum-apsp: 434 Lean files.",
+      "3sum-apsp: 5 headline theorems in EndStatement.",
+      "3sum-apsp: 132 theorem names in the paper-statements comparator.",
+      "fermat-last-theorem: 60478 Lean files.",
+      "fermat-last-theorem: 29511 theorem files.",
+      "fermat-last-theorem: 29513 proof files.",
+      "fermat-last-theorem: 1450 definition files.",
+      "All releases: 61238 Lean files.",
+      "All releases: 2 new results.",
+      "All releases: 1 formalization."
+    ],
+    "snapshot_digest": "6a5e5058c719650d216e39942003b642c38ea9b1d43cef5dd63b23c5c53f15b8"
   }
 }

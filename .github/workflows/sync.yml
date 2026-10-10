@@ -24,6 +24,10 @@ jobs:
       new: ${{ steps.sync.outputs.new }}
       apn_old: ${{ steps.sync.outputs.apn_old }}
       apn_new: ${{ steps.sync.outputs.apn_new }}
+      fm_old: ${{ steps.sync.outputs.fm_old }}
+      fm_new: ${{ steps.sync.outputs.fm_new }}
+      flt_old: ${{ steps.sync.outputs.flt_old }}
+      flt_new: ${{ steps.sync.outputs.flt_new }}
       guard: ${{ steps.verify.outputs.guard }}
       build: ${{ steps.verify.outputs.build }}
     steps:
@@ -112,6 +116,7 @@ jobs:
           cp data/upstream.json "${RUNNER_TEMP}/sync-payload/upstream.json"
           cp data/families.json "${RUNNER_TEMP}/sync-payload/families.json"
           cp data/alphaproof.json "${RUNNER_TEMP}/sync-payload/alphaproof.json"
+          cp data/anthropic.json "${RUNNER_TEMP}/sync-payload/anthropic.json"
           cp data/sources.json "${RUNNER_TEMP}/sync-payload/sources.json"
           cp .sync-pr-body.md "${RUNNER_TEMP}/sync-payload/pr-body.md"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -147,6 +152,10 @@ jobs:
           NEW: ${{ needs.prepare.outputs.new }}
           APN_OLD: ${{ needs.prepare.outputs.apn_old }}
           APN_NEW: ${{ needs.prepare.outputs.apn_new }}
+          FM_OLD: ${{ needs.prepare.outputs.fm_old }}
+          FM_NEW: ${{ needs.prepare.outputs.fm_new }}
+          FLT_OLD: ${{ needs.prepare.outputs.flt_old }}
+          FLT_NEW: ${{ needs.prepare.outputs.flt_new }}
           GH_TOKEN: ${{ github.token }}
         run: |
           # One Actions pull request on this repository, chosen by number. A fork cannot name the branch.
@@ -179,13 +188,14 @@ jobs:
           cp sync-payload/upstream.json data/upstream.json
           cp sync-payload/families.json data/families.json
           cp sync-payload/alphaproof.json data/alphaproof.json
+          cp sync-payload/anthropic.json data/anthropic.json
           cp sync-payload/sources.json data/sources.json
-          git add data/upstream.json data/families.json data/alphaproof.json data/sources.json
+          git add data/upstream.json data/families.json data/alphaproof.json data/anthropic.json data/sources.json
           if git diff --cached --quiet; then
             echo "committed=false" >> "$GITHUB_OUTPUT"
             echo "No data change to commit."
           else
-            git commit -m "upstream sync openai ${OLD:0:12} to ${NEW:0:12}, alphaproof ${APN_OLD:0:12} to ${APN_NEW:0:12}"
+            git commit -m "upstream sync openai ${OLD:0:12} to ${NEW:0:12}, alphaproof ${APN_OLD:0:12} to ${APN_NEW:0:12}, anthropic ${FM_OLD:0:12} to ${FM_NEW:0:12}, flt ${FLT_OLD:0:12} to ${FLT_NEW:0:12}"
             echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
@@ -242,6 +252,10 @@ jobs:
           NEW: ${{ needs.prepare.outputs.new }}
           APN_OLD: ${{ needs.prepare.outputs.apn_old }}
           APN_NEW: ${{ needs.prepare.outputs.apn_new }}
+          FM_OLD: ${{ needs.prepare.outputs.fm_old }}
+          FM_NEW: ${{ needs.prepare.outputs.fm_new }}
+          FLT_OLD: ${{ needs.prepare.outputs.flt_old }}
+          FLT_NEW: ${{ needs.prepare.outputs.flt_new }}
           PUSH_BRANCH: ${{ steps.push.outputs.branch }}
           PUSH_NUMBER: ${{ steps.push.outputs.number }}
           COMMIT_BRANCH: ${{ steps.commit.outputs.branch }}
@@ -250,7 +264,7 @@ jobs:
         run: |
           # Edit the selected pull request by number. This job never merges it.
           short="${NEW:0:12}"
-          title="upstream sync openai ${OLD:0:12}→${short}; alphaproof ${APN_OLD:0:12}→${APN_NEW:0:12}"
+          title="upstream sync openai ${OLD:0:12}→${short}; alphaproof ${APN_OLD:0:12}→${APN_NEW:0:12}; anthropic ${FM_OLD:0:12}→${FM_NEW:0:12}; flt ${FLT_OLD:0:12}→${FLT_NEW:0:12}"
           if [ "$COMMITTED" = "true" ]; then
             branch="$PUSH_BRANCH"
             number="$PUSH_NUMBER"

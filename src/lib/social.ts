@@ -9,10 +9,13 @@ export const PREVIEW_HEIGHT = 630;
 export function previewImageAlt(
   families: number,
   manuscripts: number,
-  leanFiles: number,
+  leanFiles = 0,
   oeisFiles = 0,
   oeisPaper = 0,
   oeisStatus = "",
+  anthropicFiles = 0,
+  anthropicNew = 0,
+  anthropicFormalizations = 0,
 ): string {
   const catalogue = `${SITE_NAME}: ${families} result families and ${manuscripts} manuscripts from the OpenAI Math catalogue`;
   const second = leanFiles > 0 ? `, plus ${leanFiles} Lean files from AlphaProof Nexus` : "";
@@ -20,7 +23,14 @@ export function previewImageAlt(
     leanFiles > 0 && oeisPaper > 0 && oeisStatus
       ? `, OEIS ${oeisFiles} of ${oeisPaper} in paper (${oeisStatus})`
       : "";
-  return `${catalogue}${second}${oeis}. Unofficial, not affiliated with OpenAI or Google DeepMind.`;
+  const noun = anthropicFormalizations === 1 ? "formalization" : "formalizations";
+  const third = anthropicFiles
+    ? `, plus ${anthropicFiles} Lean files from Anthropic (${anthropicNew} new results, ${anthropicFormalizations} ${noun})`
+    : "";
+  const affiliation = anthropicFiles
+    ? "Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."
+    : "Unofficial, not affiliated with OpenAI or Google DeepMind.";
+  return `${catalogue}${second}${oeis}${third}. ${affiliation}`;
 }
 
 export function previewAltFromCatalogue(): string {
@@ -32,6 +42,9 @@ export function previewAltFromCatalogue(): string {
     atlas.alphaproof.counts.oeis_files,
     oeis?.paper_count ?? 0,
     oeis?.status ?? "",
+    atlas.anthropic.counts.lean_files,
+    atlas.anthropic.counts.new_results,
+    atlas.anthropic.counts.formalizations,
   );
 }
 

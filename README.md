@@ -1,9 +1,11 @@
 # Math Release Atlas
 
-Unofficial index of two pinned catalogues. One is the result families in the
-manuscript collection at github.com/openai/math. The other is the Lean files
+Unofficial index of three pinned catalogues. One is the result families in the
+manuscript collection at github.com/openai/math. Another is the Lean files
 in github.com/google-deepmind/alphaproof-nexus-results, read with arXiv
-2605.22763. Not affiliated with OpenAI or Google DeepMind.
+2605.22763. The third is the Anthropic repositories
+github.com/anthropics/formal-math and github.com/anthropics/fermats-last-theorem.
+Not affiliated with OpenAI, Google DeepMind, or Anthropic.
 
 The site is a table of every family at a pinned upstream commit: subject,
 manuscripts, dates, and Lean status, with links back to the upstream PDFs.
@@ -32,17 +34,19 @@ link-preview card, and writes `dist/`.
 The shared layout emits the page title and description as Open Graph and
 Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
 `/math-release-atlas/`. `scripts/og_card.py` reads the family and manuscript
-counts from `data/families.json`, and the AlphaProof Lean-file counts from
-the same file, and writes `public/og.png` at 1200×630.
-Astro copies that file into `dist/`. The card names both sources and those
+counts from `data/families.json`, the AlphaProof Lean-file counts, and the
+Anthropic Lean-file counts from the same file, and writes `public/og.png` at
+1200×630.
+Astro copies that file into `dist/`. The card names the sources and those
 counts, including the OEIS file count against the paper count and that gap's
-status, and shows per-row provenance as missing. The image spells Erdos in
-ASCII because the card fonts have an empty box for ő. The alt text is the
+status, and shows per-row provenance as missing. When Anthropic counts are
+present, a second line gives the three release sizes. The image spells Erdos
+in ASCII because the card fonts have an empty box for ő. The alt text is the
 same sentence as `preview_alt()` in `scripts/atlaslib.py` and
 `previewImageAlt` in `src/lib/social.ts`: unofficial, not affiliated with
-OpenAI or Google DeepMind. The dist check fails if any built page is missing
-`og:image` or `twitter:card`, or if `og:image` is not absolute. Package
-version 0.3.2.
+OpenAI, Google DeepMind, or Anthropic. The dist check fails if any built page
+is missing `og:image` or `twitter:card`, or if `og:image` is not absolute.
+Package version 0.4.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -51,20 +55,22 @@ want:
 python3 scripts/sync.py --checkout /path/to/openai-math
 ```
 
-Omit `--checkout` to sparse-fetch openai/math HEAD and the AlphaProof Nexus
-tree. The OpenAI fetch does not download the PDF tree. If both commits already
-match `data/upstream.json` and `data/alphaproof.json`, the script exits
-without writing and prints `Upstream commit is unchanged.` It never edits
+Omit `--checkout` to sparse-fetch openai/math HEAD, the AlphaProof Nexus
+tree, and the two Anthropic repositories. The OpenAI fetch does not download
+the PDF tree. Fermat's Last Theorem is counted from `git ls-tree` and is not
+checked out in full. If every commit already matches `data/upstream.json`,
+`data/alphaproof.json`, and `data/anthropic.json`, the script exits without
+writing and prints `Upstream commit is unchanged.` It never edits
 `data/curated/`.
 
 ## Daily sync
 
 `.github/workflows/sync.yml` runs every day at 10:17 UTC, and it can be
 started by hand with “Run workflow”. It uses a GitHub-hosted `ubuntu-latest`
-runner. It reads both upstream HEADs. When both commits match the ones recorded
-in the catalogue, the job exits and does not open a pull request. When either
-commit changed, a read-only job regenerates the data files and runs the
-build and the wording checks. One pull request covers both catalogues. A second job does not run the install. It
+runner. It reads each upstream HEAD. When every recorded commit matches the
+catalogue, the job exits and does not open a pull request. When any commit
+changed, a read-only job regenerates the data files and runs the
+build and the wording checks. One pull request covers every catalogue. A second job does not run the install. It
 commits that data. The pull-request filter and the branch plan in that job
 run with the token removed from the environment. If one sync pull request from the
 Actions app is already open on this repository, it updates that pull request
@@ -216,7 +222,7 @@ The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML, including text inside an element marked as an upstream
 quotation. That text is left out of the check only when it exactly equals
 that family's upstream title, id, summary, or manuscript title, or when it
-exactly equals a stored AlphaProof quotation. Only the text
+exactly equals a stored AlphaProof or Anthropic quotation. Only the text
 nodes are left out. Attributes on that element and on elements inside it are
 still checked. HTML comments inside that element are still checked. The page still shows it. Text that does not match fails the
 check. A further check fails a sentence that places solved, solves, proves,
@@ -253,8 +259,13 @@ google-deepmind/alphaproof-nexus-results HEAD, then the recorded tree is
 fetched and compared. `generated_at` and the snapshot digest field are
 ignored in that comparison. While that commit is the pinned one, the build
 requires 9 Erdős Lean files, 38 OEIS Lean files, 11 Stacks Lean files, and
-13 AI collaborator Lean files. `families.json` must be the merge of
-the OpenAI snapshot, the curated notes, and the AlphaProof snapshot.
+13 AI collaborator Lean files. `data/anthropic.json` names the formal-math
+commit and, under `source.also`, the Fermat commit. The same ancestry check
+runs against each of those repositories, then the recorded trees are fetched
+and compared. While those commits are the pinned ones, the build requires
+326 zeta23 Lean files, 434 3sum-apsp Lean files, and 60478 Fermat Lean files.
+`families.json` must be the merge of the OpenAI snapshot, the curated notes,
+the AlphaProof snapshot, and the Anthropic snapshot.
 Fixed cautions for families 002, 003,
 032, 102, 103, 107, and 376 always render.
 
@@ -272,10 +283,26 @@ cross-source page lists a problem only when both catalogues name that
 number. At these pinned commits that list is empty. Per-row provenance is
 `MISSING`.
 
+The Anthropic page is three releases, not one row per Lean file. zeta23 and
+3sum-apsp are new results. Fermat's Last Theorem is a formalization of a
+known theorem, and its badge says Formalization. The zeta release is a
+zero-density bound. It is not the Riemann Hypothesis. Real-number inputs and
+some running-time claims in the 3SUM and APSP paper are not formalized.
+File counts come from the pinned trees. The Fermat README's module count and
+the `.lean` file count are both shown when they differ. The identifier scan
+reads pinned paths and the statement files fetched for each release. It does
+not read every Lean file in the Fermat repository. At these commits that scan
+finds no Erdős, OEIS, or Stacks ids, and the cross-source page says none are
+shared with OpenAI Math or AlphaProof Nexus. A directory that is not one of
+the three releases is recorded as skipped. At these commits that list is
+empty, and the page does not render an empty section for it.
+
 ## License
 
 Apache-2.0. See `NOTICE` and `UPSTREAM_LICENSE`. AlphaProof Nexus code is
 Apache-2.0. Its other materials are CC-BY 4.0. OEIS-derived material is
 CC BY-SA 4.0. The repository copyright notice names Google LLC. The
 organization label on this atlas is Google DeepMind. That repository says
-this is not an official Google product.
+this is not an official Google product. anthropics/formal-math and
+anthropics/fermats-last-theorem are Apache-2.0. This atlas links to those
+license files and does not copy the Lean sources.

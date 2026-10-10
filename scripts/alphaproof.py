@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from anthropic import anthropic_join
 from atlaslib import (
     ROOT,
     UPSTREAM_WEB,
@@ -224,21 +225,52 @@ def snapshot_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(encoded.encode()).hexdigest()
 
 
-def catalogue_extras(upstream: dict[str, Any], alphaproof: dict[str, Any]) -> dict[str, Any]:
-    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"])
-    return {
+def catalogue_extras(
+    upstream: dict[str, Any],
+    alphaproof: dict[str, Any],
+    anthropic: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    extra = [anthropic["source"]] if anthropic is not None else None
+    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"], extra)
+    records = alphaproof["records"]
+    joined = cross_source(upstream["families"], records)
+    if anthropic is not None:
+        openai_erdos: set[int] = set()
+        for family in upstream["families"]:
+            openai_erdos.update(explicit_erdos_numbers(family))
+        apn_erdos = {
+            record["erdos_number"]
+            for record in records
+            if isinstance(record.get("erdos_number"), int)
+        }
+        other_text = "\n".join(
+            f"{record.get('path', '')}\n{record.get('filename', '')}" for record in records
+        )
+        other_text += "\n" + json.dumps(upstream["families"], ensure_ascii=False)
+        joined.update(anthropic_join(anthropic, openai_erdos, apn_erdos, other_text))
+    payload = {
         "sources": registry,
         "alphaproof": alphaproof,
-        "cross": cross_source(upstream["families"], alphaproof["records"]),
+        "cross": joined,
     }
+    if anthropic is not None:
+        payload["anthropic"] = anthropic
+    return payload
 
 
-def source_registry(openai_commit: str, alphaproof_commit: str) -> dict[str, Any]:
+def source_registry(
+    openai_commit: str,
+    alphaproof_commit: str,
+    extra: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     openai = dict(OPENAI_SOURCE)
     openai["commit"] = openai_commit
     alphaproof = dict(ALPHAPROOF_SOURCE)
     alphaproof["commit"] = alphaproof_commit
-    return {"schema_version": 1, "sources": [openai, alphaproof]}
+    sources = [openai, alphaproof]
+    if extra:
+        sources.extend(extra)
+    return {"schema_version": 1, "sources": sources}
 
 
 def explicit_erdos_numbers(value: Any) -> set[int]:

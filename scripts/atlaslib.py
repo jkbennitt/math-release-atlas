@@ -44,6 +44,9 @@ def preview_alt(
     oeis_files: int = 0,
     oeis_paper: int = 0,
     oeis_status: str = "",
+    anthropic_files: int = 0,
+    anthropic_new: int = 0,
+    anthropic_formalizations: int = 0,
 ) -> str:
     """Sentence on the card image and in og:image:alt. Keep it free of claim verbs."""
     sentence = (
@@ -54,7 +57,15 @@ def preview_alt(
         sentence += f", plus {lean_files} Lean files from AlphaProof Nexus"
         if oeis_paper and oeis_status:
             sentence += f", {oeis_preview_phrase(oeis_files, oeis_paper, oeis_status)}"
-    sentence += ". Unofficial, not affiliated with OpenAI or Google DeepMind."
+    if anthropic_files:
+        noun = "formalization" if anthropic_formalizations == 1 else "formalizations"
+        sentence += (
+            f", plus {anthropic_files} Lean files from Anthropic "
+            f"({anthropic_new} new results, {anthropic_formalizations} {noun})"
+        )
+        sentence += ". Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."
+    else:
+        sentence += ". Unofficial, not affiliated with OpenAI or Google DeepMind."
     return sentence
 
 LENS_ORDER = (
@@ -2396,6 +2407,9 @@ def check_social_preview(
             int(counts.get("oeis_files") or 0),
             int(counts.get("oeis_paper") or 0),
             str(counts.get("oeis_status") or ""),
+            int(counts.get("anthropic_files") or 0),
+            int(counts.get("anthropic_new") or 0),
+            int(counts.get("anthropic_formalizations") or 0),
         )
         if properties.get("og:image:alt") != expected:
             failures.append(f"{label} og:image:alt does not match the catalogue counts")
@@ -2487,6 +2501,16 @@ def check_link_previews(dist: Path) -> list[str]:
                     counts["oeis_paper"] = paper_count
                 if isinstance(oeis_status, str):
                     counts["oeis_status"] = oeis_status
+            anthropic_counts = (catalog.get("anthropic") or {}).get("counts") or {}
+            anthropic_files = anthropic_counts.get("lean_files")
+            anthropic_new = anthropic_counts.get("new_results")
+            anthropic_formalizations = anthropic_counts.get("formalizations")
+            if isinstance(anthropic_files, int):
+                counts["anthropic_files"] = anthropic_files
+            if isinstance(anthropic_new, int):
+                counts["anthropic_new"] = anthropic_new
+            if isinstance(anthropic_formalizations, int):
+                counts["anthropic_formalizations"] = anthropic_formalizations
         except (OSError, json.JSONDecodeError, KeyError, TypeError):
             failures.append("catalogue counts are unreadable for the preview check")
     for page in pages:
@@ -2512,6 +2536,8 @@ def check_preview_source() -> list[str]:
     card = (ROOT / "scripts" / "og_card.py").read_text(encoding="utf-8")
     if 'counts["families"]' not in card or 'counts["manuscripts"]' not in card:
         failures.append("preview card does not read catalogue counts")
+    if 'payload["anthropic"]' not in card:
+        failures.append("preview card does not read the Anthropic counts")
     for name in (
         "AtlasCardSerif-Regular.ttf",
         "AtlasCardSerif-Bold.ttf",
@@ -2623,6 +2649,30 @@ def check_cross_source_page(cross_html: str, joined: dict[str, Any]) -> list[str
         expected = f"{item['number']}: {count} Lean {noun}"
         if expected not in alphaproof_rows:
             failures.append(f"alphaproof number list is missing {expected}")
+    if "anthropic_empty_text" in joined or "shared_with_anthropic" in joined:
+        fragment = _element_inner(cross_html, "anthropic-identifiers")
+        if fragment is None:
+            failures.append("cross-source page is missing the anthropic-identifiers element")
+        else:
+            shared_with = joined.get("shared_with_anthropic") or []
+            visible = _visible_text(fragment)
+            rows = _item_texts(fragment)
+            empty_anthropic = str(joined.get("anthropic_empty_text") or "")
+            if shared_with:
+                if empty_anthropic and empty_anthropic in visible:
+                    failures.append("cross-source page hides a non-empty Anthropic join")
+                if len(rows) != len(shared_with):
+                    failures.append(
+                        f"Anthropic identifier list renders {len(rows)} rows, data has {len(shared_with)}"
+                    )
+                for item in shared_with:
+                    expected = f"{item['kind']} {item['id']}"
+                    if expected not in rows:
+                        failures.append(f"Anthropic identifier list is missing {expected}")
+            elif empty_anthropic not in visible:
+                failures.append("cross-source page does not say the Anthropic identifier join is empty")
+            elif rows:
+                failures.append("cross-source page lists Anthropic rows for an empty join")
     return failures
 
 
@@ -2632,12 +2682,12 @@ def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str
     for gap in gaps:
         gap_id = gap.get("id")
         if not isinstance(gap_id, str) or not gap_id:
-            failures.append("AlphaProof gap is missing an id")
+            failures.append("gap is missing an id")
             continue
         element_id = f"gap-{gap_id}"
         fragment = _element_inner(detail_html, element_id)
         if fragment is None:
-            failures.append(f"AlphaProof page is missing {element_id}")
+            failures.append(f"page is missing {element_id}")
             continue
         visible = _visible_text(fragment)
         status = gap.get("status")
@@ -2737,6 +2787,107 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     return failures
 
 
+def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """The third source is three release rows, its own page, and the identifier join."""
+    failures: list[str] = []
+    anthropic = catalog.get("anthropic")
+    if not isinstance(anthropic, dict):
+        return ["catalogue is missing the Anthropic snapshot"]
+    home = dist / "index.html"
+    detail = dist / "source" / "anthropic" / "index.html"
+    source_index = dist / "source" / "index.html"
+    for path in (home, detail, source_index):
+        if not path.is_file():
+            failures.append(f"missing {path.relative_to(dist)}")
+    if failures:
+        return failures
+    home_raw = home.read_text(encoding="utf-8")
+    home_text = html.unescape(home_raw)
+    detail_raw = detail.read_text(encoding="utf-8")
+    detail_text = html.unescape(detail_raw)
+    index_text = html.unescape(source_index.read_text(encoding="utf-8"))
+    releases = anthropic["releases"]
+    anthropic_rows = home_raw.count('data-source="anthropic"')
+    if anthropic_rows != len(releases):
+        failures.append(f"table renders {anthropic_rows} Anthropic rows, data has {len(releases)}")
+    if "Anthropic" not in home_text:
+        failures.append("home page is missing Anthropic")
+    counts_fragment = _element_inner(detail_raw, "anthropic-counts")
+    expected_counts = list(anthropic["count_lines"])
+    if counts_fragment is None:
+        failures.append("Anthropic page is missing the counts list")
+    else:
+        count_rows = _item_texts(counts_fragment)
+        if len(count_rows) != len(expected_counts):
+            failures.append(
+                f"Anthropic counts list renders {len(count_rows)} rows, data has {len(expected_counts)}"
+            )
+        for line in expected_counts:
+            if line not in count_rows:
+                failures.append(f"Anthropic counts list is missing {line!r}")
+    gaps = [gap for release in releases for gap in release["gaps"]]
+    failures.extend(check_gap_elements(detail_raw, gaps))
+    if anthropic["check_wording"] not in detail_text:
+        failures.append("Anthropic page is missing the check wording")
+    if anthropic["identifiers"]["method"] not in detail_text:
+        failures.append("Anthropic page is missing the identifier method")
+    for quotation in anthropic["quotations"]:
+        if quotation not in detail_text:
+            failures.append("Anthropic page is missing an upstream quotation")
+    for release in releases:
+        row = _element_inner(home_raw, f"an-{release['id']}")
+        if row is None:
+            failures.append(f"table is missing Anthropic row {release['id']}")
+            continue
+        visible = _visible_text(row)
+        if release["kind_label"] not in visible:
+            failures.append(f"Anthropic row {release['id']} is missing {release['kind_label']}")
+        if release["kind"] == "formalization" and "New result" in visible:
+            failures.append("home formalization row contains New result")
+        for gap in release["gaps"]:
+            if gap["status"] not in visible or gap["label"] not in visible:
+                failures.append(f"Anthropic row {release['id']} is missing gap {gap['id']}")
+        kind = _element_inner(detail_raw, f"kind-{release['id']}")
+        if kind is None:
+            failures.append(f"Anthropic page is missing kind-{release['id']}")
+        else:
+            kind_text = _visible_text(kind)
+            if release["kind_label"] not in kind_text:
+                failures.append(f"kind-{release['id']} is missing {release['kind_label']}")
+            if release["kind"] == "formalization" and "New result" in kind_text:
+                failures.append("formalization badge contains New result")
+            if release["kind"] == "new-result" and "Formalization" in kind_text:
+                failures.append(f"new-result badge {release['id']} contains Formalization")
+        if release["tree_url"] not in detail_raw:
+            failures.append(f"Anthropic page is missing the tree for {release['id']}")
+        for item in release["statement_files"]:
+            if item["url"] not in detail_raw:
+                failures.append(f"Anthropic page is missing {item['path']}")
+        for item in release["license_files"]:
+            if item["url"] not in detail_raw:
+                failures.append(f"Anthropic page is missing license {item['path']}")
+        if release["license"] not in detail_text:
+            failures.append(f"Anthropic page is missing the license name for {release['id']}")
+    skipped = anthropic.get("skipped_directories") or []
+    skipped_fragment = _element_inner(detail_raw, "skipped-directories")
+    if skipped and skipped_fragment is None:
+        failures.append("Anthropic page hides skipped directories")
+    if not skipped and skipped_fragment is not None:
+        failures.append("Anthropic page renders an empty skipped section")
+    if skipped_fragment is not None:
+        skipped_text = _visible_text(skipped_fragment)
+        for name in skipped:
+            if name not in skipped_text:
+                failures.append(f"Anthropic page is missing skipped directory {name}")
+    if "percolation" in detail_text.lower() or "percolation" in home_text.lower():
+        failures.append("built site names percolation")
+    also = anthropic["source"].get("also") or []
+    for item in also:
+        if item["repo"] not in index_text:
+            failures.append(f"source index is missing {item['repo']}")
+    return failures
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
@@ -2755,11 +2906,11 @@ def check_dist(dist: Path) -> list[str]:
         failures.extend(scan_overclaims(combined, "built site"))
         return failures
     catalog = read_json(FAMILIES_JSON)
-    quotations = {
-        item
-        for item in (catalog.get("alphaproof") or {}).get("quotations") or []
-        if isinstance(item, str) and item
-    }
+    quotations: set[str] = set()
+    for source_key in ("alphaproof", "anthropic"):
+        for item in (catalog.get(source_key) or {}).get("quotations") or []:
+            if isinstance(item, str) and item:
+                quotations.add(item)
     prepared = "\n".join(
         prepare_built_page(path, dist, catalog["families"], quotations) for path in pages
     )
@@ -2782,6 +2933,7 @@ def check_dist(dist: Path) -> list[str]:
         failures.append(f"table renders {len(pdfs)} manuscript links, data has {expected['manuscripts']}")
     failures.extend(check_family_pages(dist, catalog["families"], index_html))
     failures.extend(check_alphaproof_pages(dist, catalog))
+    failures.extend(check_anthropic_pages(dist, catalog))
     failures.extend(check_lens_pages(dist, catalog["families"]))
     failures.extend(check_graph_page(dist, catalog["families"]))
     failures.extend(check_status_page(dist, catalog["families"]))

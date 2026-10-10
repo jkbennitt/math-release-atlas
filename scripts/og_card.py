@@ -2,7 +2,7 @@
 """Draw the link-preview card from the current catalogue counts.
 
 Counts come from data/families.json at build time, so a later sync does not
-leave a stale number on the card. The card names both sources and those counts.
+leave a stale number on the card. The card names the sources and those counts.
 The subset fonts have no glyph for ő, so the image spells Erdos in ASCII.
 The alt text is preview_alt() and does not need that spelling.
 """
@@ -103,6 +103,12 @@ def render(
     collaborator_files: int,
     provenance_status: str,
     provenance_label: str,
+    anthropic_files: int = 0,
+    anthropic_new: int = 0,
+    anthropic_formalizations: int = 0,
+    zeta_files: int = 0,
+    three_files: int = 0,
+    flt_files: int = 0,
 ) -> Image.Image:
     image = Image.new("RGB", (PREVIEW_WIDTH, PREVIEW_HEIGHT), BG)
     draw = ImageDraw.Draw(image)
@@ -125,7 +131,18 @@ def render(
     title_y = ink_top(title_font, title, mark_y + (mark - title_h) // 2)
     draw.text((title_x, title_y), title, font=title_font, fill=INK)
 
-    subtitle = "OpenAI Math and AlphaProof Nexus"
+    if anthropic_files:
+        subtitle = "OpenAI Math, AlphaProof Nexus, and Anthropic"
+        footer = "Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."
+        noun = "formalization" if anthropic_formalizations == 1 else "formalizations"
+        anthropic_line = (
+            f"Anthropic {anthropic_files} Lean files: {zeta_files} + {three_files} + {flt_files}; "
+            f"{anthropic_new} new results, {anthropic_formalizations} {noun}"
+        )
+    else:
+        subtitle = "OpenAI Math and AlphaProof Nexus"
+        footer = "Unofficial, not affiliated with OpenAI or Google DeepMind."
+        anthropic_line = ""
     draw.text((64, ink_top(subtitle_font, subtitle, 168)), subtitle, font=subtitle_font, fill=MUTED)
 
     cards = (
@@ -159,15 +176,27 @@ def render(
         f"Erdos {erdos_files}, {oeis_preview_phrase(oeis_files, oeis_paper, oeis_status)}, "
         f"Stacks {stacks_files}, AI collaborator {collaborator_files}"
     )
-    footer = "Unofficial, not affiliated with OpenAI or Google DeepMind."
-    for face, line in ((detail_font, detail), (footer_font, footer), (subtitle_font, subtitle), (title_font, title)):
+    drawn: list[tuple[ImageFont.FreeTypeFont, str, int]] = [(detail_font, detail, 424)]
+    if anthropic_line:
+        anthropic_font = fitting_font(
+            "AtlasCardSans-Regular.ttf",
+            anthropic_line,
+            PREVIEW_WIDTH - margin * 2,
+            24,
+        )
+        drawn.append((anthropic_font, anthropic_line, 468))
+        footer_y = 528
+    else:
+        footer_y = 500
+    drawn.append((footer_font, footer, footer_y))
+    for face, line, _top in drawn + [(subtitle_font, subtitle, 168), (title_font, title, title_y)]:
         require_glyphs(face, line)
     if text_width(detail_font, detail) > PREVIEW_WIDTH - margin * 2:
         raise SystemExit("preview breakdown line does not fit")
     if text_width(footer_font, footer) > PREVIEW_WIDTH - margin * 2:
         raise SystemExit("preview footer does not fit")
-    draw.text((margin, ink_top(detail_font, detail, 424)), detail, font=detail_font, fill=MUTED)
-    draw.text((margin, ink_top(footer_font, footer, 500)), footer, font=footer_font, fill=MUTED)
+    for face, line, top in drawn:
+        draw.text((margin, ink_top(face, line, top)), line, font=face, fill=MUTED)
     return image
 
 
@@ -187,6 +216,8 @@ def main() -> int:
     gaps = {gap["id"]: gap for gap in payload["alphaproof"]["gaps"]}
     oeis = gaps["oeis-count"]
     provenance = gaps["per-row-provenance"]
+    anthropic_counts = payload["anthropic"]["counts"]
+    by_release = {release["id"]: release for release in payload["anthropic"]["releases"]}
     image = render(
         int(counts["families"]),
         int(counts["manuscripts"]),
@@ -199,6 +230,12 @@ def main() -> int:
         int(alphaproof_counts["ai_collaborator"]),
         str(provenance["status"]),
         str(provenance["label"]),
+        int(anthropic_counts["lean_files"]),
+        int(anthropic_counts["new_results"]),
+        int(anthropic_counts["formalizations"]),
+        int(by_release["zeta23"]["counts"]["lean_files"]),
+        int(by_release["3sum-apsp"]["counts"]["lean_files"]),
+        int(by_release["fermat-last-theorem"]["counts"]["lean_files"]),
     )
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)
