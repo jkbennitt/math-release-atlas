@@ -7,6 +7,18 @@ JSON and into a website. We changed and derived these files. The
 upstream license is included here as UPSTREAM_LICENSE. PDFs and other
 originals are not mirrored; links point at the upstream repository.
 
+This project also stores paths, hashes, and links for Lean files and
+natural-language PDFs in
+https://github.com/google-deepmind/alphaproof-nexus-results
+at commit 0647711a71183c1ea492ad60860776617ce1ea88. Those files are not
+copied into this repository. The upstream README copyright notice names
+Google LLC. Code in that repository is Apache License 2.0. Other materials
+are Creative Commons Attribution 4.0. Material from the OEIS is Creative
+Commons Attribution-ShareAlike 4.0. The upstream README says: "This is not
+an official Google product." The organization label used here is Google
+DeepMind. This atlas is not an official Google product and is not affiliated
+with OpenAI or Google DeepMind.
+
 The link-preview card uses a subset of the Liberation fonts from
 https://github.com/liberationfonts (SIL Open Font License 1.1). The subset
 is a modified version and does not use the reserved font name. The license

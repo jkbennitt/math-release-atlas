@@ -1,7 +1,9 @@
 # Math Release Atlas
 
-Unofficial index of the result families in the manuscript collection at
-github.com/openai/math. Not affiliated with OpenAI.
+Unofficial index of two pinned catalogues. One is the result families in the
+manuscript collection at github.com/openai/math. The other is the Lean files
+in github.com/google-deepmind/alphaproof-nexus-results, read with arXiv
+2605.22763. Not affiliated with OpenAI or Google DeepMind.
 
 The site is a table of every family at a pinned upstream commit: subject,
 manuscripts, dates, and Lean status, with links back to the upstream PDFs.
@@ -30,11 +32,17 @@ link-preview card, and writes `dist/`.
 The shared layout emits the page title and description as Open Graph and
 Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
 `/math-release-atlas/`. `scripts/og_card.py` reads the family and manuscript
-counts from `data/families.json` and writes `public/og.png` at 1200×630.
-Astro copies that file into `dist/`. The card names the atlas and those
-counts, and it says the atlas is unofficial. It does not say OpenAI endorses
-it. The dist check fails if any built page is missing `og:image` or
-`twitter:card`, or if `og:image` is not absolute. Package version 0.2.0.
+counts from `data/families.json`, and the AlphaProof Lean-file counts from
+the same file, and writes `public/og.png` at 1200×630.
+Astro copies that file into `dist/`. The card names both sources and those
+counts, including the OEIS file count against the paper count and that gap's
+status, and shows per-row provenance as missing. The image spells Erdos in
+ASCII because the card fonts have an empty box for ő. The alt text is the
+same sentence as `preview_alt()` in `scripts/atlaslib.py` and
+`previewImageAlt` in `src/lib/social.ts`: unofficial, not affiliated with
+OpenAI or Google DeepMind. The dist check fails if any built page is missing
+`og:image` or `twitter:card`, or if `og:image` is not absolute. Package
+version 0.3.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -43,18 +51,20 @@ want:
 python3 scripts/sync.py --checkout /path/to/openai-math
 ```
 
-Omit `--checkout` to sparse-fetch upstream HEAD. The fetch does not download
-the PDF tree. If that commit already matches `data/upstream.json`, the script
-exits without writing. It never edits `data/curated/`.
+Omit `--checkout` to sparse-fetch openai/math HEAD and the AlphaProof Nexus
+tree. The OpenAI fetch does not download the PDF tree. If both commits already
+match `data/upstream.json` and `data/alphaproof.json`, the script exits
+without writing and prints `Upstream commit is unchanged.` It never edits
+`data/curated/`.
 
 ## Daily sync
 
 `.github/workflows/sync.yml` runs every day at 10:17 UTC, and it can be
 started by hand with “Run workflow”. It uses a GitHub-hosted `ubuntu-latest`
-runner. It reads upstream HEAD. When that commit matches the one recorded
-in the catalogue, the job exits and does not open a pull request. When the
+runner. It reads both upstream HEADs. When both commits match the ones recorded
+in the catalogue, the job exits and does not open a pull request. When either
 commit changed, a read-only job regenerates the data files and runs the
-build and the wording checks. A second job does not run the install. It
+build and the wording checks. One pull request covers both catalogues. A second job does not run the install. It
 commits that data. The pull-request filter and the branch plan in that job
 run with the token removed from the environment. If one sync pull request from the
 Actions app is already open on this repository, it updates that pull request
@@ -205,10 +215,15 @@ correct, obtain, obtains, obtained, obtaining, done, and the phrase “a theorem
 The sentence check applies to authored pages, curated notes, fixed cautions,
 and built HTML, including text inside an element marked as an upstream
 quotation. That text is left out of the check only when it exactly equals
-that family's upstream title, id, summary, or manuscript title. Only the text
+that family's upstream title, id, summary, or manuscript title, or when it
+exactly equals a stored AlphaProof quotation. Only the text
 nodes are left out. Attributes on that element and on elements inside it are
 still checked. HTML comments inside that element are still checked. The page still shows it. Text that does not match fails the
-check. alt, title, meta content,
+check. A further check fails a sentence that places solved, solves, proves,
+proved, resolves, or resolved within 48 characters of a result name, in either
+order. Those names are Erdős, Erdos, OEIS, and Stacks. An exact quotation in
+a `data-upstream` element is left out of that check. A longer sentence that
+only contains the quotation is not left out. alt, title, meta content,
 aria-label, aria-description, placeholder, and data-* attributes are included,
 quoted or unquoted. In built HTML, a data-* value is left out only when it
 exactly equals one of those same strings. The citation graph has no such
@@ -232,10 +247,29 @@ ancestor of it (`git fetch --filter=blob:none origin HEAD`, then
 the snapshot differs. `generated_at` is ignored. A SHA that the host will
 serve for the repository URL, but that is not on this history, fails the
 ancestry check. While the recorded commit is the pinned one, the build also
-requires a SHA-256 of the snapshot. `families.json` must be the merge of
-that snapshot and the curated notes. Fixed cautions for families 002, 003,
+requires a SHA-256 of the snapshot. `data/alphaproof.json` names its own
+commit. The same ancestry check runs against
+google-deepmind/alphaproof-nexus-results HEAD, then the recorded tree is
+fetched and compared. `generated_at` and the snapshot digest field are
+ignored in that comparison. While that commit is the pinned one, the build
+requires 9 Erdős Lean files, 38 OEIS Lean files, 11 Stacks Lean files, and
+13 AI collaborator Lean files. `families.json` must be the merge of
+the OpenAI snapshot, the curated notes, and the AlphaProof snapshot.
+Fixed cautions for families 002, 003,
 032, 102, 103, 107, and 376 always render.
+
+The AlphaProof page shows the paper OEIS count beside the repository file
+count and labels the difference `not in repo / unexplained`.
+`erdos_problems_attempted.txt` lists 353 entries, matching the paper.
+`wc -l` reports 352 because that file has no trailing newline. The
+cross-source page lists a problem only when both catalogues name that
+number. At these pinned commits that list is empty. Per-row provenance is
+`MISSING`.
 
 ## License
 
-Apache-2.0. See `NOTICE` and `UPSTREAM_LICENSE`.
+Apache-2.0. See `NOTICE` and `UPSTREAM_LICENSE`. AlphaProof Nexus code is
+Apache-2.0. Its other materials are CC-BY 4.0. OEIS-derived material is
+CC BY-SA 4.0. The repository copyright notice names Google LLC. The
+organization label on this atlas is Google DeepMind. That repository says
+this is not an official Google product.

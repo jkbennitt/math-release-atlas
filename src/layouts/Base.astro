@@ -29,6 +29,7 @@ const lensCurrent = here.startsWith(`${base}lens`) ? "page" : undefined;
 const graphCurrent = here.startsWith(`${base}graph`) ? "page" : undefined;
 const statusCurrent = here.startsWith(`${base}status`) ? "page" : undefined;
 const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
+const sourceCurrent = here.startsWith(`${base}source`) ? "page" : undefined;
 ---
 
 <html lang="en">
@@ -64,6 +65,7 @@ const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
         </a>
         <nav aria-label="Primary">
           <a href={base} aria-current={homeCurrent}>Table</a>
+          <a href={`${base}source/`} aria-current={sourceCurrent}>Sources</a>
           <a href={`${base}lens/`} aria-current={lensCurrent}>Lenses</a>
           <a href={`${base}graph/`} aria-current={graphCurrent}>Graph</a>
           <a href={`${base}status/`} aria-current={statusCurrent}>Status</a>
@@ -76,12 +78,14 @@ const aboutCurrent = here.startsWith(`${base}about`) ? "page" : undefined;
     </main>
     <footer class="site-footer">
       <div class="wrap">
-        <p>Unofficial. Not affiliated with OpenAI.</p>
+        <p>Unofficial. Not affiliated with OpenAI or Google DeepMind.</p>
         <p>
-          Upstream catalogue:
+          Upstream catalogues:
           <a href="https://github.com/openai/math">https://github.com/openai/math</a>
+          ·
+          <a href="https://github.com/google-deepmind/alphaproof-nexus-results">https://github.com/google-deepmind/alphaproof-nexus-results</a>
         </p>
-        <p>Atlas license: Apache-2.0. Titles and summaries on this site are derived from that catalogue.</p>
+        <p>Atlas license: Apache-2.0. Titles and summaries on this site are derived from those catalogues.</p>
       </div>
     </footer>
   </body>

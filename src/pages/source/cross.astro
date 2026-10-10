@@ -1,0 +1,56 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+const joined = atlas.cross;
+---
+
+<Base
+  title="Cross-source problem ids · Math Release Atlas"
+  description="Erdős problem numbers that both pinned catalogues name explicitly."
+>
+  <article class="prose">
+    <p class="meta"><a href={`${base}source/`}>All sources</a></p>
+    <h1>Cross-source problem ids</h1>
+    <p>
+      A row appears here only when both catalogues name the same Erdős problem number.
+      The number has to appear as <code>erdos_&lt;digits&gt;</code>, <code>Erdos&lt;digits&gt;</code>,
+      or an <code>erdosproblems.com</code> path. Titles are not compared.
+    </p>
+    {
+      joined.shared.length === 0 ? (
+        <p id="shared-problems">{joined.empty_text}</p>
+      ) : (
+        <ul id="shared-problems">
+          {joined.shared.map((item) => (
+            <li>
+              Erdős #{item.number}. OpenAI Math families {item.openai_families.join(", ")}.
+              AlphaProof Nexus records {item.alphaproof_records.join(", ")}.
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    <h2>OpenAI Math numbers</h2>
+    <ul id="openai-numbers">
+      {
+        joined.openai_numbers.map((item) => (
+          <li>
+            {item.number}: {item.families.map((id) => <a href={`${base}f/${id}/`}>{id}</a>)}
+          </li>
+        ))
+      }
+    </ul>
+    <h2>AlphaProof Nexus numbers</h2>
+    <ul id="alphaproof-numbers">
+      {
+        joined.alphaproof_numbers.map((item) => (
+          <li>
+            {item.number}: {item.records.length} Lean {item.records.length === 1 ? "file" : "files"}
+          </li>
+        ))
+      }
+    </ul>
+  </article>
+</Base>

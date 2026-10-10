@@ -26,16 +26,36 @@ CURATED_DIR = ROOT / "data" / "curated"
 CAUTIONS_JSON = ROOT / "data" / "fixed-cautions.json"
 UPSTREAM_URL = "https://github.com/openai/math.git"
 UPSTREAM_WEB = "https://github.com/openai/math"
+OPENAI_SOURCE_ID = "openai-math"
 PREVIEW_IMAGE_NAME = "og.png"
 PREVIEW_WIDTH = 1200
 PREVIEW_HEIGHT = 630
 
 
-def preview_alt(families: int, manuscripts: int) -> str:
+def oeis_preview_phrase(oeis_files: int, paper_count: int, status: str) -> str:
+    """OEIS wording on the card and in the alt text. Counts come from the snapshot."""
+    return f"OEIS {oeis_files} of {paper_count} in paper ({status})"
+
+
+def preview_alt(
+    families: int,
+    manuscripts: int,
+    lean_files: int = 0,
+    oeis_files: int = 0,
+    oeis_paper: int = 0,
+    oeis_status: str = "",
+) -> str:
     """Sentence on the card image and in og:image:alt. Keep it free of claim verbs."""
-    return (
-        f"Math Release Atlas: {families} result families and {manuscripts} manuscripts. Unofficial."
+    sentence = (
+        f"Math Release Atlas: {families} result families and {manuscripts} manuscripts "
+        "from the OpenAI Math catalogue"
     )
+    if lean_files:
+        sentence += f", plus {lean_files} Lean files from AlphaProof Nexus"
+        if oeis_paper and oeis_status:
+            sentence += f", {oeis_preview_phrase(oeis_files, oeis_paper, oeis_status)}"
+    sentence += ". Unofficial, not affiliated with OpenAI or Google DeepMind."
+    return sentence
 
 LENS_ORDER = (
     "condensed-matter",
@@ -1300,6 +1320,7 @@ def merge_data(
     upstream: dict[str, Any],
     curated: dict[str, dict[str, Any]],
     cautions: dict[str, dict[str, str]],
+    extras: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     known = {family["id"] for family in upstream["families"]}
     unknown = sorted(set(curated) - known)
@@ -1313,6 +1334,7 @@ def merge_data(
             extra = note["caution"]["text"]
             caution = extra if caution is None else f"{caution} {extra}"
         merged = dict(family)
+        merged["source"] = OPENAI_SOURCE_ID
         merged["caution"] = caution
         merged["lenses"] = note["lenses"] if note else []
         merged["related"] = note["related"] if note else []
@@ -1327,6 +1349,8 @@ def merge_data(
         "areas": upstream["areas"],
         "families": merged_families,
     }
+    if extras:
+        payload.update(extras)
     return payload
 
 
@@ -1455,8 +1479,9 @@ def assert_merged_catalogue(
     families: dict[str, Any],
     curated: dict[str, dict[str, Any]],
     cautions: dict[str, dict[str, str]],
+    extras: dict[str, Any] | None = None,
 ) -> None:
-    merged = merge_data(upstream, curated, cautions)
+    merged = merge_data(upstream, curated, cautions, extras)
     if merged != families:
         raise AtlasError("families.json is not the merge of upstream.json and the curated notes")
 
@@ -1693,6 +1718,28 @@ def mentions_guarded_problem(sentence: str) -> bool:
     return False
 
 
+_BARE_RESULT_CLAIM_RE = re.compile(
+    r"\b(?:solved|solves|proves|proved|resolves|resolved)\b.{0,48}\b(?:erdős|erdos|oeis|stacks)\b"
+    r"|\b(?:erdős|erdos|oeis|stacks)\b.{0,48}\b(?:solved|solves|proves|proved|resolves|resolved)\b",
+    re.IGNORECASE,
+)
+
+
+def bare_result_claims(text: str) -> list[str]:
+    """Flag a bare solved, proves, or resolves claim about a named result.
+
+    The existing guarded-problem check is unchanged. This one covers authored
+    wording about Erdős, OEIS, and Stacks. An exact upstream quotation is removed
+    before this runs on built HTML.
+    """
+    failures: list[str] = []
+    for chunk in re.split(r"[.!?]+", prose_for_scan(text)):
+        key = sentence_key(chunk)
+        if key and _BARE_RESULT_CLAIM_RE.search(key):
+            failures.append(key[:180])
+    return failures
+
+
 def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None) -> list[str]:
     """Flag a sentence that claims a guarded problem itself was proved, solved, or settled.
 
@@ -1923,6 +1970,8 @@ def check_authored() -> list[str]:
         text = path.read_text(encoding="utf-8")
         relative = str(path.relative_to(ROOT))
         failures.extend(scan_overclaims(text, relative))
+        for claim in bare_result_claims(text):
+            failures.append(f"{relative}: {claim}")
     failures.extend(check_denylist_tree())
     return failures
 
@@ -2136,8 +2185,17 @@ def exempt_index_rows(html_text: str, families: list[dict[str, Any]]) -> str:
     return _INDEX_ROW_RE.sub(replacer, html_text)
 
 
-def prepare_built_page(path: Path, dist: Path, families: list[dict[str, Any]]) -> str:
-    """Apply the per-family data-* exemption before the sentence scan."""
+def prepare_built_page(
+    path: Path,
+    dist: Path,
+    families: list[dict[str, Any]],
+    quotations: set[str] | None = None,
+) -> str:
+    """Apply the per-family data-* exemption before the sentence scan.
+
+    A data-upstream element is also blanked when its text equals a stored
+    AlphaProof quotation. Attributes on that element stay in the scan.
+    """
     html_text = path.read_text(encoding="utf-8")
     relative = path.relative_to(dist)
     parts = relative.parts
@@ -2146,10 +2204,16 @@ def prepare_built_page(path: Path, dist: Path, families: list[dict[str, Any]]) -
         family = by_id.get(parts[1])
         if family is not None:
             allowed = family_scan_identity(family)
-            return exempt_upstream_text(blank_exempt_data_values(html_text, allowed), allowed)
-    if relative.as_posix() == "index.html":
-        return exempt_index_rows(html_text, families)
-    return exempt_upstream_by_family_link(html_text, families)
+            prepared = exempt_upstream_text(blank_exempt_data_values(html_text, allowed), allowed)
+        else:
+            prepared = html_text
+    elif relative.as_posix() == "index.html":
+        prepared = exempt_index_rows(html_text, families)
+    else:
+        prepared = exempt_upstream_by_family_link(html_text, families)
+    if quotations:
+        prepared = exempt_upstream_text(prepared, quotations)
+    return prepared
 
 
 def exempt_upstream_by_family_link(html_text: str, families: list[dict[str, Any]]) -> str:
@@ -2325,7 +2389,14 @@ def check_social_preview(
     if tags["canonical"].strip() and properties.get("og:url", "").strip() and tags["canonical"] != properties.get("og:url"):
         failures.append(f"{label} canonical does not match og:url")
     if counts is not None and properties.get("og:image:alt", "").strip():
-        expected = preview_alt(int(counts["families"]), int(counts["manuscripts"]))
+        expected = preview_alt(
+            int(counts["families"]),
+            int(counts["manuscripts"]),
+            int(counts.get("lean_files") or 0),
+            int(counts.get("oeis_files") or 0),
+            int(counts.get("oeis_paper") or 0),
+            str(counts.get("oeis_status") or ""),
+        )
         if properties.get("og:image:alt") != expected:
             failures.append(f"{label} og:image:alt does not match the catalogue counts")
         twitter_alt = names.get("twitter:image:alt", "")
@@ -2391,8 +2462,32 @@ def check_link_previews(dist: Path) -> list[str]:
     counts = None
     if FAMILIES_JSON.is_file():
         try:
-            counts = read_json(FAMILIES_JSON)["counts"]
-        except (OSError, json.JSONDecodeError, KeyError):
+            catalog = read_json(FAMILIES_JSON)
+            counts = dict(catalog["counts"])
+            alphaproof_snapshot = catalog.get("alphaproof") or {}
+            alphaproof_counts = alphaproof_snapshot.get("counts") or {}
+            lean_files = alphaproof_counts.get("lean_files")
+            if isinstance(lean_files, int):
+                counts["lean_files"] = lean_files
+            oeis_files = alphaproof_counts.get("oeis_files")
+            if isinstance(oeis_files, int):
+                counts["oeis_files"] = oeis_files
+            oeis_gap = next(
+                (
+                    gap
+                    for gap in alphaproof_snapshot.get("gaps") or []
+                    if isinstance(gap, dict) and gap.get("id") == "oeis-count"
+                ),
+                None,
+            )
+            if isinstance(oeis_gap, dict):
+                paper_count = oeis_gap.get("paper_count")
+                oeis_status = oeis_gap.get("status")
+                if isinstance(paper_count, int):
+                    counts["oeis_paper"] = paper_count
+                if isinstance(oeis_status, str):
+                    counts["oeis_status"] = oeis_status
+        except (OSError, json.JSONDecodeError, KeyError, TypeError):
             failures.append("catalogue counts are unreadable for the preview check")
     for page in pages:
         label = page.relative_to(dist).as_posix()
@@ -2428,6 +2523,194 @@ def check_preview_source() -> list[str]:
     return failures
 
 
+def _element_inner(html_text: str, element_id: str) -> str | None:
+    """Inner HTML of the element with this id, including nested copies of its tag."""
+    opener = re.search(
+        rf'<([A-Za-z][\w:-]*)\b(?=[^>]*\bid="{re.escape(element_id)}")[^>]*>',
+        html_text,
+    )
+    if opener is None:
+        return None
+    tag = opener.group(1)
+    depth = 1
+    tokens = re.compile(rf"</?{re.escape(tag)}\b[^>]*>", re.IGNORECASE)
+    for token in tokens.finditer(html_text, opener.end()):
+        lexeme = token.group(0)
+        if lexeme.startswith("</"):
+            depth -= 1
+            if depth == 0:
+                return html_text[opener.end() : token.start()]
+        elif not lexeme.endswith("/>"):
+            depth += 1
+    return None
+
+
+def _item_texts(fragment: str) -> list[str]:
+    items = re.findall(r"<li\b[^>]*>(.*?)</li>", fragment, flags=re.IGNORECASE | re.DOTALL)
+    texts: list[str] = []
+    for item in items:
+        visible = html.unescape(re.sub(r"<[^>]+>", " ", item))
+        texts.append(re.sub(r"\s+", " ", visible).strip())
+    return texts
+
+
+def _visible_text(fragment: str) -> str:
+    visible = html.unescape(re.sub(r"<[^>]+>", " ", fragment))
+    return re.sub(r"\s+", " ", visible).strip()
+
+
+def check_cross_source_page(cross_html: str, joined: dict[str, Any]) -> list[str]:
+    """Shared ids and per-source counts are checked inside their own elements."""
+    failures: list[str] = []
+    shared_fragment = _element_inner(cross_html, "shared-problems")
+    openai_fragment = _element_inner(cross_html, "openai-numbers")
+    alphaproof_fragment = _element_inner(cross_html, "alphaproof-numbers")
+    if shared_fragment is None:
+        failures.append("cross-source page is missing the shared-problems element")
+    if openai_fragment is None:
+        failures.append("cross-source page is missing the openai-numbers element")
+    if alphaproof_fragment is None:
+        failures.append("cross-source page is missing the alphaproof-numbers element")
+    if shared_fragment is None or openai_fragment is None or alphaproof_fragment is None:
+        return failures
+    shared = joined.get("shared") or []
+    shared_text = _visible_text(shared_fragment)
+    shared_rows = _item_texts(shared_fragment)
+    empty_text = "no shared problem ids at these commits"
+    if shared:
+        if empty_text in shared_text:
+            failures.append("cross-source page hides a non-empty join")
+        if len(shared_rows) != len(shared):
+            failures.append(
+                f"cross-source shared list renders {len(shared_rows)} rows, data has {len(shared)}"
+            )
+        for item in shared:
+            families = ", ".join(item["openai_families"])
+            records = ", ".join(item["alphaproof_records"])
+            expected = (
+                f"Erdős #{item['number']}. OpenAI Math families {families}. "
+                f"AlphaProof Nexus records {records}."
+            )
+            if expected not in shared_rows:
+                failures.append(f"cross-source page does not render shared number {item['number']}")
+    elif empty_text not in shared_text:
+        failures.append("cross-source page does not say there is no shared id")
+    elif shared_rows:
+        failures.append("cross-source page lists rows for an empty join")
+    openai_rows = _item_texts(openai_fragment)
+    openai_numbers = joined.get("openai_numbers") or []
+    if len(openai_rows) != len(openai_numbers):
+        failures.append(
+            f"openai number list renders {len(openai_rows)} rows, data has {len(openai_numbers)}"
+        )
+    for item in openai_numbers:
+        row = next((text for text in openai_rows if text.startswith(f"{item['number']}:")), None)
+        if row is None:
+            failures.append(f"openai number list is missing {item['number']}")
+            continue
+        for family_id in item["families"]:
+            if family_id not in row.split():
+                failures.append(f"openai number {item['number']} is missing family {family_id}")
+    alphaproof_rows = _item_texts(alphaproof_fragment)
+    alphaproof_numbers = joined.get("alphaproof_numbers") or []
+    if len(alphaproof_rows) != len(alphaproof_numbers):
+        failures.append(
+            f"alphaproof number list renders {len(alphaproof_rows)} rows, data has {len(alphaproof_numbers)}"
+        )
+    for item in alphaproof_numbers:
+        count = len(item["records"])
+        noun = "file" if count == 1 else "files"
+        expected = f"{item['number']}: {count} Lean {noun}"
+        if expected not in alphaproof_rows:
+            failures.append(f"alphaproof number list is missing {expected}")
+    return failures
+
+
+def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """The second source is on the home page, its own page, and the cross-source page."""
+    failures: list[str] = []
+    alphaproof = catalog.get("alphaproof")
+    joined = catalog.get("cross")
+    sources = catalog.get("sources")
+    if not isinstance(alphaproof, dict) or not isinstance(joined, dict) or not isinstance(sources, dict):
+        return ["catalogue is missing the source registry, AlphaProof snapshot, or cross-source join"]
+    home = dist / "index.html"
+    source_index = dist / "source" / "index.html"
+    detail = dist / "source" / "alphaproof-nexus" / "index.html"
+    cross = dist / "source" / "cross" / "index.html"
+    for path in (home, source_index, detail, cross):
+        if not path.is_file():
+            failures.append(f"missing {path.relative_to(dist)}")
+    if failures:
+        return failures
+    home_text = html.unescape(home.read_text(encoding="utf-8"))
+    detail_raw = detail.read_text(encoding="utf-8")
+    detail_text = html.unescape(detail_raw)
+    index_text = html.unescape(source_index.read_text(encoding="utf-8"))
+    for phrase in ("openai-math", "alphaproof-nexus", "AlphaProof Nexus"):
+        if phrase not in home_text:
+            failures.append(f"home page is missing {phrase}")
+    counts = alphaproof["counts"]
+    counts_fragment = _element_inner(detail_raw, "alphaproof-counts")
+    expected_counts = [
+        f"{counts['erdos']} Erdős Lean files.",
+        f"{counts['oeis_files']} OEIS Lean files.",
+        f"{counts['stacks']} Stacks Lean files.",
+        f"{counts['ai_collaborator']} AI collaborator Lean files.",
+        f"{counts['lean_files']} Lean files in total.",
+        f"{counts['natural_language_pdfs']} natural-language PDFs, linked where the filename corresponds.",
+    ]
+    if counts_fragment is None:
+        failures.append("AlphaProof page is missing the counts list")
+    else:
+        count_rows = _item_texts(counts_fragment)
+        if len(count_rows) != len(expected_counts):
+            failures.append(
+                f"AlphaProof counts list renders {len(count_rows)} rows, data has {len(expected_counts)}"
+            )
+        for line in expected_counts:
+            if line not in count_rows:
+                failures.append(f"AlphaProof counts list is missing {line!r}")
+    attempted_gap = next(gap for gap in alphaproof["gaps"] if gap["id"] == "erdos-attempted")
+    for phrase in (
+        "not in repo / unexplained",
+        attempted_gap["label"],
+        "PARTIAL",
+        "MISSING",
+        "Lean file deposited upstream; upstream CI builds it. This atlas did not run Lean.",
+        alphaproof["paper"]["abstract_claim"],
+        "per-row provenance",
+    ):
+        if phrase not in detail_text:
+            failures.append(f"AlphaProof page is missing {phrase!r}")
+    if "352 vs 353" in detail_text:
+        failures.append("AlphaProof page still shows the false attempted-count label")
+    failures.extend(check_cross_source_page(cross.read_text(encoding="utf-8"), joined))
+    for record in alphaproof["records"]:
+        if record["path"] not in detail_text or record["statement"] not in detail_text:
+            failures.append(f"AlphaProof page is missing {record['path']}")
+        if record["anchor"] not in home_text:
+            failures.append(f"table is missing AlphaProof row {record['anchor']}")
+        if record["category"] == "AICollaborator":
+            stem_label = f"Filename stem {record['problem_id']}"
+            if stem_label not in detail_text:
+                failures.append(f"AI collaborator row does not label {stem_label}")
+            if f"Problem id {record['problem_id']}" in detail_text:
+                failures.append(f"AI collaborator stem {record['problem_id']} is labeled as a problem id")
+    for source in sources["sources"]:
+        if source["id"] not in index_text or source["repo"] not in index_text:
+            failures.append(f"source index is missing {source['id']}")
+    home_raw = home.read_text(encoding="utf-8")
+    if f'data-source="{OPENAI_SOURCE_ID}"' not in home_raw:
+        failures.append("table rows are missing the source attribute")
+    if 'data-source="alphaproof-nexus"' not in home_raw:
+        failures.append("table rows are missing the AlphaProof source attribute")
+    for family in catalog["families"]:
+        if family.get("source") != OPENAI_SOURCE_ID:
+            failures.append(f"family {family['id']} source is {family.get('source')}")
+    return failures
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
@@ -2446,8 +2729,17 @@ def check_dist(dist: Path) -> list[str]:
         failures.extend(scan_overclaims(combined, "built site"))
         return failures
     catalog = read_json(FAMILIES_JSON)
-    prepared = "\n".join(prepare_built_page(path, dist, catalog["families"]) for path in pages)
+    quotations = {
+        item
+        for item in (catalog.get("alphaproof") or {}).get("quotations") or []
+        if isinstance(item, str) and item
+    }
+    prepared = "\n".join(
+        prepare_built_page(path, dist, catalog["families"], quotations) for path in pages
+    )
     failures.extend(scan_overclaims(prepared, "built site"))
+    for claim in bare_result_claims(prepared):
+        failures.append(f"built site: {claim}")
     index_html = index.read_text(encoding="utf-8")
     about_html = about.read_text(encoding="utf-8")
     index_text = html.unescape(index_html)
@@ -2463,6 +2755,7 @@ def check_dist(dist: Path) -> list[str]:
     if len(pdfs) != expected["manuscripts"]:
         failures.append(f"table renders {len(pdfs)} manuscript links, data has {expected['manuscripts']}")
     failures.extend(check_family_pages(dist, catalog["families"], index_html))
+    failures.extend(check_alphaproof_pages(dist, catalog))
     failures.extend(check_lens_pages(dist, catalog["families"]))
     failures.extend(check_graph_page(dist, catalog["families"]))
     failures.extend(check_status_page(dist, catalog["families"]))
@@ -2667,7 +2960,12 @@ def require_upstream_ancestor(url: str, sha: str) -> None:
         ensure_ancestor_of_origin_head(dest, sha)
 
 
-def materialize_upstream(url: str, sha: str, dest: Path) -> None:
+def materialize_upstream(
+    url: str,
+    sha: str,
+    dest: Path,
+    sparse_paths: list[str] | None = None,
+) -> None:
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise AtlasError(f"{sha} is not a commit sha")
     if not (dest / ".git").exists():
@@ -2700,7 +2998,7 @@ def materialize_upstream(url: str, sha: str, dest: Path) -> None:
         check=False,
     )
     run_git(
-        ["git", "sparse-checkout", "set", "--no-cone", *SPARSE_PATHS],
+        ["git", "sparse-checkout", "set", "--no-cone", *(sparse_paths if sparse_paths is not None else SPARSE_PATHS)],
         dest,
         "could not fetch upstream",
     )

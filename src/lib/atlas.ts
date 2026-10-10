@@ -57,6 +57,7 @@ export interface CitationIn {
 
 export interface Family {
   id: string;
+  source: string;
   title: string;
   areas: string[];
   upstream_summary: string;
@@ -78,9 +79,109 @@ export interface Family {
   cited_by: CitationIn[];
 }
 
+export interface SourceInfo {
+  id: string;
+  name: string;
+  org: string;
+  repo: string;
+  commit: string;
+  paper: string | null;
+  license: string;
+  sync: string;
+}
+
+export interface NaturalLanguageProof {
+  path: string;
+  url: string;
+}
+
+export interface AlphaProofRecord {
+  id: string;
+  anchor: string;
+  source: string;
+  category: string;
+  subcategory: string | null;
+  filename: string;
+  path: string;
+  url: string;
+  problem_id: string;
+  erdos_number: number | null;
+  part: string | null;
+  variant: string | null;
+  statement: string;
+  scope_notes: string[];
+  natural_language_proofs: NaturalLanguageProof[];
+  provenance: string;
+}
+
+export interface AlphaProofGap {
+  id: string;
+  status: string;
+  label: string;
+  paper_count?: number;
+  paper_attempted?: number;
+  repo_files?: number;
+  absent?: number;
+  repo_newlines?: number;
+  repo_entries?: number;
+}
+
+export interface AlphaProofData {
+  source: SourceInfo;
+  paper: {
+    id: string;
+    title: string;
+    url: string;
+    v1_submitted: string;
+    v2_submitted: string;
+    abstract_claim: string;
+    table1_caption: string;
+    density_note: string;
+    agent_a: string;
+  };
+  quotations: string[];
+  commit_date: string;
+  commit_subject: string;
+  lean_toolchain: string;
+  upstream_ci: string;
+  check_wording: string;
+  provenance: {
+    level: string;
+    agent_d: string;
+    agent_a: string;
+    per_row: string;
+    lean_paper: string;
+    lean_repo: string;
+  };
+  counts: {
+    lean_files: number;
+    erdos: number;
+    oeis_files: number;
+    stacks: number;
+    ai_collaborator: number;
+    natural_language_pdfs: number;
+    attempted_newlines: number;
+    attempted_entries: number;
+  };
+  subcounts: Record<string, number>;
+  gaps: AlphaProofGap[];
+  records: AlphaProofRecord[];
+}
+
+export interface CrossJoin {
+  method: string;
+  shared: { number: number; openai_families: string[]; alphaproof_records: string[] }[];
+  empty_text: string;
+  openai_numbers: { number: number; families: string[] }[];
+  alphaproof_numbers: { number: number; records: string[] }[];
+}
+
 export interface AtlasData {
   schema_version: number;
   generated_at: string;
+  sources: { schema_version: number; sources: SourceInfo[] };
+  alphaproof: AlphaProofData;
+  cross: CrossJoin;
   upstream: {
     repo: string;
     commit: string;

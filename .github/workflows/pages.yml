@@ -1,6 +1,19 @@
 name: Pages
 
 on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "data/**"
+      - "scripts/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "astro.config.mjs"
+      - "tsconfig.json"
+      - "requirements.txt"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/pages.yml"
   push:
     branches: [main]
     paths:
@@ -20,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: ${{ github.event_name == 'push' && 'pages' || format('pages-pr-{0}', github.ref) }}
   cancel-in-progress: false
 
 jobs:
@@ -48,6 +61,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
