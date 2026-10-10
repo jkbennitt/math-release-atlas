@@ -3203,6 +3203,149 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     return failures
 
 
+_TAG_RE = re.compile(r"<[^>]+>")
+_SPACE_RE = re.compile(r"[ \t\r\n\f]+")
+
+
+def tight_text(fragment: str) -> str:
+    """Visible text, without inserting spaces where tags were adjacent.
+
+    Astro drops whitespace between inline tags. Replacing tags with a space
+    would hide that. Callers then look for the spaced sentence.
+    """
+    text = html.unescape(_TAG_RE.sub("", fragment))
+    return _SPACE_RE.sub(" ", text).strip()
+
+
+def missing_spaced_phrases(fragment: str, phrases: list[str]) -> list[str]:
+    visible = tight_text(fragment)
+    return [phrase for phrase in phrases if phrase not in visible]
+
+
+def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """The snapshot line and the source pages keep spaces around links."""
+    failures: list[str] = []
+    home_path = dist / "index.html"
+    source_path = dist / "source" / "index.html"
+    apn_path = dist / "source" / "alphaproof-nexus" / "index.html"
+    anthropic_path = dist / "source" / "anthropic" / "index.html"
+    about_path = dist / "about" / "index.html"
+    status_path = dist / "status" / "index.html"
+    for path in (home_path, source_path, apn_path, anthropic_path, about_path, status_path):
+        if not path.is_file():
+            failures.append(f"missing {path.relative_to(dist)} for the spacing check")
+    if failures:
+        return failures
+    home = home_path.read_text(encoding="utf-8")
+    provenance = re.search(r'<p class="provenance">(.*?)</p>', home, re.DOTALL)
+    if provenance is None:
+        failures.append("home page is missing the snapshot intro")
+    else:
+        upstream = catalog["upstream"]
+        generated = str(catalog["generated_at"])[:10]
+        sha = str(upstream["commit"])[:12]
+        scope = str(upstream["formalization_scope"]).strip()
+        phrase = (
+            f"Formalization scope: {scope} Generated {generated} from {sha}. "
+            "Overview PDF · Manuscript map · Citation graph"
+        )
+        if phrase not in tight_text(provenance.group(1)):
+            failures.append("home snapshot intro runs words together or drops separators")
+    home_visible = tight_text(home)
+    openai_sha = str(catalog["upstream"]["commit"])[:12]
+    anthropic_source = catalog["anthropic"]["source"]
+    anthropic_sha = str(anthropic_source["commit"])[:12]
+    flt = anthropic_source["also"][0]
+    flt_sha = str(flt["commit"])[:12]
+    if f"manuscripts at {openai_sha}" not in home_visible:
+        failures.append("home OpenAI card runs the commit into the word at")
+    if f"{anthropic_sha} and {flt_sha}" not in home_visible:
+        failures.append("home Anthropic card runs the two commits together")
+    footer = re.search(r"<footer\b.*?</footer>", home, re.DOTALL)
+    footer_phrase = (
+        "https://github.com/openai/math · "
+        "https://github.com/google-deepmind/alphaproof-nexus-results · "
+        "https://github.com/anthropics/formal-math · "
+        "https://github.com/anthropics/fermats-last-theorem"
+    )
+    if footer is None or footer_phrase not in tight_text(footer.group(0)):
+        failures.append("footer catalogue links run together")
+    source_phrase = (
+        "AlphaProof Nexus counts and scope notes · Anthropic releases · Cross-source problem ids"
+    )
+    if source_phrase not in tight_text(source_path.read_text(encoding="utf-8")):
+        failures.append("source index runs the catalogue links together")
+    apn_html = apn_path.read_text(encoding="utf-8")
+    apn_intro = re.search(r"<h1>AlphaProof Nexus</h1>\s*<p>(.*?)</p>", apn_html, re.DOTALL)
+    apn_source = catalog["alphaproof"]["source"]
+    apn_commit = str(apn_source["commit"])
+    apn_phrases = [
+        f"Repository {apn_source['repo']}",
+        f"{apn_commit} ({apn_commit[:12]})",
+    ]
+    if apn_intro is None:
+        failures.append("AlphaProof page is missing its intro")
+    else:
+        for phrase in missing_spaced_phrases(apn_intro.group(1), apn_phrases):
+            failures.append(f"AlphaProof intro is missing spaced text {phrase!r}")
+    anthropic_html = anthropic_path.read_text(encoding="utf-8")
+    anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p>(.*?)</p>", anthropic_html, re.DOTALL)
+    an_commit = str(anthropic_source["commit"])
+    flt_commit = str(flt["commit"])
+    an_phrases = [
+        f"Repository {anthropic_source['repo']}",
+        f"{an_commit} ({an_commit[:12]})",
+        f"). {flt['label']}",
+        f"{flt_commit} ({flt_commit[:12]})",
+    ]
+    if anthropic_intro is None:
+        failures.append("Anthropic page is missing its intro")
+    else:
+        for phrase in missing_spaced_phrases(anthropic_intro.group(1), an_phrases):
+            failures.append(f"Anthropic intro is missing spaced text {phrase!r}")
+    about_html = about_path.read_text(encoding="utf-8")
+    about_visible = tight_text(about_html)
+    review = str(catalog["upstream"]["review_status"])
+    for phrase in (
+        f"Lean files in {apn_source['repo'].removeprefix('https://')}",
+        "github.com/anthropics/formal-math and github.com/anthropics/fermats-last-theorem",
+        f"data is {openai_sha}",
+        f"status to {review}",
+        "The citation graph",
+        "The status page",
+        "and 107",
+        "AlphaProof Nexus source page · Cross-source problem ids",
+    ):
+        if phrase not in about_visible:
+            failures.append(f"about page is missing spaced text {phrase!r}")
+    status_visible = tight_text(status_path.read_text(encoding="utf-8"))
+    for phrase in (
+        "are in CONTRIBUTING.md",
+        "only when data/curated/status-approvals.yaml",
+    ):
+        if phrase not in status_visible:
+            failures.append(f"status page is missing spaced text {phrase!r}")
+    return failures
+
+
+def check_home_layout(dist: Path) -> list[str]:
+    """The home table fits a 1024px viewport, and the intro is not run together."""
+    script = ROOT / "scripts" / "layout_check.mjs"
+    if not script.is_file():
+        return ["home layout check is missing"]
+    completed = subprocess.run(
+        ["node", str(script), str(dist)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        return [detail or "home table layout check failed"]
+    return []
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
@@ -3279,6 +3422,8 @@ def check_dist(dist: Path) -> list[str]:
             failures.append(f"{page.relative_to(dist)} title uses the upstream name")
         if heading and re.search(r"openai", heading.group(1), re.I):
             failures.append(f"{page.relative_to(dist)} heading uses the upstream name")
+    failures.extend(check_inline_spacing(dist, catalog))
+    failures.extend(check_home_layout(dist))
     return failures
 
 

@@ -37,7 +37,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
     <section class="source-card">
       <h2>OpenAI Math</h2>
       <p>
-        {counts.families} families and {counts.manuscripts} manuscripts at
+        {counts.families} families and {counts.manuscripts} manuscripts at{" "}
         <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
         Source id <code>openai-math</code>.
       </p>
@@ -64,7 +64,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
         {anthropic.counts.releases} releases and {anthropic.counts.lean_files} Lean files
         ({anthropic.counts.new_results} new results, {anthropic.counts.formalizations}{" "}
         {anthropic.counts.formalizations === 1 ? "formalization" : "formalizations"})
-        in <a href={`${anthropic.source.repo}/commit/${anthropic.source.commit}`}><code>{shortSha(anthropic.source.commit)}</code></a>
+        in <a href={`${anthropic.source.repo}/commit/${anthropic.source.commit}`}><code>{shortSha(anthropic.source.commit)}</code></a>{" "}
         and <a href={`${fltRepo.repo}/commit/${fltRepo.commit}`}><code>{shortSha(fltRepo.commit)}</code></a>.
       </p>
       <p class="meta">{anthropic.source.license}. Sync: {anthropic.source.sync}.</p>
@@ -82,13 +82,13 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
   <p class="provenance">
     {counts.none} families have no Lean formalization in this snapshot.
     Upstream review status: <strong>{atlas.upstream.review_status}</strong>.
-    Formalization scope: {atlas.upstream.formalization_scope}
-    Generated {generated} from
-    <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
+    Formalization scope: {atlas.upstream.formalization_scope}{" "}
+    Generated {generated} from{" "}
+    <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.{" "}
     <a href={`${atlas.upstream.repo}/blob/${commit}/overview.pdf`}>Overview PDF</a>
-    ·
+    {" · "}
     <a href={`${atlas.upstream.repo}/blob/${commit}/CONTENTS.md`}>Manuscript map</a>
-    ·
+    {" · "}
     <a href={`${base}graph/`}>Citation graph</a>
   </p>
 

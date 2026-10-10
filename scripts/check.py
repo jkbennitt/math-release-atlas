@@ -1884,6 +1884,48 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     if not CURATED_DIR.is_dir():
         failures.append("curated directory is missing")
     failures.extend(preview_self_test())
+    failures.extend(spacing_self_test())
+    return failures
+
+
+def spacing_self_test() -> list[str]:
+    """A run-together snapshot intro fails. The spaced sentence passes."""
+    failures: list[str] = []
+    phrase = (
+        "Formalization scope: Partial progress. Generated 2026-10-09 from fd4aeeb2ee4f. "
+        "Overview PDF · Manuscript map · Citation graph"
+    )
+    bad = (
+        '<p class="provenance">Formalization scope: Partial progress.Generated 2026-10-09 from'
+        '<a href="https://example.test/commit"><code>fd4aeeb2ee4f</code></a>.'
+        '<a href="https://example.test/overview">Overview PDF</a>·'
+        '<a href="https://example.test/contents">Manuscript map</a>·'
+        '<a href="https://example.test/graph">Citation graph</a></p>'
+    )
+    good = (
+        '<p class="provenance">Formalization scope: Partial progress. Generated 2026-10-09 from '
+        '<a href="https://example.test/commit"><code>fd4aeeb2ee4f</code></a>. '
+        '<a href="https://example.test/overview">Overview PDF</a> · '
+        '<a href="https://example.test/contents">Manuscript map</a> · '
+        '<a href="https://example.test/graph">Citation graph</a></p>'
+    )
+    if not atlaslib.missing_spaced_phrases(bad, [phrase]):
+        failures.append("run-together snapshot intro was accepted")
+    if atlaslib.missing_spaced_phrases(good, [phrase]):
+        failures.append("spaced snapshot intro was rejected")
+    glued_links = (
+        "<p><a>AlphaProof Nexus counts and scope notes</a>·"
+        "<a>Anthropic releases</a>·<a>Cross-source problem ids</a></p>"
+    )
+    spaced_links = (
+        "<p><a>AlphaProof Nexus counts and scope notes</a> · "
+        "<a>Anthropic releases</a> · <a>Cross-source problem ids</a></p>"
+    )
+    link_phrase = "AlphaProof Nexus counts and scope notes · Anthropic releases · Cross-source problem ids"
+    if not atlaslib.missing_spaced_phrases(glued_links, [link_phrase]):
+        failures.append("run-together source links were accepted")
+    if atlaslib.missing_spaced_phrases(spaced_links, [link_phrase]):
+        failures.append("spaced source links were rejected")
     return failures
 
 
