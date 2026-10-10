@@ -2840,6 +2840,8 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
             failures.append(f"table is missing Anthropic row {release['id']}")
             continue
         visible = _visible_text(row)
+        if "percolation" in visible.lower():
+            failures.append(f"Anthropic row {release['id']} names percolation")
         if release["kind_label"] not in visible:
             failures.append(f"Anthropic row {release['id']} is missing {release['kind_label']}")
         if release["kind"] == "formalization" and "New result" in visible:
@@ -2879,8 +2881,8 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         for name in skipped:
             if name not in skipped_text:
                 failures.append(f"Anthropic page is missing skipped directory {name}")
-    if "percolation" in detail_text.lower() or "percolation" in home_text.lower():
-        failures.append("built site names percolation")
+    if "percolation" in detail_text.lower():
+        failures.append("Anthropic page names percolation")
     also = anthropic["source"].get("also") or []
     for item in also:
         if item["repo"] not in index_text:
