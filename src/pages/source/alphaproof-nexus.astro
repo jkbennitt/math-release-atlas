@@ -36,9 +36,9 @@ function gapBadgeClass(status: string | undefined): string {
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>AlphaProof Nexus</h1>
     <p>
-      Google DeepMind. Repository
+      Google DeepMind. Repository{" "}
       <a href={record.source.repo}>{record.source.repo}</a>.
-      Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>
+      Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
       ({shortSha(commit)}), committed {record.commit_date}, message “{record.commit_subject}”.
       Paper <a href={record.paper.url}>{record.paper.title}</a>,
       arXiv {record.paper.id}. v1 submitted {record.paper.v1_submitted}. v2 submitted {record.paper.v2_submitted}.

@@ -28,12 +28,12 @@ function gapBadgeClass(status: string): string {
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>Anthropic</h1>
     <p>
-      {record.source.org}. Repository
+      {record.source.org}. Repository{" "}
       <a href={record.source.repo}>{record.source.repo}</a>.
-      Commit <a href={`${record.source.repo}/commit/${record.source.commit}`}><code>{record.source.commit}</code></a>
-      ({shortSha(record.source.commit)}).
+      Commit <a href={`${record.source.repo}/commit/${record.source.commit}`}><code>{record.source.commit}</code></a>{" "}
+      ({shortSha(record.source.commit)}).{" "}
       {flt.label}: repository <a href={flt.repo}>{flt.repo}</a>,
-      commit <a href={`${flt.repo}/commit/${flt.commit}`}><code>{flt.commit}</code></a>
+      commit <a href={`${flt.repo}/commit/${flt.commit}`}><code>{flt.commit}</code></a>{" "}
       ({shortSha(flt.commit)}).
     </p>
     <p>{record.check_wording}</p>

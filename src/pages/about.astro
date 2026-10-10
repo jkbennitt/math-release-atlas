@@ -15,12 +15,12 @@ const commit = atlas.upstream.commit;
     <p>
       Math Release Atlas is an unofficial index of three public catalogues. One is the result families
       in the manuscript collection at <a href="https://github.com/openai/math">github.com/openai/math</a>.
-      Another is the Lean files in
+      Another is the Lean files in{" "}
       <a href="https://github.com/google-deepmind/alphaproof-nexus-results">github.com/google-deepmind/alphaproof-nexus-results</a>,
       read with the paper at <a href="https://arxiv.org/abs/2605.22763">arXiv 2605.22763</a>.
-      The third is the Anthropic repositories
-      <a href="https://github.com/anthropics/formal-math">github.com/anthropics/formal-math</a>
-      and
+      The third is the Anthropic repositories{" "}
+      <a href="https://github.com/anthropics/formal-math">github.com/anthropics/formal-math</a>{" "}
+      and{" "}
       <a href="https://github.com/anthropics/fermats-last-theorem">github.com/anthropics/fermats-last-theorem</a>.
       It is not affiliated with OpenAI, Google DeepMind, or Anthropic.
     </p>
@@ -29,13 +29,13 @@ const commit = atlas.upstream.commit;
       a table: subject, manuscript dates, PDF links, and whether Lean records a formalized main
       result, only a Comparator challenge, or neither. Each row links to a family page. Lens pages
       list the families under each hand-written tag. A family with no tag still shows community
-      status claimed. The commit pinned in the data is
+      status claimed. The commit pinned in the data is{" "}
       <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
     </p>
 
     <h2>Review status</h2>
     <p>
-      On this pinned commit, the upstream formalization catalogue sets its review status to
+      On this pinned commit, the upstream formalization catalogue sets its review status to{" "}
       <strong>{atlas.upstream.review_status}</strong>. Every Lean badge on the table repeats that
       status. This atlas did not run those checks.
     </p>
@@ -47,7 +47,7 @@ const commit = atlas.upstream.commit;
     <h2>Citations</h2>
     <p>
       Family pages list the other families cited from upstream manuscript sources. Each edge comes
-      from an <code>OAI:</code> key and links to the file that contains that key. The
+      from an <code>OAI:</code> key and links to the file that contains that key. The{" "}
       <a href={`${base}graph/`}>citation graph</a> draws those edges and repeats them in a list.
       A shared-topic link, when one is recorded, is labeled our grouping, not a citation.
     </p>
@@ -55,7 +55,7 @@ const commit = atlas.upstream.commit;
     <h2>Community status</h2>
     <p>
       Every family in this catalogue is claimed until a pull request says otherwise. A status other
-      than claimed needs an evidence URL, a date, and a short note. The
+      than claimed needs an evidence URL, a date, and a short note. The{" "}
       <a href={`${base}status/`}>status page</a> lists the vocabulary. Every status change must be
       approved by Jason (repo policy).
       The daily sync does not set a status.
@@ -74,7 +74,7 @@ const commit = atlas.upstream.commit;
         conjecture.
       </li>
       <li>
-        <a href={`${base}f/102/`}>102</a>, <a href={`${base}f/103/`}>103</a>, and
+        <a href={`${base}f/102/`}>102</a>, <a href={`${base}f/103/`}>103</a>, and{" "}
         <a href={`${base}f/107/`}>107</a>. Very large claims (UGC, L=RL, ω ≤ 9/4); treat as claims
         until checked.
       </li>
@@ -93,7 +93,7 @@ const commit = atlas.upstream.commit;
     </p>
     <p>
       <a href={`${base}source/alphaproof-nexus/`}>AlphaProof Nexus source page</a>
-      ·
+      {" · "}
       <a href={`${base}source/cross/`}>Cross-source problem ids</a>
     </p>
 

@@ -156,15 +156,37 @@ button:hover, select:hover, input:hover { border-color: var(--accent); }
 
 .shown { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.6rem; }
 
-.table-scroll { overflow-x: auto; }
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
 
 table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+
+table[data-family-table] {
+  table-layout: fixed;
+}
+
+table[data-family-table] caption {
+  caption-side: top;
+  text-align: start;
+  padding: 0.35rem 0.7rem 0.65rem;
+  overflow-wrap: anywhere;
+}
+
+table[data-family-table] th:nth-child(1) { width: 7.5rem; }
+table[data-family-table] th:nth-child(2) { width: 4.75rem; }
+table[data-family-table] th:nth-child(4) { width: 7rem; }
+table[data-family-table] th:nth-child(5) { width: 8.5rem; }
+table[data-family-table] th:nth-child(6) { width: 6.5rem; }
+table[data-family-table] th:nth-child(7) { width: 8.5rem; }
 th, td {
   text-align: left;
   vertical-align: top;
@@ -179,11 +201,22 @@ th button {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
+  white-space: normal;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+table[data-family-table] th,
+table[data-family-table] td,
+.site-footer a,
+.provenance,
+.source-card,
+.prose {
+  overflow-wrap: anywhere;
 }
 .id {
   font-family: var(--mono);
   font-size: 0.86rem;
-  white-space: nowrap;
+  white-space: normal;
 }
 .title {
   font-family: var(--serif);
@@ -200,11 +233,14 @@ th button {
 }
 .badge {
   display: inline-block;
+  max-width: 100%;
   color: white;
   border-radius: 999px;
   padding: 0.12rem 0.55rem;
   font-size: 0.78rem;
   line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .badge.main-result-formalized { background: var(--formal); }
 .badge.deposited { background: var(--deposited); }
@@ -320,6 +356,11 @@ tr[hidden] { display: none; }
   .stats { grid-template-columns: 1fr 1fr; }
   .site-header .wrap { flex-direction: column; align-items: start; }
   table, tbody, tr, td { display: block; width: 100%; }
+  table[data-family-table] caption { display: block; width: auto; }
+  table[data-family-table] th:nth-child(n),
+  table[data-family-table] td:nth-child(n),
+  table[data-family-table] .id { width: auto; }
+  table[data-family-table] td:nth-child(n) { width: 100%; }
   tr[hidden] { display: none; }
   thead, thead tr { display: block; }
   thead tr {
