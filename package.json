@@ -1,7 +1,7 @@
 {
   "name": "math-release-atlas",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Unofficial atlas of result families from the public math manuscript catalogue.",
   "license": "Apache-2.0",
   "type": "module",

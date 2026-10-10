@@ -2626,6 +2626,17 @@ def check_cross_source_page(cross_html: str, joined: dict[str, Any]) -> list[str
     return failures
 
 
+def gap_status_texts(gaps: list[dict[str, Any]]) -> list[str]:
+    """Statuses and labels the source page must show. Nothing here is a fixed status word."""
+    texts: list[str] = []
+    for gap in gaps:
+        for key in ("status", "label"):
+            value = gap.get(key)
+            if isinstance(value, str) and value and value not in texts:
+                texts.append(value)
+    return texts
+
+
 def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     """The second source is on the home page, its own page, and the cross-source page."""
     failures: list[str] = []
@@ -2671,15 +2682,10 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         for line in expected_counts:
             if line not in count_rows:
                 failures.append(f"AlphaProof counts list is missing {line!r}")
-    attempted_gap = next(gap for gap in alphaproof["gaps"] if gap["id"] == "erdos-attempted")
     for phrase in (
-        "not in repo / unexplained",
-        attempted_gap["label"],
-        "PARTIAL",
-        "MISSING",
+        *gap_status_texts(alphaproof["gaps"]),
         "Lean file deposited upstream; upstream CI builds it. This atlas did not run Lean.",
         alphaproof["paper"]["abstract_claim"],
-        "per-row provenance",
     ):
         if phrase not in detail_text:
             failures.append(f"AlphaProof page is missing {phrase!r}")

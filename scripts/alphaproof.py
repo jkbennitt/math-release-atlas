@@ -145,12 +145,21 @@ ALPHAPROOF_SOURCE = {
 }
 
 
+def oeis_count_status(absent: int) -> str:
+    """Status for the paper OEIS count minus the files in the repository."""
+    if absent > 0:
+        return "PARTIAL"
+    if absent < 0:
+        return "MORE THAN PAPER"
+    return "MATCH"
+
+
 def oeis_count_gap(repo_files: int) -> dict[str, Any]:
     """PARTIAL only while the repository has fewer OEIS files than the paper."""
     absent = PAPER_OEIS_PROVED - repo_files
     return {
         "id": "oeis-count",
-        "status": "PARTIAL" if absent > 0 else "MATCH",
+        "status": oeis_count_status(absent),
         "paper_count": PAPER_OEIS_PROVED,
         "paper_attempted": PAPER_OEIS_ATTEMPTED,
         "repo_files": repo_files,
