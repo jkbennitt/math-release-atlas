@@ -42,7 +42,7 @@ same sentence as `preview_alt()` in `scripts/atlaslib.py` and
 `previewImageAlt` in `src/lib/social.ts`: unofficial, not affiliated with
 OpenAI or Google DeepMind. The dist check fails if any built page is missing
 `og:image` or `twitter:card`, or if `og:image` is not absolute. Package
-version 0.3.1.
+version 0.3.2.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -259,9 +259,13 @@ Fixed cautions for families 002, 003,
 032, 102, 103, 107, and 376 always render.
 
 The AlphaProof page shows the paper OEIS count beside the repository file
-count and labels the difference `not in repo / unexplained`. That status is
-PARTIAL while files are absent, MATCH when the counts agree, and MORE THAN
-PAPER when the repository has more files than the paper.
+count. While files are absent the label stays `not in repo / unexplained`
+and the status is PARTIAL. MATCH means the counts agree. MORE THAN PAPER
+means the repository is ahead of the paper, and that label counts the extra
+files, for example `repo has 6 more files than paper`. The attempted list
+uses the same three statuses: 353 entries match the paper, and 354 entries
+are MORE THAN PAPER. Each gap row is checked on its own, and a zero or
+negative shortfall is not rendered as Absent.
 `erdos_problems_attempted.txt` lists 353 entries, matching the paper.
 `wc -l` reports 352 because that file has no trailing newline. The
 cross-source page lists a problem only when both catalogues name that
