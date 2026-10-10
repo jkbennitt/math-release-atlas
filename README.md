@@ -35,12 +35,14 @@ Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
 counts from `data/families.json`, and the AlphaProof Lean-file counts from
 the same file, and writes `public/og.png` at 1200×630.
 Astro copies that file into `dist/`. The card names both sources and those
-counts. The image spells Erdos in ASCII because the card fonts have an empty
-box for ő. The alt text is the same sentence as `preview_alt()` in
-`scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`: unofficial,
-not affiliated with OpenAI or Google DeepMind. The dist check fails if any
-built page is missing `og:image` or `twitter:card`, or if `og:image` is not
-absolute. Package version 0.2.0.
+counts, including the OEIS file count against the paper count and that gap's
+status, and shows per-row provenance as missing. The image spells Erdos in
+ASCII because the card fonts have an empty box for ő. The alt text is the
+same sentence as `preview_alt()` in `scripts/atlaslib.py` and
+`previewImageAlt` in `src/lib/social.ts`: unofficial, not affiliated with
+OpenAI or Google DeepMind. The dist check fails if any built page is missing
+`og:image` or `twitter:card`, or if `og:image` is not absolute. Package
+version 0.3.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -257,12 +259,12 @@ Fixed cautions for families 002, 003,
 032, 102, 103, 107, and 376 always render.
 
 The AlphaProof page shows the paper OEIS count beside the repository file
-count and labels the difference `not in repo / unexplained`. It shows the
-paper attempted count beside the newline count in
-`erdos_problems_attempted.txt` and labels that `352 vs 353`. It does not
-fill either gap. The cross-source page lists a problem only when both
-catalogues name that number. At these pinned commits that list is empty.
-Per-row provenance is `MISSING`.
+count and labels the difference `not in repo / unexplained`.
+`erdos_problems_attempted.txt` lists 353 entries, matching the paper.
+`wc -l` reports 352 because that file has no trailing newline. The
+cross-source page lists a problem only when both catalogues name that
+number. At these pinned commits that list is empty. Per-row provenance is
+`MISSING`.
 
 ## License
 

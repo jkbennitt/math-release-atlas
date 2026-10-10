@@ -22,7 +22,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files;
   title="Math Release Atlas"
   description="Unofficial table of the OpenAI Math catalogue and the AlphaProof Nexus Lean files, with links back to each pinned upstream commit."
 >
-  <h1>Result families</h1>
+  <h1>Result families and Lean files</h1>
   <p class="lede">
     A receipted index of two pinned upstream catalogues. Each OpenAI Math result title
     opens that family's page. The row still quotes the catalogue and links to its PDFs. Lean
@@ -51,7 +51,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files;
       <p class="meta">
         OEIS paper count {oeisGap?.paper_count}/{oeisGap?.paper_attempted}. Repository files {oeisGap?.repo_files}.
         Gap label: {oeisGap?.label}. Status {oeisGap?.status}.
-        Attempted label: {attemptedGap?.label}. Status {attemptedGap?.status}.
+        Attempted list: {attemptedGap?.label}. Status {attemptedGap?.status}.
       </p>
       <p class="meta"><a href={`${base}source/alphaproof-nexus/`}>Source page</a></p>
     </section>
@@ -124,7 +124,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files;
 
   <div class="table-scroll">
     <table data-family-table>
-      <caption class="meta">All result families in catalogue order, with upstream links.</caption>
+      <caption class="meta">Result families and Lean files in catalogue order, with upstream links.</caption>
       <thead>
         <tr>
           <th scope="col" data-sort="source" aria-sort="none"><button type="button" data-sort="source">Source</button></th>

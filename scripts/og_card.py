@@ -13,7 +13,14 @@ import json
 
 from PIL import Image, ImageDraw, ImageFont
 
-from atlaslib import FAMILIES_JSON, PREVIEW_HEIGHT, PREVIEW_IMAGE_NAME, PREVIEW_WIDTH, ROOT
+from atlaslib import (
+    FAMILIES_JSON,
+    PREVIEW_HEIGHT,
+    PREVIEW_IMAGE_NAME,
+    PREVIEW_WIDTH,
+    ROOT,
+    oeis_preview_phrase,
+)
 
 FONT_DIR = ROOT / "scripts" / "fonts"
 
@@ -90,8 +97,12 @@ def render(
     lean_files: int,
     erdos_files: int,
     oeis_files: int,
+    oeis_paper: int,
+    oeis_status: str,
     stacks_files: int,
     collaborator_files: int,
+    provenance_status: str,
+    provenance_label: str,
 ) -> Image.Image:
     image = Image.new("RGB", (PREVIEW_WIDTH, PREVIEW_HEIGHT), BG)
     draw = ImageDraw.Draw(image)
@@ -100,8 +111,6 @@ def render(
 
     title_font = font("AtlasCardSerif-Bold.ttf", 64)
     subtitle_font = font("AtlasCardSans-Regular.ttf", 28)
-    number_font = font("AtlasCardSerif-Bold.ttf", 52)
-    label_font = font("AtlasCardSans-Regular.ttf", 22)
     detail_font = font("AtlasCardSans-Regular.ttf", 24)
     footer_font = font("AtlasCardSans-Regular.ttf", 24)
 
@@ -123,7 +132,7 @@ def render(
         (str(families), "result families"),
         (str(manuscripts), "manuscripts"),
         (str(lean_files), "Lean files"),
-        (str(erdos_files), "Erdos files"),
+        (provenance_status, provenance_label),
     )
     margin = 64
     gap = 18
@@ -131,8 +140,10 @@ def render(
     card_h = 156
     card_w = (PREVIEW_WIDTH - margin * 2 - gap * (len(cards) - 1)) // len(cards)
     for index, (number, label) in enumerate(cards):
-        if text_width(number_font, number) > card_w - 48 or text_width(label_font, label) > card_w - 48:
-            raise SystemExit(f"preview card text does not fit: {number} {label}")
+        number_face = fitting_font("AtlasCardSerif-Bold.ttf", number, card_w - 48, 52)
+        label_face = fitting_font("AtlasCardSans-Regular.ttf", label, card_w - 48, 22)
+        require_glyphs(number_face, number)
+        require_glyphs(label_face, label)
         x = margin + index * (card_w + gap)
         draw.rounded_rectangle(
             [x, card_y, x + card_w, card_y + card_h],
@@ -141,12 +152,12 @@ def render(
             outline=LINE,
             width=2,
         )
-        draw.text((x + 24, ink_top(number_font, number, card_y + 24)), number, font=number_font, fill=INK)
-        draw.text((x + 24, ink_top(label_font, label, card_y + 96)), label, font=label_font, fill=MUTED)
+        draw.text((x + 24, ink_top(number_face, number, card_y + 24)), number, font=number_face, fill=INK)
+        draw.text((x + 24, ink_top(label_face, label, card_y + 96)), label, font=label_face, fill=MUTED)
 
     detail = (
-        f"Erdos {erdos_files}, OEIS {oeis_files}, Stacks {stacks_files}, "
-        f"AI collaborator {collaborator_files}"
+        f"Erdos {erdos_files}, {oeis_preview_phrase(oeis_files, oeis_paper, oeis_status)}, "
+        f"Stacks {stacks_files}, AI collaborator {collaborator_files}"
     )
     footer = "Unofficial, not affiliated with OpenAI or Google DeepMind."
     for face, line in ((detail_font, detail), (footer_font, footer), (subtitle_font, subtitle), (title_font, title)):
@@ -160,18 +171,34 @@ def render(
     return image
 
 
+def fitting_font(filename: str, text: str, max_width: int, size: int) -> ImageFont.FreeTypeFont:
+    while size >= 16:
+        face = font(filename, size)
+        if text_width(face, text) <= max_width:
+            return face
+        size -= 2
+    raise SystemExit(f"preview card text does not fit: {text}")
+
+
 def main() -> int:
     payload = json.loads(FAMILIES_JSON.read_text(encoding="utf-8"))
     counts = payload["counts"]
     alphaproof_counts = payload["alphaproof"]["counts"]
+    gaps = {gap["id"]: gap for gap in payload["alphaproof"]["gaps"]}
+    oeis = gaps["oeis-count"]
+    provenance = gaps["per-row-provenance"]
     image = render(
         int(counts["families"]),
         int(counts["manuscripts"]),
         int(alphaproof_counts["lean_files"]),
         int(alphaproof_counts["erdos"]),
         int(alphaproof_counts["oeis_files"]),
+        int(oeis["paper_count"]),
+        str(oeis["status"]),
         int(alphaproof_counts["stacks"]),
         int(alphaproof_counts["ai_collaborator"]),
+        str(provenance["status"]),
+        str(provenance["label"]),
     )
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)

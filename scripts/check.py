@@ -573,12 +573,20 @@ def alphaproof_self_test() -> list[str]:
             failures.append("741(i) statement overclaims")
         if by_anchor["erdos-26-variant-tenenbaum"]["scope_notes"][0].count("†") != 1:
             failures.append("26 lost the dagger scope note")
-        if payload["gaps"][0]["label"] != "not in repo / unexplained":
+        if payload["gaps"][0]["label"] != "not in repo / unexplained" or payload["gaps"][0]["status"] != "PARTIAL":
             failures.append("OEIS gap label changed")
         if payload["gaps"][0]["absent"] != 43 or "missing_entries" in payload["gaps"][0]:
             failures.append("OEIS gap invented the absent files")
-        if payload["gaps"][1]["label"] != "352 vs 353":
-            failures.append("attempted-count label changed")
+        attempted = payload["gaps"][1]
+        if attempted["status"] != "PARTIAL" or attempted["label"] != "2 listed, 353 in paper":
+            failures.append(f"attempted-count gap was not derived from the entries: {attempted}")
+        matched = alphaproof.attempted_count_gap(353, 352)
+        if matched["status"] != "MATCH" or matched["label"] != "353 listed, matching the paper":
+            failures.append(f"a matching attempted list stayed partial: {matched}")
+        if alphaproof.oeis_count_gap(44)["status"] != "MATCH":
+            failures.append("OEIS status stayed PARTIAL when no files are absent")
+        if alphaproof.oeis_count_gap(38)["status"] != "PARTIAL":
+            failures.append("OEIS status was not PARTIAL while files are absent")
         if any(record["provenance"] != "MISSING" for record in payload["records"]):
             failures.append("fixture assigned per-row provenance")
         families = [
@@ -594,6 +602,53 @@ def alphaproof_self_test() -> list[str]:
         shared = alphaproof.cross_source(overlap, payload["records"])["shared"]
         if len(shared) != 1 or shared[0]["number"] != 741 or shared[0]["openai_families"] != ["050"]:
             failures.append(f"an explicit shared number was not joined: {shared}")
+        rendered = """
+        <ul id="shared-problems">
+          <li>Erdős #741. OpenAI Math families 050. AlphaProof Nexus records APNOutputs/ErdosProblems/erdos_741.parts.i.lean.</li>
+        </ul>
+        <ul id="openai-numbers"><li>970: <a href="/f/021/">021</a></li><li>741: <a href="/f/050/">050</a></li></ul>
+        <ul id="alphaproof-numbers"><li>741: 1 Lean file</li><li>26: 1 Lean file</li></ul>
+        """
+        page_join = {
+            "shared": shared,
+            "openai_numbers": [
+                {"number": 970, "families": ["021"]},
+                {"number": 741, "families": ["050"]},
+            ],
+            "alphaproof_numbers": [
+                {"number": 741, "records": ["APNOutputs/ErdosProblems/erdos_741.parts.i.lean"]},
+                {"number": 26, "records": ["APNOutputs/ErdosProblems/erdos_26.variants.tenenbaum.lean"]},
+            ],
+        }
+        if atlaslib.check_cross_source_page(rendered, page_join):
+            failures.append(f"a rendered non-empty join was rejected: {atlaslib.check_cross_source_page(rendered, page_join)}")
+        hidden = rendered.replace(
+            '<ul id="shared-problems">',
+            '<p id="shared-problems">no shared problem ids at these commits</p><ul id="shared-problems">',
+        )
+        if not any("hides a non-empty join" in item for item in atlaslib.check_cross_source_page(hidden, page_join)):
+            failures.append("a non-empty join labeled empty was accepted")
+        elsewhere = rendered.replace(
+            "Erdős #741. OpenAI Math families 050. AlphaProof Nexus records APNOutputs/ErdosProblems/erdos_741.parts.i.lean.",
+            "Erdős #999. OpenAI Math families 050. AlphaProof Nexus records APNOutputs/ErdosProblems/erdos_741.parts.i.lean.",
+        )
+        if not any("does not render shared number 741" in item for item in atlaslib.check_cross_source_page(elsewhere, page_join)):
+            failures.append("a shared number that appears only outside its list was accepted")
+        wrong_count = rendered.replace("<li>741: 1 Lean file</li>", "<li>741: 9 Lean files</li>")
+        if not any("741: 1 Lean file" in item for item in atlaslib.check_cross_source_page(wrong_count, page_join)):
+            failures.append("a file count outside the alphaproof list satisfied the check")
+        empty_page = """
+        <p id="shared-problems">no shared problem ids at these commits</p>
+        <ul id="openai-numbers"><li>970: <a href="/f/021/">021</a></li></ul>
+        <ul id="alphaproof-numbers"><li>12: 1 Lean file</li></ul>
+        """
+        empty_join = {
+            "shared": [],
+            "openai_numbers": [{"number": 970, "families": ["021"]}],
+            "alphaproof_numbers": [{"number": 12, "records": ["APNOutputs/ErdosProblems/erdos_12.lean"]}],
+        }
+        if atlaslib.check_cross_source_page(empty_page, empty_join):
+            failures.append("an empty join with the empty sentence was rejected")
     recorded = read_json(ALPHAPROOF_JSON)
     if recorded["counts"]["erdos"] != 9 or recorded["counts"]["oeis_files"] != 38:
         failures.append("recorded AlphaProof counts are not the pinned file counts")
@@ -1532,6 +1587,22 @@ def preview_self_test() -> list[str]:
         failures.append("png header parse failed")
     if png_dimensions(b"not a png") is not None:
         failures.append("a non-png had dimensions")
+    rich_counts = {
+        "families": 372,
+        "manuscripts": 719,
+        "lean_files": 71,
+        "oeis_files": 38,
+        "oeis_paper": 44,
+        "oeis_status": "PARTIAL",
+    }
+    rich_alt = preview_alt(372, 719, 71, 38, 44, "PARTIAL")
+    if "OEIS 38 of 44 in paper (PARTIAL)" not in rich_alt:
+        failures.append("preview alt dropped the OEIS paper status")
+    rich_page = good.replace(alt, rich_alt)
+    if check_social_preview(rich_page, "fixture", prefix, rich_counts):
+        failures.append("preview alt with the OEIS paper status was rejected")
+    if not any("og:image:alt" in item for item in check_social_preview(good, "fixture", prefix, rich_counts)):
+        failures.append("a preview alt without the OEIS paper status was accepted")
     return failures
 
 

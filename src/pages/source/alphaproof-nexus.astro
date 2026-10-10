@@ -30,7 +30,7 @@ const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
     <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
 
     <h2>Counts at this commit</h2>
-    <ul>
+    <ul id="alphaproof-counts">
       <li>{counts.erdos} Erdős Lean files.</li>
       <li>{counts.oeis_files} OEIS Lean files.</li>
       <li>{counts.stacks} Stacks Lean files.</li>
@@ -46,12 +46,12 @@ const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
     <h2>Gaps</h2>
     <ul>
       <li>
-        <span class="badge partial">{oeis?.status}</span>
+        <span class={`badge ${oeis?.status?.toLowerCase() ?? ""}`}>{oeis?.status}</span>
         {" "}OEIS paper count {oeis?.paper_count}/{oeis?.paper_attempted}. Repository Lean files {oeis?.repo_files}.
         Absent {oeis?.absent}. Label: {oeis?.label}.
       </li>
       <li>
-        <span class="badge partial">{attempted?.status}</span>
+        <span class={`badge ${attempted?.status?.toLowerCase() ?? ""}`}>{attempted?.status}</span>
         {" "}Paper attempted {attempted?.paper_attempted}. Newline count in erdos_problems_attempted.txt:
         {attempted?.repo_newlines}. Non-empty lines: {attempted?.repo_entries}. Label: {attempted?.label}.
       </li>
@@ -84,7 +84,10 @@ const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
           <h3>{item.statement}</h3>
           <p class="meta">
             {item.category}
-            {item.subcategory ? ` / ${item.subcategory}` : ""}. Problem id {item.problem_id}.
+            {item.subcategory ? ` / ${item.subcategory}` : ""}.{" "}
+            {item.category === "ErdosProblems"
+              ? `Problem id ${item.problem_id}`
+              : `Filename stem ${item.problem_id}`}.
             Per-row provenance: {item.provenance}.
           </p>
           {item.scope_notes.map((note) => (

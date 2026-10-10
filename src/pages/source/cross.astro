@@ -20,9 +20,9 @@ const joined = atlas.cross;
     </p>
     {
       joined.shared.length === 0 ? (
-        <p>{joined.empty_text}</p>
+        <p id="shared-problems">{joined.empty_text}</p>
       ) : (
-        <ul>
+        <ul id="shared-problems">
           {joined.shared.map((item) => (
             <li>
               Erdős #{item.number}. OpenAI Math families {item.openai_families.join(", ")}.
@@ -33,7 +33,7 @@ const joined = atlas.cross;
       )
     }
     <h2>OpenAI Math numbers</h2>
-    <ul>
+    <ul id="openai-numbers">
       {
         joined.openai_numbers.map((item) => (
           <li>
@@ -43,7 +43,7 @@ const joined = atlas.cross;
       }
     </ul>
     <h2>AlphaProof Nexus numbers</h2>
-    <ul>
+    <ul id="alphaproof-numbers">
       {
         joined.alphaproof_numbers.map((item) => (
           <li>

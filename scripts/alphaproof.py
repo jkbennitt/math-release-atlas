@@ -40,7 +40,7 @@ OPENAI_SOURCE_ID = "openai-math"
 PINNED_ALPHAPROOF_COMMIT = "0647711a71183c1ea492ad60860776617ce1ea88"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from that commit and checked on every later build.
-PINNED_ALPHAPROOF_DIGEST = "4e30ea3f0b5765b0b21e631277db4f29cc6a880711ae05e1d5628f0019fb0aab"
+PINNED_ALPHAPROOF_DIGEST = "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
 
 PINNED_CATEGORY_COUNTS = {
     "ErdosProblems": 9,
@@ -61,7 +61,6 @@ PAPER_ERDOS_ATTEMPTED = 353
 PAPER_OEIS_PROVED = 44
 PAPER_OEIS_ATTEMPTED = 492
 OEIS_GAP_LABEL = "not in repo / unexplained"
-ATTEMPTED_GAP_LABEL = "352 vs 353"
 PROVENANCE_GAP_LABEL = "per-row provenance"
 
 # The cross-source expectation is for these two commits only.
@@ -144,6 +143,41 @@ ALPHAPROOF_SOURCE = {
     ),
     "sync": "tree-snapshot",
 }
+
+
+def oeis_count_gap(repo_files: int) -> dict[str, Any]:
+    """PARTIAL only while the repository has fewer OEIS files than the paper."""
+    absent = PAPER_OEIS_PROVED - repo_files
+    return {
+        "id": "oeis-count",
+        "status": "PARTIAL" if absent > 0 else "MATCH",
+        "paper_count": PAPER_OEIS_PROVED,
+        "paper_attempted": PAPER_OEIS_ATTEMPTED,
+        "repo_files": repo_files,
+        "absent": absent,
+        "label": OEIS_GAP_LABEL,
+    }
+
+
+def attempted_count_gap(entries: int, newlines: int) -> dict[str, Any]:
+    """PARTIAL only when the distinct attempted lines differ from the paper count.
+
+    A file with no trailing newline has one fewer newline than entries. That
+    newline count is recorded and is not itself a gap.
+    """
+    matched = entries == PAPER_ERDOS_ATTEMPTED
+    return {
+        "id": "erdos-attempted",
+        "status": "MATCH" if matched else "PARTIAL",
+        "paper_attempted": PAPER_ERDOS_ATTEMPTED,
+        "repo_newlines": newlines,
+        "repo_entries": entries,
+        "label": (
+            f"{entries} listed, matching the paper"
+            if matched
+            else f"{entries} listed, {PAPER_ERDOS_ATTEMPTED} in paper"
+        ),
+    }
 
 
 def blob_url(commit: str, path: str) -> str:
@@ -473,25 +507,9 @@ def build_alphaproof(repo: Path, commit: str | None = None) -> dict[str, Any]:
     for record in records:
         if record["subcategory"]:
             subcounts[record["subcategory"]] = subcounts.get(record["subcategory"], 0) + 1
-    absent = PAPER_OEIS_PROVED - counts["oeis_files"]
     gaps = [
-        {
-            "id": "oeis-count",
-            "status": "PARTIAL",
-            "paper_count": PAPER_OEIS_PROVED,
-            "paper_attempted": PAPER_OEIS_ATTEMPTED,
-            "repo_files": counts["oeis_files"],
-            "absent": absent,
-            "label": OEIS_GAP_LABEL,
-        },
-        {
-            "id": "erdos-attempted",
-            "status": "PARTIAL",
-            "paper_attempted": PAPER_ERDOS_ATTEMPTED,
-            "repo_newlines": counts["attempted_newlines"],
-            "repo_entries": counts["attempted_entries"],
-            "label": ATTEMPTED_GAP_LABEL,
-        },
+        oeis_count_gap(counts["oeis_files"]),
+        attempted_count_gap(counts["attempted_entries"], counts["attempted_newlines"]),
         {
             "id": "per-row-provenance",
             "status": "MISSING",
@@ -586,15 +604,21 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
         if record["category"] != "ErdosProblems" and record["erdos_number"] is not None:
             raise AtlasError(f"{record['id']} invented an Erdős number")
     labels = {gap["label"] for gap in payload["gaps"]}
-    if OEIS_GAP_LABEL not in labels or ATTEMPTED_GAP_LABEL not in labels or PROVENANCE_GAP_LABEL not in labels:
+    if OEIS_GAP_LABEL not in labels or PROVENANCE_GAP_LABEL not in labels:
         raise AtlasError("AlphaProof gaps are missing a required label")
     oeis_gap = next(gap for gap in payload["gaps"] if gap["id"] == "oeis-count")
-    if oeis_gap["status"] != "PARTIAL" or oeis_gap["paper_count"] != PAPER_OEIS_PROVED:
+    expected_oeis = oeis_count_gap(counts["oeis_files"])
+    if oeis_gap["status"] != expected_oeis["status"] or oeis_gap["paper_count"] != PAPER_OEIS_PROVED:
+        raise AtlasError("OEIS paper count drifted")
+    if oeis_gap["absent"] != expected_oeis["absent"] or oeis_gap["label"] != OEIS_GAP_LABEL:
         raise AtlasError("OEIS paper count drifted")
     if oeis_gap["repo_files"] != counts["oeis_files"] or "entries" in oeis_gap:
         raise AtlasError("OEIS gap invented entries")
     attempted = next(gap for gap in payload["gaps"] if gap["id"] == "erdos-attempted")
-    if attempted["status"] != "PARTIAL" or attempted["paper_attempted"] != PAPER_ERDOS_ATTEMPTED:
+    expected_attempted = attempted_count_gap(counts["attempted_entries"], counts["attempted_newlines"])
+    if attempted["status"] != expected_attempted["status"] or attempted["label"] != expected_attempted["label"]:
+        raise AtlasError("attempted-count gap drifted")
+    if attempted["paper_attempted"] != PAPER_ERDOS_ATTEMPTED:
         raise AtlasError("attempted-count gap drifted")
     if attempted["repo_newlines"] != counts["attempted_newlines"]:
         raise AtlasError("attempted-count gap does not match the newline count")
@@ -620,6 +644,8 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
             raise AtlasError("pinned attempted-list newline count drifted")
         if counts["attempted_entries"] != PINNED_ATTEMPTED_ENTRIES:
             raise AtlasError("pinned attempted-list entry count drifted")
+        if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
+            raise AtlasError("pinned attempted list does not match the paper")
         if payload["subcounts"] != PINNED_SUBCOUNTS:
             raise AtlasError(f"pinned AI collaborator subcounts are {payload['subcounts']}")
         if oeis_gap["absent"] != PAPER_OEIS_PROVED - PINNED_CATEGORY_COUNTS["OEIS"]:

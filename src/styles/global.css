@@ -10,6 +10,7 @@
   --caution-ink: #3f2e10;
   --caution-line: #8a5a12;
   --formal: #1f4d4a;
+  --deposited: #1d4e89;
   --comparator: #3d4c73;
   --none: #6a6258;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -202,8 +203,10 @@ th button {
   font-size: 0.78rem;
   line-height: 1.4;
 }
-.badge.main-result-formalized, .badge.deposited { background: var(--formal); }
+.badge.main-result-formalized { background: var(--formal); }
+.badge.deposited { background: var(--deposited); }
 .badge.comparator-challenge-only, .badge.partial { background: var(--comparator); }
+.badge.match { background: var(--ink); }
 .badge.none, .badge.missing { background: var(--none); }
 .source-grid {
   display: grid;

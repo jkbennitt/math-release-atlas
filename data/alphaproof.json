@@ -75,11 +75,11 @@
     },
     {
       "id": "erdos-attempted",
-      "status": "PARTIAL",
+      "status": "MATCH",
       "paper_attempted": 353,
       "repo_newlines": 352,
       "repo_entries": 353,
-      "label": "352 vs 353"
+      "label": "353 listed, matching the paper"
     },
     {
       "id": "per-row-provenance",
@@ -1555,5 +1555,5 @@
       "provenance": "MISSING"
     }
   ],
-  "snapshot_digest": "4e30ea3f0b5765b0b21e631277db4f29cc6a880711ae05e1d5628f0019fb0aab"
+  "snapshot_digest": "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
 }
