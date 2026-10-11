@@ -61,14 +61,18 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
 
 <Base
   title="Citation graph · Math Release Atlas"
-  description="Directed citation edges between result families, each linked to the upstream file that contains the reference."
+  description="Citation edges come from OpenAI Math manuscripts only. AlphaProof Nexus and Anthropic records have no citation data in this atlas."
 >
   <article class="graph-page">
     <h1>Citation graph</h1>
     <p>
-      Each citation is an <code>OAI:</code> key in an upstream manuscript source. The list names
-      every directed edge and links the file that contains the key. The map below draws the same
-      edges. Nothing on this page needs JavaScript.
+      Citation edges come from OpenAI Math manuscripts only. Each citation is an <code>OAI:</code> key
+      in an upstream manuscript source. AlphaProof Nexus and Anthropic records have no citation data
+      in this atlas. The list names every directed edge and links the file that contains the key. The
+      map below draws the same edges. Nothing on this page needs JavaScript.
+    </p>
+    <p>
+      Shared problem identifiers are compared on the <a href={`${base}source/cross/`}>cross-source page</a>.
     </p>
     <p>
       {citations.length} directed links among {citedFamilies.size} families in this catalogue.

@@ -3,12 +3,13 @@ import Base from "../layouts/Base.astro";
 import { anthropicLeanRank, atlas, dateRange, shortSha, type AlphaProofRecord } from "../lib/atlas";
 import { leanLabel, leanRank } from "../lib/lean";
 import { lensCounts, lensLabel } from "../lib/lenses";
+import { lensCarriers, openaiDirectHref } from "../lib/rows";
 
 const commit = atlas.upstream.commit;
 const counts = atlas.counts;
 const generated = atlas.generated_at.slice(0, 10);
 const base = import.meta.env.BASE_URL;
-const lenses = lensCounts(atlas.families);
+const lenses = lensCounts(lensCarriers());
 const alphaproof = atlas.alphaproof;
 const anthropic = atlas.anthropic;
 const sources = atlas.sources.sources;
@@ -171,7 +172,11 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
               data-date={dates[0]}
               data-manuscripts={family.manuscripts.length}
             >
-              <td data-label="Source"><a href={`${base}source/`}>openai-math</a></td>
+              <td data-label="Source">
+                <a class="direct-upstream" href={openaiDirectHref(family)}>openai-math</a>
+                {" "}
+                <a href={`${base}source/`}>Notes</a>
+              </td>
               <td class="id">{family.id}</td>
               <td>
                 <p class="title">
@@ -255,19 +260,33 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
             data-areas={record.category}
             data-lean="deposited"
             data-lean-rank="3"
-            data-lenses=""
+            data-lenses={record.lenses.map((lens) => lens.tag).join("|")}
             data-date={alphaproof.commit_date}
             data-manuscripts={record.natural_language_proofs.length}
           >
-            <td data-label="Source"><a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>alphaproof-nexus</a></td>
+            <td data-label="Source">
+              <a class="direct-upstream" href={record.url}>alphaproof-nexus</a>
+              {" "}
+              <a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>Notes</a>
+            </td>
             <td class="id">{record.anchor}</td>
             <td>
               <p class="title">
-                <a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>{record.statement}</a>
+                <a class="direct-upstream" href={record.url}>{record.statement}</a>
               </p>
               {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
               <p class="meta">Per-row provenance: {record.provenance}</p>
-              <p class="meta"><a href={record.url}>{record.path}</a></p>
+              <p class="meta"><a class="direct-upstream" href={record.url}>{record.path}</a></p>
+              {record.lenses.length > 0 && (
+                <ul class="notes">
+                  {record.lenses.map((lens) => (
+                    <li>
+                      <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                      {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {record.natural_language_proofs.map((item) => (
                 <p class="meta"><a href={item.url}>{item.path}</a></p>
               ))}
@@ -290,23 +309,37 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
               data-areas={release.id}
               data-lean={release.kind}
               data-lean-rank={anthropicLeanRank(release.kind)}
-              data-lenses=""
+              data-lenses={release.lenses.map((lens) => lens.tag).join("|")}
               data-date={dated}
               data-manuscripts={release.paper ? 1 : 0}
             >
-              <td data-label="Source"><a href={`${base}source/anthropic/#${release.id}`}>anthropic</a></td>
+              <td data-label="Source">
+                <a class="direct-upstream" href={release.tree_url}>anthropic</a>
+                {" "}
+                <a href={`${base}source/anthropic/#${release.id}`}>Notes</a>
+              </td>
               <td class="id">{release.id}</td>
               <td>
                 <p class="title">
-                  <a href={`${base}source/anthropic/#${release.id}`}>{release.title}</a>
+                  <a class="direct-upstream" href={release.paper?.url ?? release.tree_url}>{release.title}</a>
                 </p>
                 <p>{release.statement}</p>
                 {release.gaps.map((gap) => (
                   <p class="caution">{gap.status}. {gap.label}</p>
                 ))}
-                <p class="meta"><a href={release.tree_url}>{release.path || release.repo}</a></p>
+                <p class="meta"><a class="direct-upstream" href={release.tree_url}>{release.path || release.repo}</a></p>
                 {release.paper && (
-                  <p class="meta"><a href={release.paper.url}>{release.paper.title}</a> · {release.paper.v1_submitted}</p>
+                  <p class="meta"><a class="direct-upstream" href={release.paper.url}>{release.paper.title}</a> · {release.paper.v1_submitted}</p>
+                )}
+                {release.lenses.length > 0 && (
+                  <ul class="notes">
+                    {release.lenses.map((lens) => (
+                      <li>
+                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
                 {release.announcement && (
                   <p class="meta">

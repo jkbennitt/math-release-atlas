@@ -2,7 +2,7 @@ id: "262"
 lenses:
   - tag: electronic-structure
     why: "The family treats sharp Lieb–Thirring inequalities for finite-matrix potentials."
-    source: "Upstream family 262 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L613"
 community:
   status: claimed
   evidence: []

@@ -2,7 +2,7 @@ id: "269"
 lenses:
   - tag: condensed-matter
     why: "The family treats the Laughlin spectral gap at filling one-third and its stability under scalar disorder."
-    source: "Upstream family 269 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L627"
 community:
   status: claimed
   evidence: []

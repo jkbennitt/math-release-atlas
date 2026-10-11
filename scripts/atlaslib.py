@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import html
 import json
@@ -134,8 +135,22 @@ LENS_ORDER = (
     "quantum-information",
     "gravity-qft",
     "computation-hardness",
+    "number-theory",
+    "combinatorics",
+    "algebraic-geometry",
+    "analysis",
 )
 LENS_TAGS = set(LENS_ORDER)
+MATH_SUBJECT_TAGS = {
+    "number-theory",
+    "combinatorics",
+    "algebraic-geometry",
+    "analysis",
+}
+CATALOGUE_LENS_FILES = {
+    "alphaproof.yaml": "alphaproof",
+    "anthropic.yaml": "anthropic",
+}
 COMMUNITY_STATUS_FILE = CURATED_DIR / "community-status.yaml"
 STATUS_APPROVALS_FILE = CURATED_DIR / "status-approvals.yaml"
 STATUS_APPROVER = "jkbennitt"
@@ -716,6 +731,20 @@ def parse_areas(tex: str) -> tuple[dict[str, list[str]], list[tuple[str, int]]]:
     return mapping, area_counts
 
 
+def parse_overview_lines(tex: str) -> dict[str, int]:
+    """Line number of each family's \\resultentry in overview.tex."""
+    found: dict[str, int] = {}
+    for index, line in enumerate(tex.splitlines(), start=1):
+        entry = re.search(r"\\resultentry\{(\d{3})\}", line)
+        if not entry:
+            continue
+        family_id = entry.group(1)
+        if family_id in found:
+            raise AtlasError(f"overview.tex repeats result {family_id}")
+        found[family_id] = index
+    return found
+
+
 def parse_formalization(text: str) -> dict[str, Any]:
     section = ""
     in_main = False
@@ -882,6 +911,7 @@ def build_upstream(repo: Path) -> tuple[dict[str, Any], bool]:
 
     families = parse_contents(contents)
     areas, area_counts = parse_areas(overview)
+    overview_lines = parse_overview_lines(overview)
     formalization = parse_formalization(formalization_text)
     readme_meta = parse_readme(readme)
     headline_manuscripts, headline_families = parse_contents_headline(contents)
@@ -908,6 +938,8 @@ def build_upstream(repo: Path) -> tuple[dict[str, Any], bool]:
         family_id = family["id"]
         if family_id not in areas:
             raise AtlasError(f"family {family_id} has no subject in overview.tex")
+        if family_id not in overview_lines:
+            raise AtlasError(f"family {family_id} has no result entry in overview.tex")
         manuscripts = []
         for item in family["manuscripts"]:
             if item["slug"] not in preprint_dirs:
@@ -961,6 +993,7 @@ def build_upstream(repo: Path) -> tuple[dict[str, Any], bool]:
                 "id": family_id,
                 "title": family["title"],
                 "areas": areas[family_id],
+                "overview_line": overview_lines[family_id],
                 "upstream_summary": family["upstream_summary"],
                 "manuscripts": manuscripts,
                 "lean": {
@@ -1341,7 +1374,7 @@ def load_curated(directory: Path) -> dict[str, dict[str, Any]]:
     for path in sorted(directory.iterdir()):
         if path.suffix not in {".yaml", ".yml"}:
             continue
-        if path.name in {COMMUNITY_STATUS_FILE.name, STATUS_APPROVALS_FILE.name}:
+        if path.name in {COMMUNITY_STATUS_FILE.name, STATUS_APPROVALS_FILE.name, *CATALOGUE_LENS_FILES}:
             continue
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))
         item = validate_curated_file(path, payload)
@@ -1385,6 +1418,202 @@ REQUIRED_CAUTIONS = {
 REQUIRED_CAUTION_IDS = list(REQUIRED_CAUTIONS)
 
 
+def parse_catalogue_lens(
+    lens: Any,
+    label: str,
+    pinned_commit: str,
+    record_url: str | None = None,
+) -> dict[str, str]:
+    """A non-OpenAI lens needs a tag, a why, and an https source at the pinned commit.
+
+    An AlphaProof lens source must be that record's Lean file URL.
+    """
+    if not isinstance(lens, dict):
+        raise AtlasError(f"{label} must be a mapping")
+    tag = require_text(lens.get("tag"), f"{label} tag")
+    if tag not in LENS_TAGS:
+        raise AtlasError(f"{label} tag {tag} is not in the fixed list")
+    why = require_text(lens.get("why"), f"{label} why")
+    source = require_text(lens.get("source"), f"{label} source")
+    if not source.startswith("https://"):
+        raise AtlasError(f"{label} source must be an https URL")
+    if not re.fullmatch(r"[0-9a-f]{40}", pinned_commit) or pinned_commit not in source:
+        raise AtlasError(f"{label} source is not pinned to {pinned_commit}")
+    if record_url is not None and source != record_url:
+        raise AtlasError(f"{label} source must be the record URL")
+    overclaims = scan_overclaims(f"{why}\n{source}", label)
+    if overclaims:
+        raise AtlasError(overclaims[0])
+    return {"tag": tag, "why": why, "source": source}
+
+
+def _read_catalogue_lens_file(path: Path) -> dict[str, list[Any]]:
+    if not path.is_file():
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or set(payload) != {"records"}:
+        raise AtlasError(f"{path.name} must be a records mapping")
+    records = payload.get("records")
+    if not isinstance(records, dict):
+        raise AtlasError(f"{path.name} records must be a mapping")
+    loaded: dict[str, list[Any]] = {}
+    for record_id, body in records.items():
+        if not isinstance(record_id, str) or not record_id.strip():
+            raise AtlasError(f"{path.name} has an empty record id")
+        if record_id in loaded:
+            raise AtlasError(f"{path.name} repeats {record_id}")
+        if not isinstance(body, dict) or set(body) != {"lenses"}:
+            raise AtlasError(f"{path.name} record {record_id} must contain lenses")
+        lenses = body.get("lenses")
+        if not isinstance(lenses, list) or not lenses:
+            raise AtlasError(f"{path.name} record {record_id} needs at least one lens")
+        loaded[record_id] = lenses
+    return loaded
+
+
+def _attach_record_lenses(
+    records: list[dict[str, Any]],
+    notes: dict[str, list[Any]],
+    id_key: str,
+    commit_for,
+    label: str,
+) -> None:
+    known = {str(record.get(id_key)) for record in records}
+    unknown = sorted(set(notes) - known)
+    if unknown:
+        raise AtlasError(f"{label} lenses have no record: {unknown}")
+    for record in records:
+        record_id = str(record[id_key])
+        raw = notes.get(record_id, [])
+        cleaned = []
+        seen: set[str] = set()
+        for index, lens in enumerate(raw, start=1):
+            item = parse_catalogue_lens(
+                lens,
+                f"{record_id} lens {index}",
+                commit_for(record),
+                record_url=str(record.get("url") or "") if label == "alphaproof" else None,
+            )
+            if item["tag"] in seen:
+                raise AtlasError(f"{record_id} repeats lens {item['tag']}")
+            seen.add(item["tag"])
+            cleaned.append(item)
+        record["lenses"] = cleaned
+
+
+def apply_catalogue_lenses(extras: dict[str, Any]) -> dict[str, Any]:
+    """Copy catalogue extras and attach curated lenses. Untagged records get an empty list."""
+    cloned = copy.deepcopy(extras)
+    alphaproof_notes = _read_catalogue_lens_file(CURATED_DIR / "alphaproof.yaml")
+    anthropic_notes = _read_catalogue_lens_file(CURATED_DIR / "anthropic.yaml")
+    alphaproof = cloned.get("alphaproof")
+    if isinstance(alphaproof, dict):
+        commit = str(alphaproof.get("source", {}).get("commit", ""))
+        _attach_record_lenses(
+            alphaproof.get("records") or [],
+            alphaproof_notes,
+            "id",
+            lambda _record: commit,
+            "alphaproof",
+        )
+    anthropic = cloned.get("anthropic")
+    if isinstance(anthropic, dict):
+        _attach_record_lenses(
+            anthropic.get("releases") or [],
+            anthropic_notes,
+            "id",
+            lambda record: str(record.get("commit", "")),
+            "anthropic",
+        )
+    return cloned
+
+
+def openai_direct_href(family: dict[str, Any], repo: str) -> str:
+    """Primary link: this family's result entry in overview.tex at the pinned commit."""
+    line = family.get("overview_line")
+    sha = str(family.get("upstream_sha") or "")
+    if not isinstance(line, int) or isinstance(line, bool) or line < 1:
+        raise AtlasError(f"family {family.get('id')} has no overview line")
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise AtlasError(f"family {family.get('id')} has no upstream commit")
+    return f"{repo}/blob/{sha}/overview.tex#L{line}"
+
+
+def openai_manuscript_hrefs(family: dict[str, Any]) -> list[str]:
+    """Every pinned manuscript PDF for this family, in catalogue order."""
+    return [str(item["pdf"]) for item in family.get("manuscripts") or []]
+
+
+def anthropic_direct_hrefs(release: dict[str, Any]) -> list[str]:
+    hrefs = []
+    paper = release.get("paper") or {}
+    paper_url = paper.get("url") if isinstance(paper, dict) else None
+    if paper_url:
+        hrefs.append(str(paper_url))
+    hrefs.append(str(release["tree_url"]))
+    return hrefs
+
+
+def check_math_lens_sources(families: list[dict[str, Any]]) -> list[str]:
+    """Math-subject lenses on OpenAI families cite an https page at that family's commit."""
+    failures: list[str] = []
+    for family in families:
+        sha = str(family.get("upstream_sha") or "")
+        for lens in family.get("lenses") or []:
+            if lens.get("tag") not in MATH_SUBJECT_TAGS:
+                continue
+            source = str(lens.get("source") or "")
+            why = str(lens.get("why") or "")
+            if not why.strip():
+                failures.append(f"family {family['id']} lens {lens.get('tag')} is missing a why")
+            if not source.startswith("https://") or not re.fullmatch(r"[0-9a-f]{40}", sha) or sha not in source:
+                failures.append(
+                    f"family {family['id']} lens {lens.get('tag')} source is not pinned to the upstream commit"
+                )
+    return failures
+
+
+def check_direct_links(index_html: str, catalog: dict[str, Any]) -> list[str]:
+    """Every home row has an https upstream link pinned to that source's own commit.
+
+    An arXiv paper link is pinned when it names v1. OpenAI's primary link is the
+    overview entry. Manuscript PDFs stay in the row and are counted separately.
+    """
+    failures: list[str] = []
+    repo = str(catalog["upstream"]["repo"])
+    alphaproof_commit = str(catalog["alphaproof"]["source"]["commit"])
+    rows: list[tuple[str, list[str]]] = []
+    commits: dict[str, str] = {}
+    for family in catalog["families"]:
+        element_id = f"f-{family['id']}"
+        rows.append((element_id, [openai_direct_href(family, repo)]))
+        commits[element_id] = str(family["upstream_sha"])
+    for record in catalog["alphaproof"]["records"]:
+        element_id = f"apn-{record['anchor']}"
+        rows.append((element_id, [str(record["url"])]))
+        commits[element_id] = alphaproof_commit
+    for release in catalog["anthropic"]["releases"]:
+        element_id = f"an-{release['id']}"
+        rows.append((element_id, anthropic_direct_hrefs(release)))
+        commits[element_id] = str(release["commit"])
+    for element_id, expected in rows:
+        inner = _element_inner(index_html, element_id)
+        if inner is None:
+            failures.append(f"home row {element_id} is missing")
+            continue
+        found = classed_hrefs(inner, "direct-upstream")
+        if not found:
+            failures.append(f"home row {element_id} has no direct upstream link")
+        for href in expected:
+            if not href or href not in found:
+                failures.append(f"home row {element_id} is missing upstream {href}")
+        commit = commits[element_id]
+        for href in found:
+            if not _href_is_pinned(href, commit):
+                failures.append(f"home row {element_id} upstream link is not pinned to {commit}: {href}")
+    return failures
+
+
 def merge_data(
     upstream: dict[str, Any],
     curated: dict[str, dict[str, Any]],
@@ -1419,7 +1648,7 @@ def merge_data(
         "families": merged_families,
     }
     if extras:
-        payload.update(extras)
+        payload.update(apply_catalogue_lenses(extras))
     return payload
 
 
@@ -2056,7 +2285,12 @@ def strip_upstream_quotes(html_text: str) -> str:
     return re.sub(r'\sdata-search="[^"]*"', "", without_quotes)
 
 
-def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: str) -> list[str]:
+def check_family_pages(
+    dist: Path,
+    families: list[dict[str, Any]],
+    index_html: str,
+    repo: str,
+) -> list[str]:
     failures: list[str] = []
     index_text = html.unescape(index_html)
     for family in families:
@@ -2105,19 +2339,70 @@ def check_family_pages(dist: Path, families: list[dict[str, Any]], index_html: s
                 failures.append(f"family page {family['id']} is missing manuscript {item['slug']}")
             if item["title"] not in index_text:
                 failures.append(f"table is missing manuscript title for {family['id']}")
+        directs = classed_hrefs(text, "direct-upstream")
+        if openai_direct_href(family, repo) not in directs:
+            failures.append(f"family page {family['id']} is missing its overview link")
+        for href in openai_manuscript_hrefs(family):
+            if href not in directs:
+                failures.append(f"family page {family['id']} is missing manuscript {href}")
     return failures
 
 
-def check_lens_pages(dist: Path, families: list[dict[str, Any]]) -> list[str]:
+def classed_hrefs(fragment: str, class_name: str) -> list[str]:
+    found: list[str] = []
+    for tag in re.findall(r"<a\b[^>]*>", fragment, flags=re.IGNORECASE):
+        classes = re.search(r'class="([^"]*)"', tag)
+        if classes is None or class_name not in classes.group(1).split():
+            continue
+        href = re.search(r'href="([^"]*)"', tag)
+        if href:
+            found.append(html.unescape(href.group(1)))
+    return found
+
+
+def _href_is_pinned(href: str, commit: str) -> bool:
+    """A GitHub link must contain this source's commit. An arXiv link must name v1."""
+    if not href.startswith("https://"):
+        return False
+    if href.startswith("https://arxiv.org/"):
+        return re.fullmatch(r"https://arxiv.org/abs/\d{4}\.\d{4,5}v1", href) is not None
+    return bool(re.fullmatch(r"[0-9a-f]{40}", commit)) and commit in href
+
+
+def source_anchor_hrefs(fragment: str) -> list[str]:
+    """hrefs of anchors that immediately follow a Source: label."""
+    found: list[str] = []
+    for match in re.finditer(r"Source:\s*<a\b([^>]*)>", fragment, flags=re.IGNORECASE):
+        href = re.search(r'href="([^"]*)"', match.group(1))
+        found.append(html.unescape(href.group(1)) if href else "")
+    return found
+
+
+def check_lens_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     index = dist / "lens" / "index.html"
     if not index.is_file():
         return ["missing lens index"]
     index_text = index.read_text(encoding="utf-8")
-    grouped: dict[str, list[str]] = {tag: [] for tag in LENS_ORDER}
+    if "eleven fixed subjects" not in index_text:
+        failures.append("lens index does not name eleven fixed subjects")
+    families = catalog["families"]
+    repo = str(catalog["upstream"]["repo"])
+    grouped: dict[str, dict[str, int]] = {
+        tag: {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0} for tag in LENS_ORDER
+    }
     for family in families:
         for lens in family.get("lenses") or []:
-            grouped.setdefault(lens["tag"], []).append(family["id"])
+            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped[lens["tag"]]["openai-math"] += 1
+    for record in catalog["alphaproof"]["records"]:
+        for lens in record.get("lenses") or []:
+            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped[lens["tag"]]["alphaproof-nexus"] += 1
+    for release in catalog["anthropic"]["releases"]:
+        for lens in release.get("lenses") or []:
+            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped[lens["tag"]]["anthropic"] += 1
     for tag in LENS_ORDER:
         if f"lens/{tag}/" not in index_text:
             failures.append(f"lens index does not link to {tag}")
@@ -2126,9 +2411,52 @@ def check_lens_pages(dist: Path, families: list[dict[str, Any]]) -> list[str]:
             failures.append(f"missing lens page {tag}")
             continue
         text = page.read_text(encoding="utf-8")
-        for family_id in grouped.get(tag, []):
-            if f"f/{family_id}/" not in text:
-                failures.append(f"lens page {tag} is missing family {family_id}")
+        counts = grouped.get(tag, {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+        expected = (
+            f"OpenAI Math (openai-math) {counts['openai-math']}. "
+            f"AlphaProof Nexus (alphaproof-nexus) {counts['alphaproof-nexus']}. "
+            f"Anthropic (anthropic) {counts['anthropic']}."
+        )
+        if expected not in text:
+            failures.append(f"lens page {tag} counts do not match the catalogue")
+        for href in source_anchor_hrefs(text):
+            if not href.startswith("https://"):
+                failures.append(f"lens page {tag} has a source link that is not https")
+        directs = classed_hrefs(text, "direct-upstream")
+        for family in families:
+            for lens in family.get("lenses") or []:
+                if lens["tag"] != tag:
+                    continue
+                source = str(lens["source"])
+                if f"f/{family['id']}/" not in text or source not in text:
+                    failures.append(f"lens page {tag} is missing family {family['id']}")
+                if not source.startswith("https://") or source not in source_anchor_hrefs(text):
+                    failures.append(f"lens page {tag} source for {family['id']} is not an https link")
+                if openai_direct_href(family, repo) not in directs:
+                    failures.append(f"lens page {tag} is missing the overview link for {family['id']}")
+                for href in openai_manuscript_hrefs(family):
+                    if href not in directs:
+                        failures.append(f"lens page {tag} is missing a manuscript for {family['id']}")
+        for record in catalog["alphaproof"]["records"]:
+            for lens in record.get("lenses") or []:
+                if lens["tag"] != tag:
+                    continue
+                if f"source/alphaproof-nexus/#{record['anchor']}" not in text or record["url"] not in text:
+                    failures.append(f"lens page {tag} is missing AlphaProof {record['id']}")
+                if record["url"] not in classed_hrefs(text, "direct-upstream"):
+                    failures.append(f"lens page {tag} is missing the upstream link for {record['id']}")
+        for release in catalog["anthropic"]["releases"]:
+            for lens in release.get("lenses") or []:
+                if lens["tag"] != tag:
+                    continue
+                if f"source/anthropic/#{release['id']}" not in text or lens["source"] not in text:
+                    failures.append(f"lens page {tag} is missing Anthropic {release['id']}")
+                directs = classed_hrefs(text, "direct-upstream")
+                for href in anthropic_direct_hrefs(release):
+                    if href not in directs:
+                        failures.append(f"lens page {tag} is missing the upstream link for {release['id']}")
+                if release.get("kind") == "formalization" and "Formalization" not in text:
+                    failures.append(f"lens page {tag} drops the formalization badge on {release['id']}")
     return failures
 
 
@@ -2140,16 +2468,28 @@ def citation_pairs(payload: dict[str, Any]) -> set[tuple[str, str]]:
     return pairs
 
 
-def check_graph_page(dist: Path, families: list[dict[str, Any]]) -> list[str]:
+def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
     page = dist / "graph" / "index.html"
     if not page.is_file():
         return ["missing citation graph"]
     text = html.unescape(page.read_text(encoding="utf-8"))
     failures: list[str] = []
+    for phrase in (
+        "Citation edges come from OpenAI Math manuscripts only.",
+        "AlphaProof Nexus and Anthropic records have no citation data in this atlas.",
+        "source/cross/",
+    ):
+        if phrase not in text:
+            failures.append(f"citation graph is missing {phrase!r}")
+    joined = catalog.get("cross") or {}
+    if not joined.get("shared") and not joined.get("shared_with_anthropic"):
+        if "Cross-source edges" in text:
+            failures.append("citation graph adds an empty cross-source section")
     if "our grouping, not a citation" not in text:
         failures.append("citation graph does not label shared-topic links")
     if "<ul" not in text:
         failures.append("citation graph has no list fallback")
+    families = catalog["families"]
     for family in families:
         for edge in family.get("cites") or []:
             if edge["url"] not in text or f"f/{family['id']}/" not in text or f"f/{edge['to']}/" not in text:
@@ -3329,7 +3669,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
 
 
 def check_home_layout(dist: Path) -> list[str]:
-    """Home, source, cross, about, and status fit at 1024px and 390px."""
+    """Home, source, cross, about, status, a family, lenses, and the graph fit at 1024px and 390px."""
     script = ROOT / "scripts" / "layout_check.mjs"
     if not script.is_file():
         return ["home layout check is missing"]
@@ -3392,12 +3732,17 @@ def check_dist(dist: Path) -> list[str]:
         index_html,
     )
     if len(pdfs) != expected["manuscripts"]:
-        failures.append(f"table renders {len(pdfs)} manuscript links, data has {expected['manuscripts']}")
-    failures.extend(check_family_pages(dist, catalog["families"], index_html))
+        failures.append(
+            f"table renders {len(pdfs)} manuscript links, data has {expected['manuscripts']}"
+        )
+    repo = str(catalog["upstream"]["repo"])
+    failures.extend(check_math_lens_sources(catalog["families"]))
+    failures.extend(check_family_pages(dist, catalog["families"], index_html, repo))
+    failures.extend(check_direct_links(index_html, catalog))
     failures.extend(check_alphaproof_pages(dist, catalog))
     failures.extend(check_anthropic_pages(dist, catalog))
-    failures.extend(check_lens_pages(dist, catalog["families"]))
-    failures.extend(check_graph_page(dist, catalog["families"]))
+    failures.extend(check_lens_pages(dist, catalog))
+    failures.extend(check_graph_page(dist, catalog))
     failures.extend(check_status_page(dist, catalog["families"]))
     for family_id, text in REQUIRED_CAUTIONS.items():
         if text not in index_text:

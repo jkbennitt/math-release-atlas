@@ -1,0 +1,8 @@
+id: "071"
+lenses:
+  - tag: analysis
+    why: "The upstream overview places this family in the Real and complex analysis section."
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L216"
+community:
+  status: claimed
+  evidence: []

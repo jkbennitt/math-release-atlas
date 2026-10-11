@@ -63,8 +63,11 @@ from atlaslib import (
     exempt_index_rows,
     load_cautions,
     load_community_schema,
+    check_math_lens_sources,
     load_curated,
     load_status_approvals,
+    parse_catalogue_lens,
+    _href_is_pinned,
     materialize_upstream,
     merge_data,
     parse_contents,
@@ -119,6 +122,7 @@ def check_source() -> list[str]:
         for lens in item["lenses"]:
             if not lens["source"].strip():
                 failures.append(f"{item['id']} lens {lens['tag']} is missing a source")
+    failures.extend(check_math_lens_sources(families["families"]))
     failures.extend(check_status_vocabulary())
     failures.extend(check_status_approvals(curated))
     failures.extend(check_codeowners())
@@ -1662,6 +1666,98 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     message = expect_error("missing source", missing_source)
     if message:
         failures.append(message)
+
+    pinned = "a" * 40
+
+    def catalogue_lens_missing_why() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": " ",
+                "source": f"https://example.com/{pinned}",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    def catalogue_lens_missing_source() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": "The deposited file names a number.",
+                "source": " ",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    def catalogue_lens_unpinned_source() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "number-theory",
+                "why": "The deposited file names a number.",
+                "source": "https://example.com/file",
+            },
+            "catalogue lens",
+            pinned,
+        )
+
+    for label, func in (
+        ("catalogue lens missing why", catalogue_lens_missing_why),
+        ("catalogue lens missing source", catalogue_lens_missing_source),
+        ("catalogue lens unpinned source", catalogue_lens_unpinned_source),
+    ):
+        message = expect_error(label, func)
+        if message:
+            failures.append(message)
+
+    record_url = f"https://example.com/{pinned}/file.lean"
+
+    def catalogue_lens_record_url_mismatch() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "algebraic-geometry",
+                "why": "The deposited file states a prime spectrum.",
+                "source": f"https://example.com/{pinned}/other.lean",
+            },
+            "catalogue lens",
+            pinned,
+            record_url=record_url,
+        )
+
+    message = expect_error("catalogue lens record url", catalogue_lens_record_url_mismatch)
+    if message:
+        failures.append(message)
+    try:
+        matched = parse_catalogue_lens(
+            {
+                "tag": "algebraic-geometry",
+                "why": "The deposited file states a prime spectrum.",
+                "source": record_url,
+            },
+            "catalogue lens",
+            pinned,
+            record_url=record_url,
+        )
+    except AtlasError as exc:
+        failures.append(f"catalogue lens record url match rejected: {exc}")
+        matched = None
+    if matched is not None and matched["source"] != record_url:
+        failures.append("catalogue lens record url match changed the source")
+
+    own = "a" * 40
+    foreign = "b" * 40
+    pinned_href = f"https://github.com/openai/math/blob/{own}/overview.tex#L12"
+    if _href_is_pinned(pinned_href, foreign):
+        failures.append("a foreign commit counts as a pin")
+    if not _href_is_pinned(pinned_href, own):
+        failures.append("the source commit does not count as a pin")
+    if _href_is_pinned("https://arxiv.org/abs/2608.13637", own):
+        failures.append("an unversioned arXiv link counts as pinned")
+    if not _href_is_pinned("https://arxiv.org/abs/2608.13637v1", own):
+        failures.append("an arXiv v1 link does not count as pinned")
+    if _href_is_pinned("Upstream family 090 summary", own):
+        failures.append("prose counts as a pinned link")
     message = expect_error("curated solved", solved_curated)
     if message:
         failures.append(message)

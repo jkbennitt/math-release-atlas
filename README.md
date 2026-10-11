@@ -53,7 +53,7 @@ catalogue counts, or skips a source that has no derivation. The built
 `og.png` must match a fresh render byte for byte, so a blank or stale image
 of the right size fails. It also fails if any built page is missing
 `og:image` or `twitter:card`, or if `og:image` is not absolute.
-Package version 0.4.3.
+Package version 0.4.4.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -119,9 +119,12 @@ related:
 ```
 
 Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
-`electronic-structure`, `quantum-information`, `gravity-qft`, and
-`computation-hardness`. Each lens and each related link needs a non-empty
-`source`. Community status ids are `claimed`, `community-checking`,
+`electronic-structure`, `quantum-information`, `gravity-qft`,
+`computation-hardness`, `number-theory`, `combinatorics`,
+`algebraic-geometry`, and `analysis`. Each lens and each related link needs a
+non-empty `source`. A math-subject lens cites an https URL at the family's
+pinned commit. AlphaProof and Anthropic lenses live in
+`data/curated/alphaproof.yaml` and `data/curated/anthropic.yaml`. Community status ids are `claimed`, `community-checking`,
 `independently-checked`, `disputed`, and `retracted`. Any status other than
 `claimed` needs evidence: an http or https URL, a `YYYY-MM-DD` date, and a
 short neutral note of at most 25 words. That status is recorded only when

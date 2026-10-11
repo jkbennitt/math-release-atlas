@@ -1,22 +1,22 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { atlas } from "../../lib/atlas";
 import { lensCounts, lensLabel } from "../../lib/lenses";
+import { lensCarriers } from "../../lib/rows";
 
 const base = import.meta.env.BASE_URL;
-const rows = lensCounts(atlas.families);
+const rows = lensCounts(lensCarriers());
 ---
 
 <Base
   title="Lenses · Math Release Atlas"
-  description="Hand-written lens tags for families in the unofficial math release atlas. Each tag links to the families it covers."
+  description="Hand-written lens tags for records in the unofficial math release atlas. Each tag links to the records it covers."
 >
   <article class="lens-page">
     <h1>Lenses</h1>
     <p class="lede">
-      A lens is a hand-written tag with a source. It groups families whose upstream text fits one
-      of seven fixed subjects. Families without a tag are not listed here. The default community
-      status on every family page is claimed.
+      A lens is a hand-written tag with a source. It groups records from all three catalogues whose
+      upstream text fits one of eleven fixed subjects. Records without a tag are not listed here.
+      The default community status on every family page is claimed.
     </p>
     <ul class="lens-index">
       {
@@ -25,7 +25,7 @@ const rows = lensCounts(atlas.families);
             <a href={`${base}lens/${row.tag}/`}>{lensLabel(row.tag)}</a>
             <span class="meta">
               {" "}
-              {row.tag} · {row.count} {row.count === 1 ? "family" : "families"}
+              {row.tag} · {row.count} {row.count === 1 ? "record" : "records"}
             </span>
           </li>
         ))

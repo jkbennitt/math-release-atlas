@@ -1,0 +1,96 @@
+records:
+  "APNOutputs/AICollaborator/AdditiveCombinatorics/57.lean":
+    lenses:
+      - tag: combinatorics
+        why: "The deposited Lean file is Ben Green's Open Problem 57, in the AdditiveCombinatorics folder, about convex combinations on a finite abelian group."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AdditiveCombinatorics/57.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_1.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_1.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_2.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_2.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_3.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_3.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_4.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_4.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_5.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_5.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_7.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_7.lean"
+  "APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_8.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited Lean file sits in the AlgebraicGeometry folder and is named as a Hilbert-function statement."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/AlgebraicGeometry/hilbert_functions_8.lean"
+  "APNOutputs/AICollaborator/Graphs/GraphConjecture2.lean":
+    lenses:
+      - tag: combinatorics
+        why: "The deposited Lean file is Written on the Wall II, Conjecture 2, and opens on SimpleGraph."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/Graphs/GraphConjecture2.lean"
+  "APNOutputs/AICollaborator/Graphs/bipartite_graph_reconstruction_conjecture_2.lean":
+    lenses:
+      - tag: combinatorics
+        why: "The deposited Lean file is named as the bipartite graph reconstruction conjecture and opens on SimpleGraph."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/Graphs/bipartite_graph_reconstruction_conjecture_2.lean"
+  "APNOutputs/AICollaborator/QuantumOptics/35.lean":
+    lenses:
+      - tag: quantum-information
+        why: "The deposited Lean file is Open Quantum Problem 35 on absolutely maximally entangled pure states."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/QuantumOptics/35.lean"
+  "APNOutputs/AICollaborator/QuantumOptics/MonochromaticQuantumGraph.lean":
+    lenses:
+      - tag: quantum-information
+        why: "The deposited Lean file studies monochromatic quantum graphs whose quantum-optics motivation is multipartite GHZ-type states."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/AICollaborator/QuantumOptics/MonochromaticQuantumGraph.lean"
+  "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states that a directed colimit of geometrically irreducible algebras is geometrically irreducible, where geometric irreducibility means the prime spectrum stays irreducible after base change."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean"
+  "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states that geometric irreducibility of algebras is transitive along a scalar tower."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean"
+  "APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states equivalent conditions for a geometrically irreducible algebra, including an irreducible prime spectrum after base change to a separable finite extension, a separable closure, and an algebraically closed field."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean"
+  "APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states a bijection of minimal primes for a tensor product with a geometrically irreducible algebra."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean"
+  "APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states that geometric reducedness of an algebra is unchanged by a separable algebraic extension of the base field."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean"
+  "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states that the tensor product of a reduced algebra with a separable field extension stays reduced."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean"
+  "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean":
+    lenses:
+      - tag: algebraic-geometry
+        why: "The deposited file states that the tensor product of a reduced algebra with a separably generated field extension stays reduced."
+        source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean"

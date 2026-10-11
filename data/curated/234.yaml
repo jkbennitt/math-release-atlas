@@ -2,7 +2,7 @@ id: "234"
 lenses:
   - tag: condensed-matter
     why: "The family treats the pressure of orthogonally invariant Ising spin glasses."
-    source: "Upstream family 234 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L551"
 community:
   status: claimed
   evidence: []

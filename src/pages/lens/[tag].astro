@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { atlas, type Family } from "../../lib/atlas";
 import { lensLabel, LENS_TAGS, type LensTag } from "../../lib/lenses";
+import { lensRows, lensSourceCounts } from "../../lib/rows";
 
 export function getStaticPaths() {
   return LENS_TAGS.map((tag) => ({
@@ -17,48 +17,64 @@ interface Props {
 const { tag } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const label = lensLabel(tag);
-
-interface Tagged {
-  family: Family;
-  why: string;
-  source: string;
-}
-
-const tagged: Tagged[] = [];
-for (const family of atlas.families) {
-  for (const lens of family.lenses) {
-    if (lens.tag === tag) {
-      tagged.push({ family, why: lens.why, source: lens.source });
-    }
-  }
-}
+const tagged = lensRows(tag);
+const counts = lensSourceCounts(tag);
 ---
 
 <Base
   title={`${label} · Math Release Atlas`}
-  description={`Families tagged ${tag} in the unofficial math release atlas.`}
+  description={`Records tagged ${tag} in the unofficial math release atlas.`}
 >
   <article class="lens-page">
     <p class="meta"><a href={`${base}lens/`}>All lenses</a></p>
     <h1>{label}</h1>
     <p class="meta">{tag}</p>
+    <p id="lens-source-counts">
+      OpenAI Math (openai-math) {counts["openai-math"]}. AlphaProof Nexus (alphaproof-nexus) {counts["alphaproof-nexus"]}. Anthropic (anthropic) {counts.anthropic}.
+    </p>
     <p class="lede">
       {tagged.length === 0
-        ? "No families are tagged with this lens."
-        : `${tagged.length} ${tagged.length === 1 ? "family is" : "families are"} tagged from the upstream catalogue text. Each note cites that text.`}
+        ? "No records are tagged with this lens."
+        : `${tagged.length} ${tagged.length === 1 ? "record is" : "records are"} tagged from upstream text. Each note cites that text.`}
     </p>
     <ul class="lens-families">
       {
         tagged.map((item) => (
           <li>
+            <p>
+              <span class={`badge ${item.sourceClass}`}>{item.sourceLabel}</span>
+              {item.kindLabel ? (
+                <>
+                  {" "}
+                  <span class={`badge ${item.kindClass}`}>{item.kindLabel}</span>
+                </>
+              ) : null}
+            </p>
             <p class="title">
-              <a href={`${base}f/${item.family.id}/`}>
-                <span class="id">{item.family.id}</span>{" "}
-                <span data-upstream="title">{item.family.title}</span>
+              <a href={`${base}${item.atlasPath}`}>
+                <span class="id">{item.idLabel}</span>{" "}
+                <span data-upstream="title">{item.title}</span>
               </a>
             </p>
+            <p>
+              {item.direct.map((link, index) => (
+                <>
+                  {index > 0 ? " · " : null}
+                  <a class="direct-upstream" href={link.href}>
+                    {link.label}
+                  </a>
+                </>
+              ))}
+            </p>
             <p>{item.why}</p>
-            <p class="meta">Source: {item.source}</p>
+            <p class="meta">
+              Source:{" "}
+              {item.lensSource.startsWith("https://") ? (
+                <a href={item.lensSource}>{item.lensSource}</a>
+              ) : (
+                item.lensSource
+              )}
+            </p>
           </li>
         ))
       }
