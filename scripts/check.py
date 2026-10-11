@@ -2473,8 +2473,8 @@ def preview_self_test() -> list[str]:
         failures.append("citation map is still hidden on a narrow screen")
     if "Scroll or pinch to zoom." not in graph_source:
         failures.append("citation map dropped the scroll hint")
-    if "min-width: 640px" not in css:
-        failures.append("citation map dropped the 640px frame")
+    if "min-width: 900px" not in css:
+        failures.append("citation map dropped the 900px frame")
     if re.search(r"\.graph-map\s*\{[^}]*display:\s*none", css):
         failures.append("citation map is display:none")
 
@@ -2485,9 +2485,6 @@ def preview_self_test() -> list[str]:
         ("#1f4d4a", "#faf7f1", "cite line on the light map"),
         ("#4e483f", "#faf7f1", "topic line on the light map"),
         ("#1d1a16", "#faf7f1", "label on the light map"),
-        ("#7ec9c1", "#1c1916", "cite line on the dark map"),
-        ("#e0d2bc", "#1c1916", "topic line on the dark map"),
-        ("#f3efe6", "#1c1916", "label on the dark map"),
     ):
         if ink not in css or paper not in css:
             failures.append(f"map color {ink} left the stylesheet")

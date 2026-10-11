@@ -537,7 +537,6 @@ a.tag:hover { text-decoration: underline; }
   overflow-x: auto;
   max-width: 100%;
   min-width: 0;
-  color-scheme: light dark;
 }
 .graph-map {
   --map-paper: var(--paper);
@@ -546,12 +545,11 @@ a.tag:hover { text-decoration: underline; }
   --map-label: var(--ink);
   display: block;
   width: 100%;
-  min-width: 640px;
+  min-width: 900px;
   height: auto;
   background: var(--map-paper);
   border: 1px solid var(--line);
   border-radius: 2px;
-  color-scheme: light dark;
 }
 .graph-map line.cite { stroke: var(--map-cite); stroke-width: 1.25; }
 .graph-map line.topic { stroke: var(--map-topic); stroke-width: 1.25; stroke-dasharray: 5 4; }
@@ -561,16 +559,6 @@ a.tag:hover { text-decoration: underline; }
   font-size: 12px;
   fill: var(--map-label);
   font-family: var(--mono);
-}
-@media (prefers-color-scheme: dark) {
-  /* #7ec9c1 is 9.18:1 on #1c1916. #e0d2bc is 11.76:1. #f3efe6 is 15.25:1. */
-  .graph-map {
-    --map-paper: #1c1916;
-    --map-cite: #7ec9c1;
-    --map-topic: #e0d2bc;
-    --map-label: #f3efe6;
-    border-color: #6b6256;
-  }
 }
 
 .status-line {

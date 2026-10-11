@@ -6,7 +6,7 @@
 - Share colors step in lightness, and the partly-in-Lean segment is hatched, so every segment stays distinct in grayscale. Each fill is at least 3:1 on #f3efe6. Neighboring fills stay at least 1.5:1 apart. The card and the home bars use the same swatches.
 - On a narrow screen the share bars are 10px tall and the outline is removed, so the outline no longer covers the fill.
 - Each home bar's screen-reader label is checked against the catalogue, the same way the percent and the caption are.
-- The citation map stays visible on a narrow screen. It sits in a sideways-scrolling frame at least 640px wide, with the hint "Scroll or pinch to zoom." Cite lines, topic lines, and labels stay at least 3:1 on the light paper and on the dark map.
+- The citation map stays visible on a narrow screen. It sits in a sideways-scrolling frame at least 900px wide, with the hint "Scroll or pinch to zoom." Cite lines, topic lines, and labels stay at least 3:1 on the light paper.
 
 ## 0.4.6
 

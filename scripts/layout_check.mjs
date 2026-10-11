@@ -234,7 +234,7 @@ function graphMapFailures(label, map, width) {
   if (map.width < 1 || map.height < 1) {
     failures.push(`${label}: citation map is ${map.width} by ${map.height}`);
   }
-  if (width === 390 && map.width < 640) {
+  if (width === 390 && map.width < 900) {
     failures.push(`${label}: citation map is ${map.width.toFixed(1)}px wide`);
   }
   if (map.hiddenSentence) {
@@ -351,7 +351,20 @@ try {
         failures.push(...graphMapFailures(label, await readGraphMap(page), width));
         if (width === 390) {
           await page.emulateMedia({ colorScheme: "dark" });
-          failures.push(...graphMapFailures(`${label} dark`, await readGraphMap(page), width));
+          const darkMap = await readGraphMap(page);
+          failures.push(...graphMapFailures(`${label} dark`, darkMap, width));
+          const paper = parseColor(darkMap.background ?? "");
+          const pagePaper = [250, 247, 241];
+          if (
+            paper === null ||
+            paper[0] !== pagePaper[0] ||
+            paper[1] !== pagePaper[1] ||
+            paper[2] !== pagePaper[2]
+          ) {
+            failures.push(
+              `${label} dark: map background is ${darkMap.background ?? "missing"}, expected rgb(250, 247, 241)`,
+            );
+          }
           await page.emulateMedia({ colorScheme: "light" });
         }
       }
