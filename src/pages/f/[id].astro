@@ -43,12 +43,49 @@ const direct = openaiUpstreamLinks(family);
       ))}
     </p>
 
+    <h2>Lean status</h2>
+    <p>
+      <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
+    </p>
+    <p class="meta">
+      Upstream review: {family.lean.upstream_review_status}. Scope:{" "}
+      <span data-upstream="scope">{family.lean.scope}</span>
+    </p>
+    {family.lean.doc && (
+      <p>
+        <a href={family.lean.doc}>Lean note</a>
+      </p>
+    )}
+    {
+      family.lean.comparators.length > 0 && (
+        <div>
+          <p class="meta">Comparator files</p>
+          <ul class="links">
+            {family.lean.comparators.map((item) => (
+              <li>
+                <a href={item.url}>{item.file.split("/").pop()}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+    {
+      family.reasoning_trace && (
+        <p>
+          <a href={family.reasoning_trace.url}>Reasoning summary</a>
+        </p>
+      )
+    }
+    {family.caution && <p class="caution">{family.caution}</p>}
+
+    <h2>Upstream summary</h2>
+    <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+
     <h2>Subject areas</h2>
     <ul>
       {family.areas.map((area) => <li>{area}</li>)}
     </ul>
-
-    {family.caution && <p class="caution">{family.caution}</p>}
 
     <h2>Lens tags</h2>
     {
@@ -169,44 +206,6 @@ const direct = openaiUpstreamLinks(family);
         ))
       }
     </ul>
-
-    <h2>Lean status</h2>
-    <p>
-      <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
-    </p>
-    <p class="meta">
-      Upstream review: {family.lean.upstream_review_status}. Scope:{" "}
-      <span data-upstream="scope">{family.lean.scope}</span>
-    </p>
-    {family.lean.doc && (
-      <p>
-        <a href={family.lean.doc}>Lean note</a>
-      </p>
-    )}
-    {
-      family.lean.comparators.length > 0 && (
-        <div>
-          <p class="meta">Comparator files</p>
-          <ul class="links">
-            {family.lean.comparators.map((item) => (
-              <li>
-                <a href={item.url}>{item.file.split("/").pop()}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )
-    }
-    {
-      family.reasoning_trace && (
-        <p>
-          <a href={family.reasoning_trace.url}>Reasoning summary</a>
-        </p>
-      )
-    }
-
-    <h2>Upstream summary</h2>
-    <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
 
     <h2>Provenance</h2>
     <p>

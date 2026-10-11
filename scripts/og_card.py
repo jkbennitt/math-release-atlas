@@ -599,6 +599,55 @@ def png_bytes(image: Image.Image) -> bytes:
     return buffer.getvalue()
 
 
+_ROLE = {
+    ACCENT: "lean",
+    MID: "challenge",
+    PAPER_ONLY: "paper",
+}
+SHARE_HEADING = "Share of each catalogue with Lean files"
+
+
+def share_document(catalog: dict[str, Any]) -> dict[str, Any]:
+    """The bars, percents, and legend the site draws. Same rows as the card."""
+    if SHARE_HEADING.upper() != PANEL_TITLE:
+        raise SystemExit("share heading drifted from the card panel title")
+    rows = share_rows(catalog)
+    painted = []
+    for row in rows:
+        segments = []
+        for count, color in row["segments"]:
+            if count <= 0:
+                continue
+            role = _ROLE.get(color)
+            if role is None:
+                raise SystemExit(f"{row['name']} has a segment color the site cannot draw")
+            segments.append({"count": count, "role": role})
+        if not segments:
+            raise SystemExit(f"{row['name']} has an empty share bar")
+        painted.append(
+            {
+                "name": row["name"],
+                "unit": row["unit"],
+                "percent": row["percent"],
+                "caption": row["caption"],
+                "segments": segments,
+            }
+        )
+    return {
+        "headline": HEADLINE,
+        "shareHeading": SHARE_HEADING,
+        "sentence": share_sentence(rows),
+        "legend": [{"role": _ROLE[color], "label": label} for color, label in LEGEND],
+        "rows": painted,
+    }
+
+
+def write_share_document(catalog: dict[str, Any]) -> None:
+    dest = ROOT / "src" / "generated" / "share.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(share_document(catalog), indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     payload = json.loads(FAMILIES_JSON.read_text(encoding="utf-8"))
     sources = payload["sources"]["sources"]
@@ -608,6 +657,7 @@ def main() -> int:
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(png_bytes(image))
+    write_share_document(payload)
     return 0
 
 

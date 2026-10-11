@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import { atlas, shortSha } from "../../lib/atlas";
+import { provenanceLine } from "../../lib/rows";
 
 const base = import.meta.env.BASE_URL;
 const record = atlas.alphaproof;
@@ -63,19 +64,20 @@ function gapBadgeClass(status: string | undefined): string {
     <h2>Gaps</h2>
     <ul>
       <li id={`gap-${oeis?.id}`}>
-        <span class={`badge ${gapBadgeClass(oeis?.status)}`}>{oeis?.status}</span>
-        {" "}OEIS paper count {oeis?.paper_count}/{oeis?.paper_attempted}. Repository Lean files {oeis?.repo_files}.
+        <span class="gap-code" aria-hidden="true"><span class={`badge ${gapBadgeClass(oeis?.status)}`}>{oeis?.status}</span></span>
+        {" "}OEIS: {oeis?.repo_files} of the {oeis?.paper_count} the paper claims are in the repo.
         {oeis && oeis.absent !== undefined && oeis.absent > 0 ? <> Absent {oeis.absent}.</> : null}
         {" "}Label: {oeis?.label}.
       </li>
       <li id={`gap-${attempted?.id}`}>
-        <span class={`badge ${gapBadgeClass(attempted?.status)}`}>{attempted?.status}</span>
-        {" "}Paper attempted {attempted?.paper_attempted}. Newline count in erdos_problems_attempted.txt:
-        {attempted?.repo_newlines}. Non-empty lines: {attempted?.repo_entries}. Label: {attempted?.label}.
+        <span class="gap-code" aria-hidden="true"><span class={`badge ${gapBadgeClass(attempted?.status)}`}>{attempted?.status}</span></span>
+        {" "}Attempted list: {attempted?.repo_entries} of the {attempted?.paper_attempted} the paper lists are in the file.
+        {" "}Label: {attempted?.label}.
       </li>
       <li id={`gap-${provenance?.id}`}>
-        <span class={`badge ${gapBadgeClass(provenance?.status)}`}>{provenance?.status}</span>
-        {" "}{provenance?.label}: {provenance?.status}. The repository has no per-file agent record.
+        <span class="gap-code" aria-hidden="true"><span class={`badge ${gapBadgeClass(provenance?.status)}`}>{provenance?.status}</span></span>
+        {" "}<span class="gap-code" aria-hidden="true">{provenance?.label}: {provenance?.status}.</span>
+        {" "}The repository has no per-file agent record.
       </li>
     </ul>
 
@@ -106,7 +108,7 @@ function gapBadgeClass(status: string | undefined): string {
             {item.category === "ErdosProblems"
               ? `Problem id ${item.problem_id}`
               : `Filename stem ${item.problem_id}`}.
-            Per-row provenance: {item.provenance}.
+            Per-row provenance: {provenanceLine(item.provenance)}.
           </p>
           {item.scope_notes.map((note) => (
             <p class="caution">{note}</p>

@@ -63,6 +63,28 @@ export function lensCarriers(): { lenses: LensNote[] }[] {
   ];
 }
 
+export function provenanceLine(value: string): string {
+  if (value === "MISSING") {
+    return "no per-file agent record";
+  }
+  return value;
+}
+
+export function sourceChip(source: CatalogueSource): string {
+  switch (source) {
+    case "openai-math":
+      return "OpenAI";
+    case "alphaproof-nexus":
+      return "APN";
+    case "anthropic":
+      return "Anthropic";
+    default: {
+      const exhaustive: never = source;
+      return exhaustive;
+    }
+  }
+}
+
 function sourceBadge(source: CatalogueSource): { label: string; className: string } {
   switch (source) {
     case "openai-math":

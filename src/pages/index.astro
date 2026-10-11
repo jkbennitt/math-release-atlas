@@ -1,15 +1,39 @@
 ---
 import Base from "../layouts/Base.astro";
 import { anthropicLeanRank, atlas, dateRange, shortSha, type AlphaProofRecord } from "../lib/atlas";
+import { lensChoices, subjectChoices } from "../lib/filters";
 import { leanLabel, leanRank } from "../lib/lean";
-import { lensCounts, lensLabel } from "../lib/lenses";
-import { lensCarriers, openaiDirectHref } from "../lib/rows";
+import { openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
+import shareDocument from "../generated/share.json";
 
+interface ShareSegment {
+  count: number;
+  role: "lean" | "challenge" | "paper";
+}
+
+interface ShareRow {
+  name: string;
+  unit: string;
+  percent: string;
+  caption: string;
+  segments: ShareSegment[];
+}
+
+interface ShareDocument {
+  headline: string;
+  shareHeading: string;
+  sentence: string;
+  legend: { role: ShareSegment["role"]; label: string }[];
+  rows: ShareRow[];
+}
+
+const share = shareDocument as ShareDocument;
 const commit = atlas.upstream.commit;
 const counts = atlas.counts;
 const generated = atlas.generated_at.slice(0, 10);
 const base = import.meta.env.BASE_URL;
-const lenses = lensCounts(lensCarriers());
+const subjects = subjectChoices();
+const lenses = lensChoices();
 const alphaproof = atlas.alphaproof;
 const anthropic = atlas.anthropic;
 const sources = atlas.sources.sources;
@@ -19,83 +43,45 @@ const fltRepo = anthropic.source.also[0];
 const oeisGap = alphaproof.gaps.find((gap) => gap.id === "oeis-count");
 const attemptedGap = alphaproof.gaps.find((gap) => gap.id === "erdos-attempted");
 const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.counts.releases;
+const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization" : "formalizations";
 ---
 
 <Base
   title="Math Release Atlas"
   description="Unofficial table of the OpenAI Math catalogue, the AlphaProof Nexus Lean files, and the Anthropic releases, with links back to each pinned upstream commit."
 >
-  <h1>Result families and Lean files</h1>
-  <p class="lede">
-    A receipted index of three pinned upstream catalogues. Each OpenAI Math result title
-    opens that family's page. The row still quotes the catalogue and links to its PDFs. Lean
-    badges on those rows repeat the upstream review status. They are not peer review, and they are not
-    laboratory results. AlphaProof Nexus rows link to the Lean file deposited upstream.
-    Anthropic rows are the three releases and link to the upstream trees.
-    This atlas did not run Lean.
-  </p>
-  <div class="source-grid">
-    <section class="source-card">
-      <h2>OpenAI Math</h2>
-      <p>
-        {counts.families} families and {counts.manuscripts} manuscripts at{" "}
-        <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
-        Source id <code>openai-math</code>.
-      </p>
-      {openaiSource && <p class="meta">{openaiSource.license}. Sync: {openaiSource.sync}.</p>}
-    </section>
-    <section class="source-card">
-      <h2>AlphaProof Nexus</h2>
-      <p>
-        {alphaproof.counts.lean_files} Lean files
-        ({alphaproof.counts.erdos} Erdős, {alphaproof.counts.oeis_files} OEIS files,
-        {alphaproof.counts.stacks} Stacks, {alphaproof.counts.ai_collaborator} AI collaborator)
-        at <a href={`${apnSource?.repo}/commit/${alphaproof.source.commit}`}><code>{shortSha(alphaproof.source.commit)}</code></a>.
-      </p>
-      <p class="meta">
-        OEIS paper count {oeisGap?.paper_count}/{oeisGap?.paper_attempted}. Repository files {oeisGap?.repo_files}.
-        Gap label: {oeisGap?.label}. Status {oeisGap?.status}.
-        Attempted list: {attemptedGap?.label}. Status {attemptedGap?.status}.
-      </p>
-      <p class="meta"><a href={`${base}source/alphaproof-nexus/`}>Source page</a></p>
-    </section>
-    <section class="source-card">
-      <h2>Anthropic</h2>
-      <p>
-        {anthropic.counts.releases} releases and {anthropic.counts.lean_files} Lean files
-        ({anthropic.counts.new_results} new results, {anthropic.counts.formalizations}{" "}
-        {anthropic.counts.formalizations === 1 ? "formalization" : "formalizations"})
-        in <a href={`${anthropic.source.repo}/commit/${anthropic.source.commit}`}><code>{shortSha(anthropic.source.commit)}</code></a>{" "}
-        and <a href={`${fltRepo.repo}/commit/${fltRepo.commit}`}><code>{shortSha(fltRepo.commit)}</code></a>.
-      </p>
-      <p class="meta">{anthropic.source.license}. Sync: {anthropic.source.sync}.</p>
-      <p class="meta"><a href={`${base}source/anthropic/`}>Source page</a></p>
-    </section>
-  </div>
-  <section class="snapshot">
-    <h2>OpenAI Math in this snapshot</h2>
-    <p class="meta">These four counts are the OpenAI Math catalogue only. The table also lists AlphaProof Nexus and Anthropic.</p>
-    <div class="stats">
-      <div class="stat"><b>{counts.families}</b><span>families</span></div>
-      <div class="stat"><b>{counts.manuscripts}</b><span>manuscripts</span></div>
-      <div class="stat"><b>{counts.main_result_formalized}</b><span>formalized main results</span></div>
-      <div class="stat">
-        <b>{counts.comparator_challenge_only}</b><span>comparator challenge only</span>
-      </div>
-    </div>
+  <h1 class="home-title">{share.headline}</h1>
+  <section class="share" aria-labelledby="share-heading">
+    <h2 id="share-heading">{share.shareHeading}</h2>
+    <ol class="share-rows">
+      {share.rows.map((row) => (
+        <li>
+          <div class="share-name">
+            <span>{row.name}</span>
+            <span class="share-unit">{row.unit}</span>
+          </div>
+          <div class="share-track">
+            <div class="share-bar" role="img" aria-label={`${row.name} ${row.percent}. ${row.caption}`}>
+              {row.segments.map((segment) => (
+                <span class={`seg seg-${segment.role}`} style={`flex-grow: ${segment.count}`} />
+              ))}
+            </div>
+            <span class="share-pct">{row.percent}</span>
+          </div>
+          <p class="share-caption">{row.caption}</p>
+        </li>
+      ))}
+    </ol>
+    <ul class="share-legend">
+      {share.legend.map((item) => (
+        <li>
+          <span class={`swatch seg-${item.role}`} />
+          {item.label}
+        </li>
+      ))}
+    </ul>
   </section>
-  <p class="provenance">
-    {counts.none} families have no Lean formalization in this snapshot.
-    Upstream review status: <strong>{atlas.upstream.review_status}</strong>.
-    Formalization scope: {atlas.upstream.formalization_scope}{" "}
-    Generated {generated} from{" "}
-    <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.{" "}
-    <a href={`${atlas.upstream.repo}/blob/${commit}/overview.pdf`}>Overview PDF</a>
-    {" · "}
-    <a href={`${atlas.upstream.repo}/blob/${commit}/CONTENTS.md`}>Manuscript map</a>
-    {" · "}
-    <a href={`${base}graph/`}>Citation graph</a>
-  </p>
+  <p class="lede atlas-line">{share.sentence}</p>
 
   <div class="filters">
     <label>
@@ -106,7 +92,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
       Subject
       <select id="area-filter">
         <option value="">All subjects</option>
-        {atlas.areas.map((area) => <option value={area.name}>{area.name} ({area.families})</option>)}
+        {subjects.map((area) => <option value={area.name}>{area.name} ({area.count})</option>)}
       </select>
     </label>
     <label>
@@ -114,8 +100,8 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
       <select id="lens-filter">
         <option value="">All lenses</option>
         {lenses.map((lens) => (
-          <option value={lens.tag}>
-            {lensLabel(lens.tag)} ({lens.count})
+          <option value={lens.tag} data-label={lens.label}>
+            {lens.label} ({lens.count})
           </option>
         ))}
       </select>
@@ -154,10 +140,9 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
           <th scope="col" data-sort="source" aria-sort="none"><button type="button" data-sort="source">Source</button></th>
           <th scope="col" data-sort="id" aria-sort="ascending"><button type="button" data-sort="id">ID</button></th>
           <th scope="col" data-sort="title" aria-sort="none"><button type="button" data-sort="title">Result</button></th>
-          <th scope="col" data-sort="area" aria-sort="none"><button type="button" data-sort="area">Subject</button></th>
           <th scope="col" data-sort="lean" aria-sort="none"><button type="button" data-sort="lean">Lean</button></th>
-          <th scope="col" data-sort="manuscripts" aria-sort="none"><button type="button" data-sort="manuscripts">Manuscripts</button></th>
-          <th scope="col" data-sort="date" aria-sort="none"><button type="button" data-sort="date">Dates</button></th>
+          <th scope="col" data-sort="area" aria-sort="none"><button type="button" data-sort="area">Subject</button></th>
+          <th scope="col" data-sort="date" aria-sort="none"><button type="button" data-sort="date">Date</button></th>
         </tr>
       </thead>
       <tbody>
@@ -178,85 +163,74 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
               data-manuscripts={family.manuscripts.length}
             >
               <td data-label="Source">
-                <a class="direct-upstream" href={openaiDirectHref(family)}>openai-math</a>
-                {" "}
-                <a href={`${base}source/`}>Notes</a>
+                <a class="chip direct-upstream" href={openaiDirectHref(family)}>{sourceChip("openai-math")}</a>
               </td>
-              <td class="id">{family.id}</td>
-              <td>
-                <p class="title">
-                  <a data-upstream="title" href={`${base}f/${family.id}/`}>{family.title}</a>
-                </p>
-                {family.caution && <p class="caution">{family.caution}</p>}
-                <details>
-                  <summary>Upstream summary</summary>
-                  <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
-                </details>
-                <details>
-                  <summary>Manuscripts ({family.manuscripts.length})</summary>
-                  <ul class="links">
-                    {family.manuscripts.map((item) => (
-                      <li>
-                        <a data-upstream="manuscript" href={item.pdf}>
-                          {item.title}
-                        </a>
-                        <span class="meta"> · {item.date}{item.main_result_formalized ? " · main result in formalization catalogue" : ""}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-                {family.lean.doc && (
-                  <p class="meta"><a href={family.lean.doc}>Lean note</a></p>
-                )}
-                {family.lean.comparators.length > 0 && (
-                  <details>
-                    <summary>Comparator files ({family.lean.comparators.length})</summary>
-                    <ul class="links">
-                      {family.lean.comparators.map((item) => (
-                        <li><a href={item.url}>{item.file.split("/").pop()}</a></li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-                {family.reasoning_trace && (
-                  <p class="meta"><a href={family.reasoning_trace.url}>Reasoning summary</a></p>
-                )}
-                {(family.lenses.length > 0 || family.related.length > 0) && (
-                  <details>
-                    <summary>Lenses and groupings</summary>
-                    {family.lenses.length > 0 && (
-                      <ul class="notes">
-                        {family.lenses.map((lens) => (
+              <td class="id" data-label="ID" title={family.id}>{family.id}</td>
+              <td data-label="Result">
+                <div class="result-line">
+                  <p class="title">
+                    <a data-upstream="title" href={`${base}f/${family.id}/`}>{family.title}</a>
+                  </p>
+                  <details class="row-more">
+                    <summary>Receipt</summary>
+                    <div class="receipt">
+                      {family.caution && <p class="caution">{family.caution}</p>}
+                      <blockquote data-upstream="summary">{family.upstream_summary}</blockquote>
+                      <ul class="links">
+                        {family.manuscripts.map((item) => (
                           <li>
-                            <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                            {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                            <a data-upstream="manuscript" href={item.pdf}>{item.title}</a>
+                            <span class="meta"> · {item.date}{item.main_result_formalized ? " · main result in formalization catalogue" : ""}</span>
                           </li>
                         ))}
                       </ul>
-                    )}
-                    {family.related.length > 0 && (
-                      <ul class="notes">
-                        {family.related.map((item) => (
-                          <li>
-                            <a href={`#f-${item.to}`}>{item.to}</a>
-                            {" "}({item.kind === "shared-topic" ? "our grouping, not a citation" : item.kind}): {item.why}
-                            <span class="meta"> Source: {item.source}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                      {family.lean.status !== "none" && (
+                        <p class="meta">Upstream review: {family.lean.upstream_review_status}</p>
+                      )}
+                      {family.lean.doc && (
+                        <p class="meta"><a href={family.lean.doc}>Lean note</a></p>
+                      )}
+                      {family.lean.comparators.length > 0 && (
+                        <ul class="links">
+                          {family.lean.comparators.map((item) => (
+                            <li><a href={item.url}>{item.file.split("/").pop()}</a></li>
+                          ))}
+                        </ul>
+                      )}
+                      {family.reasoning_trace && (
+                        <p class="meta"><a href={family.reasoning_trace.url}>Reasoning summary</a></p>
+                      )}
+                      {family.lenses.length > 0 && (
+                        <ul class="notes">
+                          {family.lenses.map((lens) => (
+                            <li>
+                              <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                              {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {family.related.length > 0 && (
+                        <ul class="notes">
+                          {family.related.map((item) => (
+                            <li>
+                              <a href={`#f-${item.to}`}>{item.to}</a>
+                              {" "}({item.kind === "shared-topic" ? "our grouping, not a citation" : item.kind}): {item.why}
+                              <span class="meta"> Source: {item.source}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p class="meta"><a href={`${base}source/`}>Source notes</a></p>
+                    </div>
                   </details>
-                )}
+                </div>
               </td>
-              <td class="subject" data-label="Subject">{family.areas.join(", ")}</td>
               <td data-label="Lean">
                 <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
-                {family.lean.status !== "none" && (
-                  <span class="review">Upstream review: {family.lean.upstream_review_status}</span>
-                )}
               </td>
-              <td data-label="Manuscripts">{family.manuscripts.length}</td>
-              <td data-label="Dates">{dateRange(dates)}</td>
+              <td class="subject" data-label="Subject">{family.areas.join(", ")}</td>
+              <td data-label="Date">{dateRange(dates)}</td>
             </tr>
           );
         })}
@@ -275,43 +249,46 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
             data-manuscripts={record.natural_language_proofs.length}
           >
             <td data-label="Source">
-              <a class="direct-upstream" href={record.url}>alphaproof-nexus</a>
-              {" "}
-              <a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>Notes</a>
+              <a class="chip direct-upstream" href={record.url}>{sourceChip("alphaproof-nexus")}</a>
             </td>
-            <td class="id">{record.anchor}</td>
-            <td>
-              <p class="title">
-                <a class="direct-upstream" href={record.url}>{record.statement}</a>
-              </p>
-              {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
-              <details>
-                <summary>File and lenses</summary>
-                <p class="meta">Per-row provenance: {record.provenance}</p>
-                <p class="meta"><a class="direct-upstream" href={record.url}>{record.path}</a></p>
-                {record.lenses.length > 0 && (
-                  <ul class="notes">
-                    {record.lenses.map((lens) => (
-                      <li>
-                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
-                      </li>
+            <td class="id" data-label="ID" title={record.anchor}>{record.anchor}</td>
+            <td data-label="Result">
+              <div class="result-line">
+                <p class="title">
+                  <a class="direct-upstream" href={record.url}>{record.statement}</a>
+                </p>
+                <details class="row-more">
+                  <summary>Receipt</summary>
+                  <div class="receipt">
+                    {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
+                    <p class="meta">Per-row provenance: {provenanceLine(record.provenance)}</p>
+                    <p class="meta"><a class="direct-upstream" href={record.url}>{record.path}</a></p>
+                    {record.natural_language_proofs.map((item) => (
+                      <p class="meta"><a href={item.url}>{item.path}</a></p>
                     ))}
-                  </ul>
-                )}
-                {record.natural_language_proofs.map((item) => (
-                  <p class="meta"><a href={item.url}>{item.path}</a></p>
-                ))}
-              </details>
+                    {record.lenses.length > 0 && (
+                      <ul class="notes">
+                        {record.lenses.map((lens) => (
+                          <li>
+                            <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                            {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p class="meta"><a href={`${base}source/alphaproof-nexus/#${record.anchor}`}>Source notes</a></p>
+                  </div>
+                </details>
+              </div>
             </td>
-              <td class="subject" data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
             <td data-label="Lean"><span class="badge deposited">Deposited</span></td>
-            <td data-label="Manuscripts">{record.natural_language_proofs.length}</td>
-            <td data-label="Dates">{alphaproof.commit_date}</td>
+            <td class="subject" data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
+            <td data-label="Date">{alphaproof.commit_date}</td>
           </tr>
         ))}
         {anthropic.releases.map((release) => {
           const dated = release.paper?.v1_submitted ?? release.announcement_date ?? release.commit_date;
+          const titleHref = release.paper?.url ?? release.tree_url;
           return (
             <tr
               id={`an-${release.id}`}
@@ -327,53 +304,93 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
               data-manuscripts={release.paper ? 1 : 0}
             >
               <td data-label="Source">
-                <a class="direct-upstream" href={release.tree_url}>anthropic</a>
-                {" "}
-                <a href={`${base}source/anthropic/#${release.id}`}>Notes</a>
+                <a class="chip direct-upstream" href={release.tree_url}>{sourceChip("anthropic")}</a>
               </td>
-              <td class="id">{release.id}</td>
-              <td>
-                <p class="title">
-                  <a class="direct-upstream" href={release.paper?.url ?? release.tree_url}>{release.title}</a>
-                </p>
-                <p>{release.statement}</p>
-                {release.gaps.map((gap) => (
-                  <p class="caution">{gap.status}. {gap.label}</p>
-                ))}
-                <p class="meta"><a class="direct-upstream" href={release.tree_url}>{release.path || release.repo}</a></p>
-                {release.paper && (
-                  <p class="meta"><a class="direct-upstream" href={release.paper.url}>{release.paper.title}</a> · {release.paper.v1_submitted}</p>
-                )}
-                {release.lenses.length > 0 && (
-                  <details>
-                    <summary>Lenses</summary>
-                    <ul class="notes">
-                      {release.lenses.map((lens) => (
-                        <li>
-                          <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                          {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-                {release.announcement && (
-                  <p class="meta">
-                    <a href={release.announcement}>Announcement</a>
-                    {release.announcement_date ? ` · ${release.announcement_date}` : ""}
+              <td class="id" data-label="ID" title={release.id}>{release.id}</td>
+              <td data-label="Result">
+                <div class="result-line">
+                  <p class="title">
+                    <a class="direct-upstream" href={titleHref}>{release.title}</a>
                   </p>
-                )}
+                  <details class="row-more">
+                    <summary>Receipt</summary>
+                    <div class="receipt">
+                      <p>{release.statement}</p>
+                      {release.gaps.map((gap) => (
+                        <p class="caution">{gap.status}. {gap.label}</p>
+                      ))}
+                      <p class="meta"><a class="direct-upstream" href={release.tree_url}>{release.path || release.repo}</a></p>
+                      {release.paper && (
+                        <p class="meta"><a class="direct-upstream" href={release.paper.url}>{release.paper.title}</a> · {release.paper.v1_submitted}</p>
+                      )}
+                      {release.lenses.length > 0 && (
+                        <ul class="notes">
+                          {release.lenses.map((lens) => (
+                            <li>
+                              <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                              {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {release.announcement && (
+                        <p class="meta">
+                          <a href={release.announcement}>Announcement</a>
+                          {release.announcement_date ? ` · ${release.announcement_date}` : ""}
+                        </p>
+                      )}
+                      <p class="meta"><a href={`${base}source/anthropic/#${release.id}`}>Source notes</a></p>
+                    </div>
+                  </details>
+                </div>
               </td>
-              <td class="subject" data-label="Subject">{release.id}</td>
               <td data-label="Lean"><span class={`badge ${release.kind}`}>{release.kind_label}</span></td>
-              <td data-label="Manuscripts">{release.paper ? 1 : 0}</td>
-              <td data-label="Dates">{dated}</td>
+              <td class="subject" data-label="Subject">{release.id}</td>
+              <td data-label="Date">{dated}</td>
             </tr>
           );
         })}
       </tbody>
     </table>
   </div>
+
+  <p class="provenance">
+    {counts.none} families have no Lean formalization in this snapshot.
+    Upstream review status: <strong>{atlas.upstream.review_status}</strong>.
+    Formalization scope: {atlas.upstream.formalization_scope}{" "}
+    Generated {generated} from{" "}
+    <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.{" "}
+    <a href={`${atlas.upstream.repo}/blob/${commit}/overview.pdf`}>Overview PDF</a>
+    {" · "}
+    <a href={`${atlas.upstream.repo}/blob/${commit}/CONTENTS.md`}>Manuscript map</a>
+    {" · "}
+    <a href={`${base}graph/`}>Citation graph</a>
+  </p>
+
+  <ul class="catalogue">
+    <li>
+      <strong>OpenAI Math.</strong> {counts.families} families and {counts.manuscripts} manuscripts at{" "}
+      <a href={`${atlas.upstream.repo}/commit/${commit}`}><code>{shortSha(commit)}</code></a>.
+      Source id <code>openai-math</code>.
+      {openaiSource && <> {openaiSource.license}. Sync: {openaiSource.sync}.</>}
+    </li>
+    <li>
+      <strong>AlphaProof Nexus.</strong> {alphaproof.counts.lean_files} Lean files at{" "}
+      <a href={`${apnSource?.repo}/commit/${alphaproof.source.commit}`}><code>{shortSha(alphaproof.source.commit)}</code></a>.
+      OEIS: {oeisGap?.repo_files} of the {oeisGap?.paper_count} the paper claims are in the repo.
+      Attempted list: {attemptedGap?.label}.
+      Source id <code>alphaproof-nexus</code>.{" "}
+      <a href={`${base}source/alphaproof-nexus/`}>Source page</a>.
+    </li>
+    <li>
+      <strong>Anthropic.</strong> {anthropic.counts.releases} releases and {anthropic.counts.lean_files} Lean files
+      ({anthropic.counts.new_results} new results, {anthropic.counts.formalizations} {formalizationWord})
+      in <a href={`${anthropic.source.repo}/commit/${anthropic.source.commit}`}><code>{shortSha(anthropic.source.commit)}</code></a>{" "}
+      and <a href={`${fltRepo.repo}/commit/${fltRepo.commit}`}><code>{shortSha(fltRepo.commit)}</code></a>.
+      {anthropic.source.license}.{" "}
+      <a href={`${base}source/anthropic/`}>Source page</a>.
+    </li>
+  </ul>
 </Base>
 
 <script>

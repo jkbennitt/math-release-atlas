@@ -1,0 +1,69 @@
+{
+  "headline": "AI math claims: on paper, or in Lean?",
+  "shareHeading": "Share of each catalogue with Lean files",
+  "sentence": "372 OpenAI result families, 71 Google DeepMind AlphaProof Nexus Lean files and 3 Anthropic releases, each linked to its paper or Lean files at a pinned commit.",
+  "legend": [
+    {
+      "role": "lean",
+      "label": "result in Lean"
+    },
+    {
+      "role": "challenge",
+      "label": "Lean challenge only"
+    },
+    {
+      "role": "paper",
+      "label": "paper only"
+    }
+  ],
+  "rows": [
+    {
+      "name": "OpenAI Math",
+      "unit": "372 result families",
+      "percent": "65%",
+      "caption": "135 result in Lean  \u00b7  107 challenge only  \u00b7  130 paper only",
+      "segments": [
+        {
+          "count": 135,
+          "role": "lean"
+        },
+        {
+          "count": 107,
+          "role": "challenge"
+        },
+        {
+          "count": 130,
+          "role": "paper"
+        }
+      ]
+    },
+    {
+      "name": "AlphaProof Nexus",
+      "unit": "71 files + 6 named in paper",
+      "percent": "92%",
+      "caption": "71 Lean files  \u00b7  6 OEIS results in paper, no file",
+      "segments": [
+        {
+          "count": 71,
+          "role": "lean"
+        },
+        {
+          "count": 6,
+          "role": "paper"
+        }
+      ]
+    },
+    {
+      "name": "Anthropic",
+      "unit": "3 releases",
+      "percent": "100%",
+      "caption": "3 of 3 with Lean  \u00b7  2 new results, 1 formalization (FLT)",
+      "segments": [
+        {
+          "count": 3,
+          "role": "lean"
+        }
+      ]
+    }
+  ]
+}
