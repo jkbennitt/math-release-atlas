@@ -3059,10 +3059,7 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
             failures.append(f"alt text is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
         if "per-row provenance" in alt or "OEIS" in alt:
             failures.append("alt text includes a gap status")
-        lowered_alt = alt.lower()
-        for banned in ("verified", "proved"):
-            if banned in lowered_alt:
-                failures.append(f"alt text uses {banned}")
+        failures.extend(scan_overclaims(alt, "alt text"))
         for entry in entries:
             if entry["name"] not in alt:
                 failures.append(f"alt text omits {entry['name']}")
@@ -3121,10 +3118,7 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
     for banned in ("PARTIAL", "MATCH", "MISSING"):
         if banned in drawn_text:
             failures.append(f"preview card still shows {banned}")
-    lowered = drawn_text.lower()
-    for banned in ("verified", "proved"):
-        if banned in lowered:
-            failures.append(f"preview card uses {banned}")
+    failures.extend(scan_overclaims(drawn_text, "preview card"))
     return failures
 
 
@@ -3369,9 +3363,11 @@ def alphaproof_badge_class(status: str | None) -> str:
 
 def _render_gap_li(var: str, body: str, gap: dict[str, Any]) -> str:
     class_expr = "class={`badge ${gapBadgeClass(" + var + "?.status)}`}"
-    if class_expr not in body:
-        raise AtlasError(f"{var} gap template is missing the badge class")
-    rendered = body.replace(class_expr, f'class="badge {alphaproof_badge_class(gap.get("status"))}"', 1)
+    rendered = body
+    if class_expr in rendered:
+        rendered = rendered.replace(
+            class_expr, f'class="badge {alphaproof_badge_class(gap.get("status"))}"', 1
+        )
     absent_expr = (
         "{"
         + var
@@ -3417,8 +3413,29 @@ def render_alphaproof_gap_rows(gaps_by_role: dict[str, dict[str, Any]]) -> str:
     return "\n".join(_render_gap_li(var, found[var], gaps_by_role[var]) for var in expected)
 
 
+_PLAIN_GAP_STATUS = {
+    "NOT IN COMPARATOR": "Not in the comparator",
+    "NOT FORMALIZED": "Not formalized",
+    "NOTED": "Noted",
+}
+_RAW_GAP_TOKENS = (
+    "NOT IN COMPARATOR",
+    "NOT FORMALIZED",
+    "NOTED",
+    "MORE THAN PAPER",
+    "PARTIAL",
+    "MATCH",
+    "MISSING",
+)
+
+
+def gap_plain_status(status: str) -> str | None:
+    """Sentence-case label for a release gap. Count gaps use their data sentence instead."""
+    return _PLAIN_GAP_STATUS.get(status)
+
+
 def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str]:
-    """Each gap's badge span is its status, and its label is inside its own row."""
+    """Each gap row shows its label and a plain-English sentence, not a status token."""
     failures: list[str] = []
     for gap in gaps:
         gap_id = gap.get("id")
@@ -3431,13 +3448,30 @@ def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str
             failures.append(f"page is missing {element_id}")
             continue
         visible = _visible_text(fragment)
-        status = gap.get("status")
         label = gap.get("label")
-        shown = _badge_text(fragment)
-        if not isinstance(status, str) or shown != status:
-            failures.append(f"{element_id} badge is {shown!r}, expected status {status!r}")
         if not isinstance(label, str) or label not in visible:
             failures.append(f"{element_id} is missing label {label!r}")
+        status = gap.get("status")
+        plain = gap_plain_status(status) if isinstance(status, str) else None
+        if plain and plain not in visible:
+            failures.append(f"{element_id} is missing {plain!r}")
+        repo_files = gap.get("repo_files")
+        paper_count = gap.get("paper_count")
+        if isinstance(repo_files, int) and isinstance(paper_count, int):
+            phrase = f"{repo_files} of the {paper_count}"
+            if phrase not in visible:
+                failures.append(f"{element_id} is missing {phrase!r}")
+        repo_entries = gap.get("repo_entries")
+        paper_attempted = gap.get("paper_attempted")
+        if isinstance(repo_entries, int) and isinstance(paper_attempted, int):
+            phrase = f"{repo_entries} of the {paper_attempted}"
+            if phrase not in visible:
+                failures.append(f"{element_id} is missing {phrase!r}")
+        if gap_id == "per-row-provenance" and "The repository has no per-file agent record." not in visible:
+            failures.append(f"{element_id} is missing the plain-English provenance sentence")
+        for token in _RAW_GAP_TOKENS:
+            if token in visible:
+                failures.append(f"{element_id} still shows {token}")
         if "absent" not in gap:
             continue
         absent = gap.get("absent")
@@ -3636,8 +3670,11 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         if release["kind"] == "formalization" and "New result" in visible:
             failures.append("home formalization row contains New result")
         for gap in release["gaps"]:
-            if gap["status"] not in visible or gap["label"] not in visible:
+            plain = gap_plain_status(str(gap.get("status") or ""))
+            if not plain or plain not in visible or gap["label"] not in visible:
                 failures.append(f"Anthropic row {release['id']} is missing gap {gap['id']}")
+            if gap["status"] in visible:
+                failures.append(f"Anthropic row {release['id']} still shows {gap['status']}")
         kind = _element_inner(detail_raw, f"kind-{release['id']}")
         if kind is None:
             failures.append(f"Anthropic page is missing kind-{release['id']}")
@@ -3752,7 +3789,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     if source_phrase not in tight_text(source_path.read_text(encoding="utf-8")):
         failures.append("source index runs the catalogue links together")
     apn_html = apn_path.read_text(encoding="utf-8")
-    apn_intro = re.search(r"<h1>AlphaProof Nexus</h1>\s*<p>(.*?)</p>", apn_html, re.DOTALL)
+    apn_intro = re.search(r"<h1>AlphaProof Nexus</h1>\s*<p\b[^>]*>(.*?)</p>", apn_html, re.DOTALL)
     apn_source = catalog["alphaproof"]["source"]
     apn_commit = str(apn_source["commit"])
     apn_phrases = [
@@ -3765,7 +3802,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     for phrase in missing_spaced_phrases(apn_html, apn_phrases):
         failures.append(f"AlphaProof page is missing spaced text {phrase!r}")
     anthropic_html = anthropic_path.read_text(encoding="utf-8")
-    anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p>(.*?)</p>", anthropic_html, re.DOTALL)
+    anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p\b[^>]*>(.*?)</p>", anthropic_html, re.DOTALL)
     an_commit = str(anthropic_source["commit"])
     flt_commit = str(flt["commit"])
     an_phrases = [

@@ -1,9 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
-import { anthropicLeanRank, atlas, dateRange, shortSha, type AlphaProofRecord } from "../lib/atlas";
+import { anthropicLeanRank, atlas, dateRange, formatIso, shortSha, type AlphaProofRecord } from "../lib/atlas";
 import { lensChoices, subjectChoices } from "../lib/filters";
 import { leanLabel, leanRank } from "../lib/lean";
-import { openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
+import { gapPlainStatus, openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
 import shareDocument from "../generated/share.json";
 
 interface ShareSegment {
@@ -16,6 +16,7 @@ interface ShareRow {
   unit: string;
   percent: string;
   caption: string;
+  shortCaption: string;
   segments: ShareSegment[];
 }
 
@@ -68,7 +69,8 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
             </div>
             <span class="share-pct">{row.percent}</span>
           </div>
-          <p class="share-caption">{row.caption}</p>
+          <p class="share-caption share-caption-full">{row.caption}</p>
+          <p class="share-caption share-caption-short">{row.shortCaption}</p>
         </li>
       ))}
     </ol>
@@ -230,7 +232,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
                 <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
               </td>
               <td class="subject" data-label="Subject">{family.areas.join(", ")}</td>
-              <td data-label="Date">{dateRange(dates)}</td>
+              <td class="date" data-label="Date">{dateRange(dates)}</td>
             </tr>
           );
         })}
@@ -283,7 +285,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
             </td>
             <td data-label="Lean"><span class="badge deposited">Deposited</span></td>
             <td class="subject" data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
-            <td data-label="Date">{alphaproof.commit_date}</td>
+            <td class="date" data-label="Date">{formatIso(alphaproof.commit_date)}</td>
           </tr>
         ))}
         {anthropic.releases.map((release) => {
@@ -317,7 +319,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
                     <div class="receipt">
                       <p>{release.statement}</p>
                       {release.gaps.map((gap) => (
-                        <p class="caution">{gap.status}. {gap.label}</p>
+                        <p class="caution">{gapPlainStatus(gap.status)}. {gap.label}</p>
                       ))}
                       <p class="meta"><a class="direct-upstream" href={release.tree_url}>{release.path || release.repo}</a></p>
                       {release.paper && (
@@ -346,7 +348,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
               </td>
               <td data-label="Lean"><span class={`badge ${release.kind}`}>{release.kind_label}</span></td>
               <td class="subject" data-label="Subject">{release.id}</td>
-              <td data-label="Date">{dated}</td>
+              <td class="date" data-label="Date">{formatIso(dated)}</td>
             </tr>
           );
         })}

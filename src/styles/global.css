@@ -144,17 +144,17 @@ h1 {
 .lede { max-width: 62ch; margin: 0 0 1.25rem; font-size: 1.125rem; line-height: 1.5; }
 .atlas-line { margin: 0.2rem 0 0.55rem; font-size: 1.02rem; line-height: 1.4; max-width: 78ch; }
 
-.share { margin: 0 0 0.35rem; }
+.share { margin: 0 0 0.7rem; }
 .share h2 {
   font-family: var(--sans);
   font-size: 0.82rem;
   font-weight: 400;
   letter-spacing: 0.01em;
   color: var(--muted);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.45rem;
 }
 .share-rows { list-style: none; margin: 0; padding: 0; }
-.share-rows > li { margin: 0 0 0.28rem; }
+.share-rows > li { margin: 0 0 0.7rem; }
 .share-name {
   display: flex;
   justify-content: space-between;
@@ -162,12 +162,12 @@ h1 {
   align-items: baseline;
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.2;
+  font-size: 1.05rem;
+  line-height: 1.25;
 }
-.share-unit { color: var(--muted); font-family: var(--sans); font-weight: 400; font-size: 0.82rem; }
-.share-track { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.2rem; }
-.share-bar { display: flex; flex: 1 1 auto; min-width: 0; height: 0.7rem; }
+.share-unit { color: var(--muted); font-family: var(--sans); font-weight: 400; font-size: 0.86rem; }
+.share-track { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
+.share-bar { display: flex; flex: 1 1 auto; min-width: 0; height: 1rem; }
 .seg { display: block; min-width: 2px; height: 100%; }
 .seg-lean { background: var(--accent); }
 .seg-challenge { background: #6fa096; }
@@ -181,15 +181,16 @@ h1 {
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
 }
-.share-caption { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
+.share-caption { margin: 0.32rem 0 0; color: var(--muted); font-size: 0.86rem; line-height: 1.35; }
+.share-caption-short { display: none; }
 .share-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 1rem;
+  gap: 0.4rem 1.1rem;
   list-style: none;
-  margin: 0.15rem 0 0;
+  margin: 0.35rem 0 0;
   padding: 0;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
 }
 .share-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
 .swatch { width: 0.85rem; height: 0.85rem; display: inline-block; }
@@ -207,8 +208,6 @@ h1 {
   line-height: 1.4;
 }
 .catalogue strong { font-family: var(--serif); }
-
-.gap-code { display: none; }
 
 .snapshot {
   margin: 0 0 1.35rem;
@@ -308,9 +307,9 @@ table[data-family-table] caption {
 
 table[data-family-table] th:nth-child(1) { width: 6.5rem; }
 table[data-family-table] th:nth-child(2) { width: 5.5rem; }
-table[data-family-table] th:nth-child(4) { width: 11rem; }
-table[data-family-table] th:nth-child(5) { width: 7.25rem; }
-table[data-family-table] th:nth-child(6) { width: 6.5rem; }
+table[data-family-table] th:nth-child(4) { width: 10.5rem; }
+table[data-family-table] th:nth-child(5) { width: 6.25rem; }
+table[data-family-table] th:nth-child(6) { width: 8.25rem; }
 th, td {
   text-align: left;
   vertical-align: top;
@@ -373,6 +372,11 @@ table[data-family-table] td.id {
 }
 table[data-family-table] td.subject {
   overflow-wrap: break-word;
+}
+table[data-family-table] td.date {
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 a.chip {
   display: inline-flex;
@@ -539,6 +543,46 @@ a.tag:hover { text-decoration: underline; }
   font-family: var(--mono);
 }
 
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.8rem;
+  margin: 0 0 0.85rem;
+  line-height: 1.45;
+}
+.summary-lead {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.45;
+  margin: 0 0 1.1rem;
+  max-width: 62ch;
+}
+.receipts { margin: 0.2rem 0 1.2rem; }
+.receipts > details,
+details.receipts {
+  border-top: 1px solid var(--line);
+  margin: 0;
+  padding: 0.1rem 0 0.35rem;
+}
+.receipts summary,
+details.receipts summary {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--ink);
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+.receipts h3 {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  margin: 0.9rem 0 0.3rem;
+}
+.gap-list { list-style: none; margin: 0.4rem 0 0.8rem; padding: 0; }
+.gap-list li { margin: 0.35rem 0; }
+.source-page h2, .family h2 { margin-top: 1.5rem; }
+
 .prose { max-width: 68ch; }
 .prose h2 {
   font-family: var(--serif);
@@ -567,13 +611,40 @@ tr[hidden] { display: none; }
 .release > h2 { margin-top: 0; }
 
 @media (max-width: 800px) {
+  .home-title { margin-bottom: 0.1rem; font-size: 1.45rem; }
+  .share { margin-bottom: 0.1rem; }
+  .share h2 { font-size: 0.72rem; margin-bottom: 0.08rem; }
+  .share-rows > li { margin-bottom: 0.08rem; }
+  .atlas-line { font-size: 0.8rem; line-height: 1.3; margin-bottom: 0.15rem; }
+  table[data-family-table] caption { font-size: 0.75rem; line-height: 1.3; padding-bottom: 0.2rem; }
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.25rem 0.4rem;
+    align-items: end;
+  }
+  .filters label:first-child { grid-column: 1 / -1; }
+  #filter-reset { grid-column: auto; min-height: 2.75rem; }
+  .filters select,
+  #family-search { width: 100%; max-width: none; min-width: 0; }
+  .share-name { font-size: 0.92rem; line-height: 1.15; }
+  .share-track { margin-top: 0.12rem; gap: 0.4rem; }
+  .share-bar { height: 0.38rem; }
+  .share-pct { font-size: 0.9rem; min-width: 2.6rem; }
+  .share-caption { margin-top: 0.05rem; font-size: 0.72rem; line-height: 1.25; }
+  .share-caption-full { display: none; }
+  .share-caption-short { display: block; }
+  .share-legend { margin-top: 0.1rem; gap: 0.2rem 0.65rem; font-size: 0.72rem; }
+  .summary-lead { font-size: 1.05rem; }
+  .release { padding: 0.85rem; margin: 1rem 0; }
   .graph-map { display: none; }
   .map-fallback { display: block; }
   .stats { grid-template-columns: 1fr 1fr; }
   .site-header .wrap { flex-direction: column; align-items: start; }
   table, tbody, tr, td { display: block; width: 100%; }
   table[data-family-table] caption { display: block; width: auto; }
-  table[data-family-table] td.id {
+  table[data-family-table] td.id,
+  table[data-family-table] td.date {
     white-space: normal;
     overflow: visible;
     text-overflow: clip;

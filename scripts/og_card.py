@@ -28,6 +28,7 @@ from atlaslib import (
     affiliation_sentence,
     preview_entries,
     published_prefix,
+    scan_overclaims,
 )
 
 FONT_DIR = ROOT / "scripts" / "fonts"
@@ -57,7 +58,7 @@ LEAN_NONE = "none"
 KIND_NEW = "new-result"
 KIND_FORMALIZATION = "formalization"
 _INITIALS = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?")
-_BANNED_WORDS = ("verified", "proved")
+_NOT_FORMALIZED = "NOT FORMALIZED"
 
 LX = 56
 LW = 520
@@ -67,7 +68,7 @@ PANEL_TOP = 40
 PANEL_BOTTOM = 548
 LEGEND = (
     (ACCENT, "result in Lean"),
-    (MID, "Lean challenge only"),
+    (MID, "not the whole claim"),
     (PAPER_ONLY, "paper only"),
 )
 # Room to the right of every bar for the percent, in dark ink.
@@ -181,11 +182,10 @@ def _plural(count: int, singular: str, plural_form: str | None = None) -> str:
     return f"{count} {word}"
 
 
-def _reject_banned(text: str) -> None:
-    lowered = text.lower()
-    for word in _BANNED_WORDS:
-        if word in lowered:
-            raise SystemExit(f"preview card uses {word}")
+def _reject_overclaim(text: str) -> None:
+    failures = scan_overclaims(text, "preview card")
+    if failures:
+        raise SystemExit(failures[0])
 
 
 def _initials(title: str) -> str:
@@ -245,13 +245,16 @@ def _family_row(name: str, org: str, families: list[dict[str, Any]]) -> dict[str
         f"{main} result in Lean{CAPTION_GAP}{challenge} challenge only{CAPTION_GAP}{paper} paper only"
     )
     short_noun = "family" if total == 1 else "families"
-    alt = f"of {total} {short_noun} ({main} result, {challenge} challenge only, {paper} paper only)"
+    alt = f"of {total} {short_noun} ({main} main result, {challenge} challenge only, {paper} paper only)"
     return {
         "name": name,
         "org": org,
         "unit": f"{total} {family_noun}",
         "percent": f"{percent(lean, total)}%",
         "caption": caption,
+        "short_caption": (
+            f"{main} in Lean{CAPTION_GAP}{challenge} challenge{CAPTION_GAP}{paper} paper"
+        ),
         "clause": clause,
         "alt": alt,
         "segments": [(main, ACCENT), (challenge, MID), (paper, PAPER_ONLY)],
@@ -296,6 +299,7 @@ def _file_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "unit": f"{files} {file_noun} + {absent} named in paper",
         "percent": f"{percent(files, total)}%",
         "caption": f"{files} {lean_noun}{CAPTION_GAP}{absent} {series} results in paper, no file",
+        "short_caption": f"{files} Lean{CAPTION_GAP}{absent} no file",
         "clause": f"{files} {who} {lean_noun}",
         "alt": f"({files} {file_noun}, {absent} paper only)",
         "segments": [(files, ACCENT), (absent, PAPER_ONLY)],
@@ -312,7 +316,9 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         raise SystemExit(f"{name} release count disagrees with its release list")
     new_results: list[dict[str, Any]] = []
     formalizations: list[dict[str, Any]] = []
-    with_lean = 0
+    full = 0
+    partial = 0
+    paper = 0
     for release in releases:
         if not isinstance(release, dict):
             raise SystemExit(f"{name} has a release the share card cannot draw")
@@ -327,9 +333,18 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         lean_files = release_counts.get("lean_files") if isinstance(release_counts, dict) else None
         if not isinstance(lean_files, int):
             raise SystemExit(f"{name} has a release without a Lean-file count")
-        if lean_files > 0:
-            with_lean += 1
+        gaps = release.get("gaps")
+        not_formalized = isinstance(gaps, list) and any(
+            isinstance(gap, dict) and gap.get("status") == _NOT_FORMALIZED for gap in gaps
+        )
+        if lean_files <= 0:
+            paper += 1
+        elif not_formalized:
+            partial += 1
+        else:
+            full += 1
     total = len(releases)
+    with_lean = full + partial
     recorded_new = counts.get("new_results")
     recorded_formal = counts.get("formalizations")
     if isinstance(recorded_new, int) and recorded_new != len(new_results):
@@ -343,16 +358,25 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
     new_phrase = _plural(len(new_results), "new result")
     release_noun = "release" if total == 1 else "releases"
     who = name if name == org else f"{org} {name}"
-    paper = total - with_lean
+    if partial:
+        caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} not formalized{CAPTION_GAP}"
+            f"{len(new_results)} new, {formal_phrase}"
+        )
+        short_caption = f"{full} in Lean{CAPTION_GAP}{partial} not formalized"
+    else:
+        caption = f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}"
+        short_caption = f"{with_lean} of {total} with Lean"
     return {
         "name": name,
         "org": org,
         "unit": f"{total} {release_noun}",
         "percent": f"{percent(with_lean, total)}%",
-        "caption": f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}",
+        "caption": caption,
+        "short_caption": short_caption,
         "clause": f"{total} {who} {release_noun}",
         "alt": f"({with_lean} of {total}; {new_phrase}, {_plural(len(formalizations), 'formalization')})",
-        "segments": [(with_lean, ACCENT), (paper, PAPER_ONLY)],
+        "segments": [(full, ACCENT), (partial, MID), (paper, PAPER_ONLY)],
     }
 
 
@@ -413,7 +437,7 @@ def card_alt(catalog: dict[str, Any]) -> str:
         alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {note}. {line}"
     else:
         alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {line}"
-    _reject_banned(alt)
+    _reject_overclaim(alt)
     if len(alt) > SOCIAL_IMAGE_ALT_MAX:
         raise SystemExit(f"preview alt is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
     return alt
@@ -434,7 +458,7 @@ def compose(catalog: dict[str, Any]) -> list[str]:
     """The exact strings the card draws, in paint order. Overflow stops the build."""
     rows = share_rows(catalog)
     sentence = share_sentence(rows)
-    _reject_banned(sentence)
+    _reject_overclaim(sentence)
     headline_face, headline_lines = _headline_lines()
     sentence_face = font(SANS, 25)
     sentence_lines = wrap_text(sentence_face, sentence, LW)
@@ -472,7 +496,7 @@ def compose(catalog: dict[str, Any]) -> list[str]:
             raise SystemExit("share bar has no room beside the percent")
         if text_width(percent_face, pct) > PERCENT_GUTTER - 8:
             raise SystemExit(f"percent label does not fit beside the bar for {name}")
-        _reject_banned(f"{name} {unit} {pct} {label}")
+        _reject_overclaim(f"{name} {unit} {pct} {label}")
         lines.extend([name, unit, pct, label])
         y = (y + 42) + 36 + 50
     legend_y = y + 2
@@ -630,6 +654,7 @@ def share_document(catalog: dict[str, Any]) -> dict[str, Any]:
                 "unit": row["unit"],
                 "percent": row["percent"],
                 "caption": row["caption"],
+                "shortCaption": row["short_caption"],
                 "segments": segments,
             }
         )

@@ -91,15 +91,6 @@ function plural(count: number, singular: string, pluralForm?: string): string {
   return `${count} ${word}`;
 }
 
-function rejectBanned(text: string): void {
-  const lowered = text.toLowerCase();
-  for (const word of ["verified", "proved"]) {
-    if (lowered.includes(word)) {
-      throw new Error(`preview card uses ${word}`);
-    }
-  }
-}
-
 function integer(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
@@ -177,7 +168,7 @@ function familyRow(name: string, org: string, families: Family[]): ShareRow {
     name,
     org,
     percent: `${percent(main + challenge, total)}%`,
-    alt: `of ${total} ${familyNoun} (${main} result, ${challenge} challenge only, ${paper} paper only)`,
+    alt: `of ${total} ${familyNoun} (${main} main result, ${challenge} challenge only, ${paper} paper only)`,
   };
 }
 
@@ -341,7 +332,6 @@ export function previewAltFromCatalogue(): string {
   const alt = note
     ? `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${note}. ${line}`
     : `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${line}`;
-  rejectBanned(alt);
   if (alt.length > SOCIAL_IMAGE_ALT_MAX) {
     throw new Error(`preview alt is ${alt.length} characters, over ${SOCIAL_IMAGE_ALT_MAX}`);
   }
