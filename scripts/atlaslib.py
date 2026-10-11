@@ -2579,6 +2579,12 @@ def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
         failures.append("citation graph does not label shared-topic links")
     if "<ul" not in text:
         failures.append("citation graph has no list fallback")
+    if "diagram is hidden" in text:
+        failures.append("citation graph hides the diagram on a narrow screen")
+    if "Scroll or pinch to zoom." not in text:
+        failures.append("citation graph is missing the scroll hint")
+    if "graph-map" not in text:
+        failures.append("citation graph is missing the map")
     families = catalog["families"]
     for family in families:
         for edge in family.get("cites") or []:
@@ -3897,6 +3903,7 @@ _SHARE_SEG_RE = re.compile(
     r'class="seg seg-([a-z]+)"[^>]*style="flex-grow:\s*(\d+)"',
 )
 _SHARE_PCT_RE = re.compile(r'class="share-pct"[^>]*>\s*([^<]+?)\s*<')
+_SHARE_ARIA_RE = re.compile(r"""aria-label\s*=\s*(?:"([^"]*)"|'([^']*)')""")
 
 
 def check_home_share(index_html: str, catalog: dict[str, Any]) -> list[str]:
@@ -3943,6 +3950,20 @@ def check_home_share(index_html: str, catalog: dict[str, Any]) -> list[str]:
         expected = [(segment["role"], str(segment["count"])) for segment in row["segments"]]
         if drawn != expected:
             failures.append(f"{name} share bar is {drawn}, data has {expected}")
+        aria_match = _SHARE_ARIA_RE.search(item)
+        expected_aria = re.sub(
+            r"\s+",
+            " ",
+            f"{row['name']} {row['percent']}. {row['caption']}",
+        ).strip()
+        shown_aria = ""
+        if aria_match is not None:
+            raw_aria = aria_match.group(1) if aria_match.group(1) is not None else aria_match.group(2)
+            shown_aria = re.sub(r"\s+", " ", html.unescape(raw_aria or "")).strip()
+        if shown_aria != expected_aria:
+            failures.append(
+                f"{name} screen-reader label is {shown_aria!r}, data has {expected_aria!r}"
+            )
     legend_items = [_visible_text(item) for item in _SHARE_ITEM_RE.findall(legend_match.group(1))]
     expected_legend = [str(item["label"]) for item in document["legend"]]
     if legend_items != expected_legend:

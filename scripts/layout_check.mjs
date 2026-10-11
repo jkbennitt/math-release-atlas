@@ -157,6 +157,118 @@ async function measure(page) {
   });
 }
 
+function channel(value) {
+  const part = value / 255;
+  return part <= 0.04045 ? part / 12.92 : ((part + 0.055) / 1.055) ** 2.4;
+}
+
+function luminance(color) {
+  return 0.2126 * channel(color[0]) + 0.7152 * channel(color[1]) + 0.0722 * channel(color[2]);
+}
+
+function contrast(left, right) {
+  const lighter = Math.max(luminance(left), luminance(right));
+  const darker = Math.min(luminance(left), luminance(right));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function parseColor(value) {
+  const match = String(value).match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+  if (!match) {
+    return null;
+  }
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+async function readGraphMap(page) {
+  return page.evaluate(() => {
+    const map = document.querySelector("svg.graph-map");
+    const hint = document.querySelector(".map-hint");
+    const list = document.querySelector(".edge-list");
+    const body = document.body.textContent ?? "";
+    if (map === null) {
+      return { missing: true, hiddenSentence: body.includes("diagram is hidden") };
+    }
+    const style = getComputedStyle(map);
+    const paint = (node) => {
+      if (node === null) {
+        return "";
+      }
+      const painted = getComputedStyle(node);
+      if (painted.stroke && painted.stroke !== "none") {
+        return painted.stroke;
+      }
+      return painted.fill;
+    };
+    const cite = map.querySelector("line.cite");
+    const topic = map.querySelector("line.topic") ?? map.querySelector(".topic-arrow");
+    const label = map.querySelector("text");
+    const box = map.getBoundingClientRect();
+    return {
+      missing: false,
+      display: style.display,
+      visibility: style.visibility,
+      width: box.width,
+      height: box.height,
+      background: style.backgroundColor,
+      cite: paint(cite),
+      topic: paint(topic),
+      label: paint(label),
+      hintDisplay: hint === null ? "" : getComputedStyle(hint).display,
+      hintText: hint === null ? "" : (hint.textContent ?? "").trim(),
+      hasList: list !== null,
+      hiddenSentence: body.includes("diagram is hidden"),
+    };
+  });
+}
+
+function graphMapFailures(label, map, width) {
+  const failures = [];
+  if (map.missing) {
+    failures.push(`${label}: citation map is missing`);
+    return failures;
+  }
+  if (map.display === "none" || map.visibility === "hidden") {
+    failures.push(`${label}: citation map is hidden (${map.display}, ${map.visibility})`);
+  }
+  if (map.width < 1 || map.height < 1) {
+    failures.push(`${label}: citation map is ${map.width} by ${map.height}`);
+  }
+  if (width === 390 && map.width < 900) {
+    failures.push(`${label}: citation map is ${map.width.toFixed(1)}px wide`);
+  }
+  if (map.hiddenSentence) {
+    failures.push(`${label}: the narrow-screen hide sentence is still on the page`);
+  }
+  if (width === 390 && (map.hintDisplay === "none" || map.hintText !== "Scroll or pinch to zoom.")) {
+    failures.push(`${label}: scroll hint is missing`);
+  }
+  if (!map.hasList) {
+    failures.push(`${label}: citation edge list is missing`);
+  }
+  const paper = parseColor(map.background);
+  if (paper === null) {
+    failures.push(`${label}: map background ${map.background} could not be read`);
+  } else {
+    for (const [name, raw] of [
+      ["cite line", map.cite],
+      ["topic line", map.topic],
+      ["label", map.label],
+    ]) {
+      const color = parseColor(raw);
+      if (color === null) {
+        failures.push(`${label}: ${name} color ${raw} could not be read`);
+        continue;
+      }
+      const ratio = contrast(color, paper);
+      if (ratio < 3) {
+        failures.push(`${label}: ${name} is ${ratio.toFixed(2)}:1 on the map`);
+      }
+    }
+  }
+  return failures;
+}
+
 function layoutFailures(label, metrics, table) {
   const failures = [];
   if (metrics.pageOverflow > 1) {
@@ -213,6 +325,19 @@ try {
         continue;
       }
       const home = route.name === "home";
+      if (home && width === 390) {
+        const barHeights = await page.evaluate(() =>
+          [...document.querySelectorAll(".share-bar")].map((node) => node.getBoundingClientRect().height),
+        );
+        if (barHeights.length === 0) {
+          failures.push("home at 390px: share bars are missing");
+        }
+        for (const height of barHeights) {
+          if (height < 10) {
+            failures.push(`home at 390px: share bar is ${height.toFixed(1)}px`);
+          }
+        }
+      }
       if (home) {
         await page.locator("[data-family-table]").waitFor();
         if (width === 1024) {
@@ -220,6 +345,27 @@ try {
           if (!introPattern.test(intro) || /progress\.Generated|from[0-9a-f]|PDF·|map·/.test(intro)) {
             failures.push(`snapshot intro runs together: ${intro}`);
           }
+        }
+      }
+      if (route.name === "graph") {
+        failures.push(...graphMapFailures(label, await readGraphMap(page), width));
+        if (width === 390) {
+          await page.emulateMedia({ colorScheme: "dark" });
+          const darkMap = await readGraphMap(page);
+          failures.push(...graphMapFailures(`${label} dark`, darkMap, width));
+          const paper = parseColor(darkMap.background ?? "");
+          const pagePaper = [250, 247, 241];
+          if (
+            paper === null ||
+            paper[0] !== pagePaper[0] ||
+            paper[1] !== pagePaper[1] ||
+            paper[2] !== pagePaper[2]
+          ) {
+            failures.push(
+              `${label} dark: map background is ${darkMap.background ?? "missing"}, expected rgb(250, 247, 241)`,
+            );
+          }
+          await page.emulateMedia({ colorScheme: "light" });
         }
       }
       failures.push(...layoutFailures(label, await measure(page), home && width === 1024));
