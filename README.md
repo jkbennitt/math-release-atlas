@@ -34,31 +34,36 @@ link-preview card, and writes `dist/`.
 The shared layout emits the page title and description as Open Graph and
 Twitter Card tags, plus a canonical URL. Every URL is absolute and includes
 `/math-release-atlas/`. `npm run build` and the daily sync both run
-`scripts/og_card.py`, which reads the source registry in `data/families.json`
+`scripts/og_card.py`, which reads the catalogue in `data/families.json`
 and writes `public/og.png` at 1200×630. Astro copies that file into `dist/`.
-The card loops every registered source. Each source's counts, and the
-AlphaProof statuses PARTIAL, MATCH, and MISSING, are derived when the
-catalogue is merged. Adding or removing a source, or a count changing on
-sync, updates the card, the alt text, and the social text without an edit to
-the card. The image spells Erdos in ASCII because the card fonts have an
-empty box for ő. The alt text is the same sentence as `preview_alt()` in
-`scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`. It names
-every registered source and that source's counts. Gap statuses, including
-per-row provenance, stay on the source pages, and the sentence stays within
-300 characters. It says the atlas is unofficial, not affiliated with OpenAI,
+The card is a share view. The headline is "AI math claims: on paper, or in
+Lean?" One sentence lists every registered catalogue, with its count taken
+from the data. Each source then has one percent bar for the share of that
+catalogue that has Lean files. A family catalogue splits Lean status into a
+main result, a comparator challenge, and paper only. A file catalogue counts
+Lean files against the paper gap of results that have no file. A release list
+counts releases that include Lean files, and a formalization keeps that label,
+including Fermat's Last Theorem. A source that matches none of those shapes,
+or that no longer fits on the card, stops the build. Adding a source that
+does match, or a count changing on sync, updates the card and the alt text
+without an edit to the card. The footer shows the site host and "Unofficial ·
+not affiliated with any lab". The alt text is the same sentence as `card_alt()`
+in `scripts/og_card.py` and `previewAltFromCatalogue` in `src/lib/social.ts`.
+It describes the share card, names every registered source, and stays within
+420 characters. It says the atlas is unofficial, not affiliated with OpenAI,
 Google DeepMind, or Anthropic. Those organization names are pinned, so
-renaming one fails the check. The Anthropic panel and the alt text add
-Fermat's Last Theorem: Formalization, not a new result, with an ASCII
-apostrophe, because the card font has no curly apostrophe. The check fails
-if the card, the alt text, or the social text omits a registered source,
-omits that formalization note, disagrees with the catalogue counts, or skips
-a source that has no derivation. The built `og.png` must match a fresh render
-byte for byte, so a blank or stale image of the right size fails. It also
-fails if any built page is missing `og:image` or `twitter:card`, if
-`og:image` or `twitter:image` is not an absolute https URL, if
-`twitter:image:alt` or `og:image:alt` is over 420 characters, if
-`twitter:description` or `og:description` is over 200 characters, or if
-`twitter:title` is over 70 characters.
+renaming one fails the check. It also says Fermat's Last Theorem:
+Formalization, not a new result, with an ASCII apostrophe, because the card
+font has no curly apostrophe. Gap statuses stay on the source pages. The
+check fails if the card or the alt text omits a registered source, omits that
+formalization, disagrees with the catalogue counts, or skips a source that
+has no derivation. The built `og.png` must match a fresh render byte for
+byte, so a blank or stale image of the right size fails. It also fails if
+any built page is missing `og:image` or `twitter:card`, if `og:image` or
+`twitter:image` is not an absolute https URL, if `twitter:image:alt` or
+`og:image:alt` is over 420 characters, if `twitter:description` or
+`og:description` is over 200 characters, or if `twitter:title` is over 70
+characters.
 Package version 0.4.5.
 
 To regenerate the catalogue from a clone that is already at the commit you

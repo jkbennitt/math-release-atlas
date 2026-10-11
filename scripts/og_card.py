@@ -1,33 +1,38 @@
 #!/usr/bin/env python3
-"""Draw the link-preview card from the registered sources.
+"""Draw the link-preview card from the registered catalogues.
 
-Each source contributes the preview stored on its registry record. Adding or
-removing a source, or a count changing on sync, changes that record and this
-card follows. The card does not name a source of its own. The subset fonts
-have no glyph for ő, so a detail line spells Erdos in ASCII. The alt text is
-preview_alt() and does not need that spelling.
+Each source contributes one share bar. The bar is chosen from the shape of
+that source's records: families with a Lean status, a release list, or Lean
+files plus one paper gap. A source that matches none of those shapes stops
+the build. The card does not name a source of its own. The alt text is
+card_alt().
 """
 
 from __future__ import annotations
 
 import io
 import json
+import re
 from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
 
 from atlaslib import (
     FAMILIES_JSON,
+    FLT_PREVIEW_NOTE,
     PREVIEW_HEIGHT,
     PREVIEW_IMAGE_NAME,
     PREVIEW_WIDTH,
     ROOT,
+    SOCIAL_IMAGE_ALT_MAX,
     affiliation_sentence,
-    join_series,
     preview_entries,
+    published_prefix,
 )
 
 FONT_DIR = ROOT / "scripts" / "fonts"
+SERIF_BOLD = "AtlasCardSerif-Bold.ttf"
+SANS = "AtlasCardSans-Regular.ttf"
 
 BG = (243, 239, 230)
 PAPER = (250, 247, 241)
@@ -35,11 +40,36 @@ INK = (29, 26, 22)
 MUTED = (78, 72, 63)
 LINE = (221, 212, 198)
 ACCENT = (31, 77, 74)
+MID = (111, 160, 150)
+PAPER_ONLY = (214, 196, 160)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
-MARGIN = 48
-GAP = 16
-MIN_CARD_W = 200
+
+BRAND = "Math Release Atlas"
+HEADLINE = "AI math claims: on paper, or in Lean?"
+PANEL_TITLE = "SHARE OF EACH CATALOGUE WITH LEAN FILES"
+UNAFFILIATED = "Unofficial · not affiliated with any lab"
+SENTENCE_TAIL = ", each linked to its paper or Lean files at a pinned commit."
+CAPTION_GAP = "  \u00b7  "
+LEAN_MAIN = "main-result-formalized"
+LEAN_CHALLENGE = "comparator-challenge-only"
+LEAN_NONE = "none"
+KIND_NEW = "new-result"
+KIND_FORMALIZATION = "formalization"
+_INITIALS = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?")
+_BANNED_WORDS = ("verified", "proved")
+
+LX = 56
+LW = 520
+RX = 624
+RW = 520
+PANEL_TOP = 40
+PANEL_BOTTOM = 548
+LEGEND = (
+    (ACCENT, "result in Lean"),
+    (MID, "Lean challenge only"),
+    (PAPER_ONLY, "paper only"),
+)
 
 
 def font(name: str, size: int) -> ImageFont.FreeTypeFont:
@@ -99,15 +129,6 @@ def require_glyphs(face: ImageFont.FreeTypeFont, text: str) -> None:
         raise SystemExit(f"preview font is missing glyphs: {shown}")
 
 
-def fitting_font(filename: str, text: str, max_width: int, size: int) -> ImageFont.FreeTypeFont:
-    while size >= 15:
-        face = font(filename, size)
-        if text_width(face, text) <= max_width:
-            return face
-        size -= 1
-    raise SystemExit(f"preview card text does not fit: {text}")
-
-
 def wrap_text(face: ImageFont.FreeTypeFont, text: str, max_width: int) -> list[str]:
     if not text:
         return []
@@ -126,49 +147,356 @@ def wrap_text(face: ImageFont.FreeTypeFont, text: str, max_width: int) -> list[s
     return lines
 
 
-def card_width(count: int) -> int:
-    if count < 1:
-        raise SystemExit("preview card has no sources")
-    width = (PREVIEW_WIDTH - MARGIN * 2 - GAP * (count - 1)) // count
-    if width < MIN_CARD_W:
-        raise SystemExit(f"preview card has {count} sources and no longer fits")
-    return width
+def card_host() -> str:
+    prefix = published_prefix()
+    if not prefix:
+        raise SystemExit("preview card cannot read the published host")
+    host = prefix
+    for scheme in ("https://", "http://"):
+        if host.startswith(scheme):
+            host = host[len(scheme) :]
+            break
+    return host.rstrip("/")
 
 
-def plan(entries: list[dict[str, Any]]) -> dict[str, Any]:
-    """The exact strings the card draws, in registry order."""
-    if not entries:
-        raise SystemExit("preview card has no sources")
-    inner = card_width(len(entries)) - 36
-    detail_face = font("AtlasCardSans-Regular.ttf", 16)
-    panels = []
-    for entry in entries:
-        tiles = [(str(tile["value"]), str(tile["label"])) for tile in entry["tiles"]]
-        detail = wrap_text(detail_face, str(entry.get("detail") or ""), inner)
-        panels.append({"name": str(entry["name"]), "tiles": tiles, "detail_lines": detail})
+def percent(part: int, total: int) -> int:
+    """Half-even percentage, so the card and the alt text round the same way."""
+    if total <= 0:
+        raise SystemExit("share bar has an empty catalogue")
+    quotient, remainder = divmod(part * 100, total)
+    if remainder * 2 < total:
+        return quotient
+    if remainder * 2 > total:
+        return quotient + 1
+    if quotient % 2 == 0:
+        return quotient
+    return quotient + 1
+
+
+def _plural(count: int, singular: str, plural_form: str | None = None) -> str:
+    word = singular if count == 1 else (plural_form or f"{singular}s")
+    return f"{count} {word}"
+
+
+def _reject_banned(text: str) -> None:
+    lowered = text.lower()
+    for word in _BANNED_WORDS:
+        if word in lowered:
+            raise SystemExit(f"preview card uses {word}")
+
+
+def _initials(title: str) -> str:
+    words = _INITIALS.findall(title)
+    if not words:
+        raise SystemExit(f"preview card cannot initial a release title {title!r}")
+    return "".join(word[0].upper() for word in words)
+
+
+def _families_for(catalog: dict[str, Any], source_id: str) -> list[dict[str, Any]]:
+    families = catalog.get("families")
+    if not isinstance(families, list):
+        return []
+    matched: list[dict[str, Any]] = []
+    for family in families:
+        if isinstance(family, dict) and family.get("source") == source_id:
+            matched.append(family)
+    return matched
+
+
+def _catalogue_blocks(catalog: dict[str, Any]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    for value in catalog.values():
+        if not isinstance(value, dict):
+            continue
+        source = value.get("source")
+        if isinstance(source, dict) and isinstance(source.get("id"), str):
+            blocks.append(value)
+    return blocks
+
+
+def _block_for(catalog: dict[str, Any], source_id: str, name: str) -> dict[str, Any] | None:
+    matches = [block for block in _catalogue_blocks(catalog) if block["source"]["id"] == source_id]
+    if len(matches) > 1:
+        raise SystemExit(f"{name} matches more than one catalogue")
+    return matches[0] if matches else None
+
+
+def _family_row(name: str, org: str, families: list[dict[str, Any]]) -> dict[str, Any]:
+    counts = {LEAN_MAIN: 0, LEAN_CHALLENGE: 0, LEAN_NONE: 0}
+    for family in families:
+        lean = family.get("lean")
+        status = lean.get("status") if isinstance(lean, dict) else None
+        if status not in counts:
+            raise SystemExit(f"{name} has a Lean status the share card cannot draw")
+        counts[status] += 1
+    total = sum(counts.values())
+    if total <= 0:
+        raise SystemExit(f"{name} has no result families")
+    main = counts[LEAN_MAIN]
+    challenge = counts[LEAN_CHALLENGE]
+    paper = counts[LEAN_NONE]
+    lean = main + challenge
+    family_noun = "result family" if total == 1 else "result families"
+    clause = f"{total} {org} {family_noun}"
+    caption = (
+        f"{main} result in Lean{CAPTION_GAP}{challenge} challenge only{CAPTION_GAP}{paper} paper only"
+    )
+    alt = (
+        f"of {total} {family_noun} ({main} result in Lean, {challenge} challenge only, {paper} paper only)"
+    )
     return {
-        "title": "Math Release Atlas",
-        "subtitle": join_series([str(entry["name"]) for entry in entries], "and"),
-        "panels": panels,
-        "footer": affiliation_sentence([str(entry["org"]) for entry in entries]),
+        "name": name,
+        "org": org,
+        "unit": f"{total} {family_noun}",
+        "percent": f"{percent(lean, total)}%",
+        "caption": caption,
+        "clause": clause,
+        "alt": alt,
+        "segments": [(main, ACCENT), (challenge, MID), (paper, PAPER_ONLY)],
     }
 
 
-def planned_text(entries: list[dict[str, Any]]) -> list[str]:
-    planned = plan(entries)
-    lines = [planned["title"], planned["subtitle"]]
-    for panel in planned["panels"]:
-        lines.append(panel["name"])
-        for value, label in panel["tiles"]:
-            lines.append(value)
-            lines.append(label)
-        lines.extend(panel["detail_lines"])
-    lines.append(planned["footer"])
+def _gap_series(gap_id: str) -> str:
+    head = gap_id.split("-", 1)[0]
+    if head.lower() == "oeis":
+        return head.upper()
+    raise SystemExit(f"preview card cannot name the paper gap {gap_id}")
+
+
+def _file_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
+    counts = block.get("counts")
+    files = counts.get("lean_files") if isinstance(counts, dict) else None
+    if not isinstance(files, int):
+        raise SystemExit(f"{name} has no Lean-file count")
+    gaps = block.get("gaps")
+    if not isinstance(gaps, list):
+        raise SystemExit(f"{name} has no paper gap")
+    matched = [
+        gap
+        for gap in gaps
+        if isinstance(gap, dict)
+        and str(gap.get("id", "")).lower().startswith("oeis")
+        and isinstance(gap.get("absent"), int)
+    ]
+    if len(matched) != 1:
+        raise SystemExit(f"{name} needs one paper gap with an absent count")
+    absent = int(matched[0]["absent"])
+    total = files + absent
+    if total <= 0:
+        raise SystemExit(f"{name} has no files to share")
+    series = _gap_series(str(matched[0]["id"]))
+    file_noun = "file" if files == 1 else "files"
+    lean_noun = "Lean file" if files == 1 else "Lean files"
+    who = name if name == org else f"{org} {name}"
+    return {
+        "name": name,
+        "org": org,
+        "unit": f"{files} {file_noun} + {absent} named in paper",
+        "percent": f"{percent(files, total)}%",
+        "caption": f"{files} {lean_noun}{CAPTION_GAP}{absent} {series} results in paper, no file",
+        "clause": f"{files} {who} {lean_noun}",
+        "alt": f"({files} {lean_noun}, {absent} named in paper)",
+        "segments": [(files, ACCENT), (absent, PAPER_ONLY)],
+    }
+
+
+def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
+    releases = block.get("releases")
+    if not isinstance(releases, list) or not releases:
+        raise SystemExit(f"{name} has no releases")
+    counts = block.get("counts") if isinstance(block.get("counts"), dict) else {}
+    recorded = counts.get("releases")
+    if isinstance(recorded, int) and recorded != len(releases):
+        raise SystemExit(f"{name} release count disagrees with its release list")
+    new_results: list[dict[str, Any]] = []
+    formalizations: list[dict[str, Any]] = []
+    with_lean = 0
+    for release in releases:
+        if not isinstance(release, dict):
+            raise SystemExit(f"{name} has a release the share card cannot draw")
+        kind = release.get("kind")
+        if kind == KIND_NEW:
+            new_results.append(release)
+        elif kind == KIND_FORMALIZATION:
+            formalizations.append(release)
+        else:
+            raise SystemExit(f"{name} has a release kind the share card cannot draw")
+        release_counts = release.get("counts")
+        lean_files = release_counts.get("lean_files") if isinstance(release_counts, dict) else None
+        if not isinstance(lean_files, int):
+            raise SystemExit(f"{name} has a release without a Lean-file count")
+        if lean_files > 0:
+            with_lean += 1
+    total = len(releases)
+    recorded_new = counts.get("new_results")
+    recorded_formal = counts.get("formalizations")
+    if isinstance(recorded_new, int) and recorded_new != len(new_results):
+        raise SystemExit(f"{name} new-result count disagrees with its releases")
+    if isinstance(recorded_formal, int) and recorded_formal != len(formalizations):
+        raise SystemExit(f"{name} formalization count disagrees with its releases")
+    tags = [_initials(str(release.get("title") or "")) for release in formalizations]
+    formal_phrase = _plural(len(formalizations), "formalization")
+    if tags:
+        formal_phrase += f" ({', '.join(tags)})"
+    new_phrase = _plural(len(new_results), "new result")
+    release_noun = "release" if total == 1 else "releases"
+    who = name if name == org else f"{org} {name}"
+    paper = total - with_lean
+    return {
+        "name": name,
+        "org": org,
+        "unit": f"{total} {release_noun}",
+        "percent": f"{percent(with_lean, total)}%",
+        "caption": f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}",
+        "clause": f"{total} {who} {release_noun}",
+        "alt": f"({with_lean} of {total} with Lean, {new_phrase}, {_plural(len(formalizations), 'formalization')})",
+        "segments": [(with_lean, ACCENT), (paper, PAPER_ONLY)],
+    }
+
+
+def row_for(catalog: dict[str, Any], entry: dict[str, Any]) -> dict[str, Any]:
+    source_id = str(entry["id"])
+    name = str(entry["name"])
+    org = str(entry["org"])
+    families = _families_for(catalog, source_id)
+    block = _block_for(catalog, source_id, name)
+    if families and block is not None:
+        raise SystemExit(f"{name} matches more than one share-card catalogue")
+    if families:
+        return _family_row(name, org, families)
+    if block is None:
+        raise SystemExit(f"{name} has no catalogue the share card can draw")
+    if isinstance(block.get("releases"), list):
+        return _release_row(name, org, block)
+    return _file_row(name, org, block)
+
+
+def share_rows(catalog: dict[str, Any]) -> list[dict[str, Any]]:
+    entries = preview_entries(catalog["sources"]["sources"])
+    rows = []
+    for entry in entries:
+        rows.append(row_for(catalog, entry))
+    if not rows:
+        raise SystemExit("preview card has no sources")
+    return rows
+
+
+def share_sentence(rows: list[dict[str, Any]]) -> str:
+    clauses = [str(row["clause"]) for row in rows]
+    if len(clauses) == 1:
+        joined = clauses[0]
+    elif len(clauses) == 2:
+        joined = f"{clauses[0]} and {clauses[1]}"
+    else:
+        joined = ", ".join(clauses[:-1]) + " and " + clauses[-1]
+    return f"{joined}{SENTENCE_TAIL}"
+
+
+def formalization_note(catalog: dict[str, Any]) -> str:
+    entries = preview_entries(catalog["sources"]["sources"])
+    for entry in entries:
+        blob = f"{entry.get('fragment', '')}\n{entry.get('detail', '')}"
+        if FLT_PREVIEW_NOTE in blob:
+            return FLT_PREVIEW_NOTE
+    return ""
+
+
+def card_alt(catalog: dict[str, Any]) -> str:
+    """Image alt for the share card. Names every source and stays within the X limit."""
+    rows = share_rows(catalog)
+    body = ". ".join(f"{row['name']}: {row['percent']} {row['alt']}" for row in rows)
+    note = formalization_note(catalog)
+    line = affiliation_sentence([str(row["org"]) for row in rows])
+    if note:
+        alt = f"{BRAND}. {HEADLINE} {body}. {note}. {line}"
+    else:
+        alt = f"{BRAND}. {HEADLINE} {body}. {line}"
+    _reject_banned(alt)
+    if len(alt) > SOCIAL_IMAGE_ALT_MAX:
+        raise SystemExit(f"preview alt is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
+    return alt
+
+
+def _headline_lines() -> tuple[ImageFont.FreeTypeFont, list[str]]:
+    size = 66
+    while size >= 32:
+        face = font(SERIF_BOLD, size)
+        lines = wrap_text(face, HEADLINE, LW)
+        if len(lines) <= 3:
+            return face, lines
+        size -= 2
+    raise SystemExit("preview headline does not fit")
+
+
+def compose(catalog: dict[str, Any]) -> list[str]:
+    """The exact strings the card draws, in paint order. Overflow stops the build."""
+    rows = share_rows(catalog)
+    sentence = share_sentence(rows)
+    _reject_banned(sentence)
+    headline_face, headline_lines = _headline_lines()
+    sentence_face = font(SANS, 25)
+    sentence_lines = wrap_text(sentence_face, sentence, LW)
+    y = 118
+    line_height = int(headline_face.size * 1.12)
+    y += line_height * len(headline_lines)
+    y += 18
+    y += 34 * len(sentence_lines)
+    if y > 540:
+        raise SystemExit(f"preview card left column is too tall: {y}")
+
+    lines = [BRAND, *headline_lines, *sentence_lines, card_host(), UNAFFILIATED, PANEL_TITLE]
+    name_face = font(SERIF_BOLD, 28)
+    unit_face = font(SANS, 19)
+    caption_face = font(SANS, 17)
+    percent_face = font(SERIF_BOLD, 24)
+    ix = RX + 28
+    iw = RW - 56
+    y = 108
+    for row in rows:
+        name = str(row["name"])
+        unit = str(row["unit"])
+        label = str(row["caption"])
+        pct = str(row["percent"])
+        if text_width(name_face, name) + text_width(unit_face, unit) + 8 > iw:
+            raise SystemExit(f"{name} does not fit beside its unit")
+        if text_width(caption_face, label) > iw:
+            raise SystemExit(f"label overflows: {label}")
+        segments = [(count, color) for count, color in row["segments"] if count > 0]
+        total = sum(count for count, _color in segments)
+        if total <= 0:
+            raise SystemExit(f"{name} has an empty share bar")
+        cursor = ix
+        accent_width = 0
+        for index, (count, color) in enumerate(segments):
+            width = round(iw * count / total) if index < len(segments) - 1 else ix + iw - cursor
+            if color == ACCENT:
+                accent_width += width
+            cursor += width
+        pct_width = text_width(percent_face, pct)
+        if accent_width < 12 + pct_width + 8 and accent_width != 0:
+            raise SystemExit(f"percent label does not fit on the Lean segment for {name}")
+        _reject_banned(f"{name} {unit} {pct} {label}")
+        lines.extend([name, unit, pct, label])
+        y = (y + 42) + 36 + 50
+    legend_y = y + 2
+    if legend_y + 20 > 540:
+        raise SystemExit(f"right panel too tall: {legend_y}")
+    cursor = ix
+    for _color, label in LEGEND:
+        if cursor + 26 + text_width(caption_face, label) > ix + iw:
+            raise SystemExit(f"legend does not fit: {label}")
+        lines.append(label)
+        cursor += 26 + text_width(caption_face, label) + 22
     return lines
 
 
-def render(entries: list[dict[str, Any]]) -> Image.Image:
-    planned = plan(entries)
+def planned_text(catalog: dict[str, Any]) -> list[str]:
+    return compose(catalog)
+
+
+def render(catalog: dict[str, Any]) -> Image.Image:
+    expected = compose(catalog)
+    rows = share_rows(catalog)
     image = Image.new("RGB", (PREVIEW_WIDTH, PREVIEW_HEIGHT), BG)
     draw = ImageDraw.Draw(image)
     drawn: list[str] = []
@@ -178,64 +506,90 @@ def render(entries: list[dict[str, Any]]) -> Image.Image:
         draw.text(xy, text, font=face, fill=fill)
         drawn.append(text)
 
-    draw.rectangle([0, 0, PREVIEW_WIDTH, 12], fill=ACCENT)
-    draw.rectangle([0, PREVIEW_HEIGHT - 12, PREVIEW_WIDTH, PREVIEW_HEIGHT], fill=ACCENT)
+    draw.rectangle([0, 0, PREVIEW_WIDTH, 10], fill=ACCENT)
+    draw.rectangle([0, PREVIEW_HEIGHT - 10, PREVIEW_WIDTH, PREVIEW_HEIGHT], fill=ACCENT)
 
-    mark = 64
-    mark_x, mark_y = MARGIN, 28
-    draw_mark(draw, mark_x, mark_y, mark)
-    title = planned["title"]
-    title_font = fitting_font("AtlasCardSerif-Bold.ttf", title, PREVIEW_WIDTH - mark_x - mark - 80, 52)
-    title_box = title_font.getbbox(title)
-    title_h = title_box[3] - title_box[1]
+    draw_mark(draw, LX, 40, 40)
+    brand_face = font(SERIF_BOLD, 24)
+    paint(brand_face, BRAND, (LX + 54, ink_top(brand_face, BRAND, 49)), ACCENT)
+
+    headline_face, headline_lines = _headline_lines()
+    y = 118
+    line_height = int(headline_face.size * 1.12)
+    for line in headline_lines:
+        paint(headline_face, line, (LX, ink_top(headline_face, line, y)), INK)
+        y += line_height
+    y += 18
+    sentence_face = font(SANS, 25)
+    for line in wrap_text(sentence_face, share_sentence(rows), LW):
+        paint(sentence_face, line, (LX, ink_top(sentence_face, line, y)), MUTED)
+        y += 34
+
+    footer_face = font(SANS, 20)
+    host = card_host()
+    paint(footer_face, host, (LX, ink_top(footer_face, host, 578)), ACCENT)
     paint(
-        title_font,
-        title,
-        (mark_x + mark + 20, ink_top(title_font, title, mark_y + (mark - title_h) // 2)),
-        INK,
+        footer_face,
+        UNAFFILIATED,
+        (PREVIEW_WIDTH - 56 - text_width(footer_face, UNAFFILIATED), ink_top(footer_face, UNAFFILIATED, 578)),
+        MUTED,
     )
-    subtitle = planned["subtitle"]
-    subtitle_font = fitting_font("AtlasCardSans-Regular.ttf", subtitle, PREVIEW_WIDTH - MARGIN * 2, 26)
-    paint(subtitle_font, subtitle, (MARGIN, ink_top(subtitle_font, subtitle, 112)), MUTED)
 
-    panels = planned["panels"]
-    card_w = card_width(len(panels))
-    card_y = 158
-    card_h = 400
-    inner = card_w - 36
-    for index, panel in enumerate(panels):
-        x = MARGIN + index * (card_w + GAP)
-        draw.rounded_rectangle(
-            [x, card_y, x + card_w, card_y + card_h],
-            radius=16,
-            fill=PAPER,
-            outline=LINE,
-            width=2,
+    draw.rounded_rectangle(
+        [RX, PANEL_TOP, RX + RW, PANEL_BOTTOM],
+        radius=18,
+        fill=PAPER,
+        outline=LINE,
+        width=2,
+    )
+    ix = RX + 28
+    iw = RW - 56
+    title_face = font(SANS, 19)
+    paint(title_face, PANEL_TITLE, (ix, ink_top(title_face, PANEL_TITLE, 66)), MUTED)
+
+    y = 108
+    name_face = font(SERIF_BOLD, 28)
+    unit_face = font(SANS, 19)
+    caption_face = font(SANS, 17)
+    percent_face = font(SERIF_BOLD, 24)
+    for row in rows:
+        name = str(row["name"])
+        unit = str(row["unit"])
+        label = str(row["caption"])
+        pct = str(row["percent"])
+        paint(name_face, name, (ix, ink_top(name_face, name, y)), INK)
+        paint(
+            unit_face,
+            unit,
+            (ix + iw - text_width(unit_face, unit), ink_top(unit_face, unit, y + 6)),
+            MUTED,
         )
-        name_font = fitting_font("AtlasCardSerif-Bold.ttf", panel["name"], inner, 24)
-        cursor = card_y + 18
-        paint(name_font, panel["name"], (x + 18, ink_top(name_font, panel["name"], cursor)), INK)
-        cursor += 40
-        for tile_index, (value, label) in enumerate(panel["tiles"]):
-            value_size = 40 if tile_index == 0 else 24
-            value_font = fitting_font("AtlasCardSerif-Bold.ttf", value, inner, value_size)
-            label_font = fitting_font("AtlasCardSans-Regular.ttf", label, inner, 18 if tile_index == 0 else 16)
-            paint(value_font, value, (x + 18, ink_top(value_font, value, cursor)), INK)
-            value_h = value_font.getbbox(value)[3] - value_font.getbbox(value)[1]
-            cursor += value_h + 4
-            paint(label_font, label, (x + 18, ink_top(label_font, label, cursor)), MUTED)
-            label_h = label_font.getbbox(label)[3] - label_font.getbbox(label)[1]
-            cursor += label_h + (16 if tile_index == 0 else 10)
-        detail_font = font("AtlasCardSans-Regular.ttf", 16)
-        for line in panel["detail_lines"]:
-            if cursor + 20 > card_y + card_h - 12:
-                raise SystemExit(f"preview card crowds {panel['name']}")
-            paint(detail_font, line, (x + 18, ink_top(detail_font, line, cursor)), MUTED)
-            cursor += 22
-    footer = planned["footer"]
-    footer_font = fitting_font("AtlasCardSans-Regular.ttf", footer, PREVIEW_WIDTH - MARGIN * 2, 22)
-    paint(footer_font, footer, (MARGIN, ink_top(footer_font, footer, 578)), MUTED)
-    if drawn != planned_text(entries):
+        bar_y = y + 42
+        bar_h = 36
+        segments = [(count, color) for count, color in row["segments"] if count > 0]
+        total = sum(count for count, _color in segments)
+        cursor = ix
+        accent_width = 0
+        for index, (count, color) in enumerate(segments):
+            width = round(iw * count / total) if index < len(segments) - 1 else ix + iw - cursor
+            draw.rectangle([cursor, bar_y, cursor + width, bar_y + bar_h], fill=color)
+            if color == ACCENT:
+                accent_width += width
+            cursor += width
+        pct_width = text_width(percent_face, pct)
+        pct_fill = MARK_INK if accent_width >= 12 + pct_width + 8 else INK
+        paint(percent_face, pct, (ix + 12, ink_top(percent_face, pct, bar_y + 7)), pct_fill)
+        paint(caption_face, label, (ix, ink_top(caption_face, label, bar_y + bar_h + 10)), MUTED)
+        y = bar_y + bar_h + 50
+
+    legend_y = y + 2
+    cursor = ix
+    for color, label in LEGEND:
+        draw.rectangle([cursor, legend_y, cursor + 18, legend_y + 18], fill=color)
+        paint(caption_face, label, (cursor + 26, ink_top(caption_face, label, legend_y + 1)), INK)
+        cursor += 26 + text_width(caption_face, label) + 22
+
+    if drawn != expected:
         raise SystemExit("preview card omitted a registered source")
     return image
 
@@ -249,8 +603,10 @@ def png_bytes(image: Image.Image) -> bytes:
 
 def main() -> int:
     payload = json.loads(FAMILIES_JSON.read_text(encoding="utf-8"))
-    entries = preview_entries(payload["sources"]["sources"])
-    image = render(entries)
+    sources = payload["sources"]["sources"]
+    if not sources:
+        raise SystemExit("preview card has no sources")
+    image = render(payload)
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(png_bytes(image))

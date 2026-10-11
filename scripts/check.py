@@ -9,6 +9,7 @@ import copy
 import inspect
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
@@ -660,13 +661,6 @@ def alphaproof_self_test() -> list[str]:
                 failures.append("alt text dropped a source name")
             if "MATCH" not in preview["fragment"] or "MISSING" not in preview["fragment"]:
                 failures.append(f"AlphaProof preview dropped a status label: {preview['fragment']}")
-            try:
-                image = og_card.render(entries)
-            except SystemExit as exc:
-                failures.append(f"preview card rejected {status}: {exc}")
-            else:
-                if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
-                    failures.append(f"preview card for {status} is {image.size}")
         attempted_cases = (
             (2, 2, "PARTIAL", "2 listed, 353 in paper"),
             (353, 352, "MATCH", "353 listed, matching the paper"),
@@ -740,8 +734,8 @@ def alphaproof_self_test() -> list[str]:
         ):
             failures.append("Absent leak passed for a MATCH row rendered from the page template")
         social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-        if "source.preview.tiles" not in social or "source.preview.fragment" not in social:
-            failures.append("social alt text does not render each source preview")
+        if "source.preview.fragment" not in social or "family.lean.status" not in social or "lean_files" not in social:
+            failures.append("social alt text does not read each catalogue")
         badge_page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
         for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
             if f'case "{status}":' not in badge_page:
@@ -1027,8 +1021,13 @@ def anthropic_self_test() -> list[str]:
     if "percolation" in page.lower():
         failures.append("Anthropic source page names percolation")
     social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-    if "source.preview.tiles" not in social or "source.preview.fragment" not in social or "source.org" not in social:
-        failures.append("social alt text does not read each source preview")
+    if (
+        "source.preview.fragment" not in social
+        or "source.org" not in social
+        or "family.lean.status" not in social
+        or "lean_files" not in social
+    ):
+        failures.append("social alt text does not read each catalogue")
     anthropic_preview = anthropic.anthropic_preview(
         {
             "source": {"name": "Anthropic", "org": "Anthropic"},
@@ -1101,26 +1100,40 @@ def anthropic_self_test() -> list[str]:
         failures.append(f"preview alt dropped an organization: {alt}")
     if scan_overclaims(alt, "preview"):
         failures.append("Anthropic preview alt was flagged")
-    extra = {
-        "name": "Example Source",
-        "org": "Example Org",
-        "fragment": "4 notes from Example Source",
-        "tiles": [{"value": "4", "label": "notes"}],
-        "detail": "",
-    }
+    catalog = read_json(FAMILIES_JSON)
     try:
-        image = og_card.render(entries)
-        wider = og_card.render([*entries, extra])
+        image = og_card.render(catalog)
     except SystemExit as exc:
         failures.append(f"preview card rejected a registered source: {exc}")
     else:
         if image.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
-            failures.append(f"Anthropic preview card is {image.size}")
-        if wider.size != (atlaslib.PREVIEW_WIDTH, atlaslib.PREVIEW_HEIGHT):
-            failures.append(f"a fourth source did not fit on the preview card: {wider.size}")
-        drawn = og_card.planned_text([*entries, extra])
-        if "Example Source" not in drawn or "Anthropic" not in drawn:
+            failures.append(f"preview card is {image.size}")
+        drawn = "\n".join(og_card.planned_text(catalog))
+        if "Anthropic" not in drawn or "formalization" not in drawn:
             failures.append(f"preview card omitted a source: {drawn}")
+        for banned in ("PARTIAL", "MATCH", "MISSING"):
+            if banned in drawn:
+                failures.append(f"preview card still shows {banned}")
+    unknown = copy.deepcopy(catalog)
+    unknown["sources"]["sources"].append(
+        {
+            "id": "example",
+            "name": "Example Source",
+            "org": "Example Org",
+            "preview": {
+                "fragment": "4 notes from Example Source",
+                "tiles": [{"value": "4", "label": "notes"}],
+                "detail": "",
+                "bindings": [{"value": "4", "path": ["example", "notes"]}],
+            },
+        }
+    )
+    try:
+        og_card.render(unknown)
+    except SystemExit:
+        pass
+    else:
+        failures.append("a source with no share model was drawn")
     return failures
 
 
@@ -2178,21 +2191,73 @@ def preview_self_test() -> list[str]:
         failures.append("preview alt named Anthropic without a registered source")
     catalog = read_json(FAMILIES_JSON)
     entries = atlaslib.preview_entries(catalog["sources"]["sources"])
-    catalogue_alt = preview_alt(entries)
-    if len(catalogue_alt) > atlaslib.PREVIEW_ALT_MAX:
+    catalogue_alt = og_card.card_alt(catalog)
+    if len(catalogue_alt) > atlaslib.SOCIAL_IMAGE_ALT_MAX:
         failures.append(f"catalogue alt is {len(catalogue_alt)} characters")
     if "per-row provenance" in catalogue_alt or "OEIS" in catalogue_alt:
         failures.append(f"catalogue alt includes a gap status: {catalogue_alt}")
+    if "PARTIAL" in catalogue_alt or "MATCH" in catalogue_alt or "MISSING" in catalogue_alt:
+        failures.append(f"catalogue alt includes a status word: {catalogue_alt}")
     if atlaslib.FLT_PREVIEW_NOTE not in catalogue_alt:
         failures.append(f"catalogue alt omits the formalization note: {catalogue_alt}")
+    if "AI math claims:" not in catalogue_alt:
+        failures.append(f"catalogue alt does not describe the share card: {catalogue_alt}")
     for source_name in ("OpenAI Math", "AlphaProof Nexus", "Anthropic"):
         if source_name not in catalogue_alt:
             failures.append(f"catalogue alt omits {source_name}: {catalogue_alt}")
     if not catalogue_alt.endswith("Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."):
         failures.append(f"catalogue alt dropped the affiliation: {catalogue_alt}")
-    image = og_card.render(entries)
+    share_page = good.replace(alt, catalogue_alt)
+    share_failures = check_social_preview(share_page, "fixture", prefix, entries, catalog)
+    if share_failures:
+        failures.append(f"the share-card alt was rejected: {share_failures}")
+    if not any(
+        "og:image:alt" in item
+        for item in check_social_preview(good, "fixture", prefix, entries, catalog)
+    ):
+        failures.append("a preview alt that does not describe the share card was accepted")
+    families = [family for family in catalog["families"] if family.get("source") == "openai-math"]
+    main = sum(1 for family in families if family["lean"]["status"] == "main-result-formalized")
+    challenge = sum(1 for family in families if family["lean"]["status"] == "comparator-challenge-only")
+    paper = sum(1 for family in families if family["lean"]["status"] == "none")
+    family_total = len(families)
+    family_caption = f"{main} result in Lean  ·  {challenge} challenge only  ·  {paper} paper only"
+    family_percent = f"{round(100 * (main + challenge) / family_total)}%"
+    files = catalog["alphaproof"]["counts"]["lean_files"]
+    absent = next(gap["absent"] for gap in catalog["alphaproof"]["gaps"] if gap["id"] == "oeis-count")
+    file_caption = f"{files} Lean files  ·  {absent} OEIS results in paper, no file"
+    file_percent = f"{round(100 * files / (files + absent))}%"
+    releases = catalog["anthropic"]["releases"]
+    with_lean = sum(1 for release in releases if release["counts"]["lean_files"] > 0)
+    new_results = catalog["anthropic"]["counts"]["new_results"]
+    formalizations = catalog["anthropic"]["counts"]["formalizations"]
+    formal_title = next(release["title"] for release in releases if release["kind"] == "formalization")
+    formal_letters = "".join(
+        word[0].upper() for word in re.findall(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?", formal_title)
+    )
+    release_caption = (
+        f"{with_lean} of {len(releases)} with Lean  ·  {new_results} new results, "
+        f"{formalizations} formalization ({formal_letters})"
+    )
+    release_percent = f"{round(100 * with_lean / len(releases))}%"
+    drawn = "\n".join(og_card.planned_text(catalog))
+    for piece in (
+        family_caption,
+        family_percent,
+        file_caption,
+        file_percent,
+        release_caption,
+        release_percent,
+        "AI math claims:",
+        "Unofficial · not affiliated with any lab",
+    ):
+        if piece not in drawn:
+            failures.append(f"preview card omitted {piece!r}")
+    if absent > 0 and file_percent == "100%":
+        failures.append("paper gap was left out of the file-catalogue share")
+    image = og_card.render(catalog)
     blob = og_card.png_bytes(image)
-    if og_card.png_bytes(og_card.render(entries)) != blob:
+    if og_card.png_bytes(og_card.render(catalog)) != blob:
         failures.append("preview card png is not deterministic")
     with tempfile.TemporaryDirectory() as tmp:
         dist = Path(tmp)
