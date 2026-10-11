@@ -43,10 +43,10 @@ INK = (29, 26, 22)
 MUTED = (78, 72, 63)
 LINE = (221, 212, 198)
 ACCENT = (31, 77, 74)
-# Lightness steps, each at least 3:1 on #f3efe6. #286460 is 5.94:1, #ac7348 is 3.45:1,
+# Lightness steps, each at least 3:1 on #f3efe6. #2c6f6f is 5.07:1, #b37a4c is 3.15:1.
 # #93866e is 3.11:1. The partly-in-Lean segment is hatched so it stays apart from the tan.
-CHALLENGE = (40, 100, 96)
-PARTIAL = (172, 115, 72)
+CHALLENGE = (44, 111, 111)
+PARTIAL = (179, 122, 76)
 PAPER_ONLY = (147, 134, 110)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
@@ -334,6 +334,15 @@ def _require_segment_contrast() -> None:
         ratio = _contrast(INK, style.fill)
         if ratio < 3:
             raise SystemExit(f"segment outline is {ratio:.2f}:1 on {style.role}")
+    for left_role, right_role in (
+        ("lean", "challenge"),
+        ("challenge", "paper"),
+        ("lean", "partial"),
+        ("lean", "paper"),
+    ):
+        ratio = _contrast(style_for(left_role).fill, style_for(right_role).fill)
+        if ratio < 1.5:
+            raise SystemExit(f"{left_role} and {right_role} are {ratio:.2f}:1 apart")
     _require_gray_gap(_swatch_grays(1), "at full size")
     _require_gray_gap(_swatch_grays(3), "at a 400px-wide downscale")
 

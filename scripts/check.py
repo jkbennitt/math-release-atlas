@@ -2393,6 +2393,29 @@ def preview_self_test() -> list[str]:
         failures.append("challenge and partial share a legend swatch")
     if not partial_style.hatch or challenge_style.hatch:
         failures.append("the partly-in-Lean swatch is not the hatched one")
+    neighbor_ratios = (
+        ("lean", "challenge", 1.63),
+        ("challenge", "paper", 1.63),
+        ("lean", "partial", 2.62),
+        ("lean", "paper", 2.65),
+    )
+    for left_role, right_role, expected in neighbor_ratios:
+        ratio = og_card._contrast(
+            og_card.style_for(left_role).fill,
+            og_card.style_for(right_role).fill,
+        )
+        if ratio < 1.5:
+            failures.append(f"{left_role} and {right_role} are {ratio:.2f}:1 apart")
+        elif abs(ratio - expected) > 0.02:
+            failures.append(
+                f"{left_role} and {right_role} are {ratio:.2f}:1, expected about {expected:.2f}:1"
+            )
+    expected_grays = (("lean", 61.7), ("challenge", 88.7), ("partial", 104.1), ("paper", 131.1))
+    swatch_grays = dict(og_card._swatch_grays(1))
+    for role, expected_gray in expected_grays:
+        gray = swatch_grays[role]
+        if abs(gray - expected_gray) > 0.2:
+            failures.append(f"{role} gray is {gray:.1f}, expected about {expected_gray:.1f}")
     hidden = og_card.legend_for(
         [{"segments": [(2, "lean"), (0, "challenge"), (0, "partial"), (1, "paper")]}]
     )
@@ -2445,6 +2468,33 @@ def preview_self_test() -> list[str]:
         failures.append("share bars dropped the segment outline")
     if ".share-bar { height: 10px; }" not in css or ".share-bar .seg { box-shadow: none; }" not in css:
         failures.append("narrow share bars stayed short or kept the outline")
+    graph_source = (ROOT / "src" / "pages" / "graph" / "index.astro").read_text(encoding="utf-8")
+    if "diagram is hidden" in graph_source or "diagram is hidden" in css:
+        failures.append("citation map is still hidden on a narrow screen")
+    if "Scroll or pinch to zoom." not in graph_source:
+        failures.append("citation map dropped the scroll hint")
+    if "min-width: 640px" not in css:
+        failures.append("citation map dropped the 640px frame")
+    if re.search(r"\.graph-map\s*\{[^}]*display:\s*none", css):
+        failures.append("citation map is display:none")
+
+    def hex_color(value: str) -> tuple[int, int, int]:
+        return (int(value[1:3], 16), int(value[3:5], 16), int(value[5:7], 16))
+
+    for ink, paper, name in (
+        ("#1f4d4a", "#faf7f1", "cite line on the light map"),
+        ("#4e483f", "#faf7f1", "topic line on the light map"),
+        ("#1d1a16", "#faf7f1", "label on the light map"),
+        ("#7ec9c1", "#1c1916", "cite line on the dark map"),
+        ("#e0d2bc", "#1c1916", "topic line on the dark map"),
+        ("#f3efe6", "#1c1916", "label on the dark map"),
+    ):
+        if ink not in css or paper not in css:
+            failures.append(f"map color {ink} left the stylesheet")
+            continue
+        ratio = og_card._contrast(hex_color(ink), hex_color(paper))
+        if ratio < 3:
+            failures.append(f"{name} is {ratio:.2f}:1")
     share_html = _home_share_fixture(share_doc)
     share_problems = atlaslib.check_home_share(share_html, catalog)
     if share_problems:

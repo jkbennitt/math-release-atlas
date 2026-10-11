@@ -2579,6 +2579,12 @@ def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
         failures.append("citation graph does not label shared-topic links")
     if "<ul" not in text:
         failures.append("citation graph has no list fallback")
+    if "diagram is hidden" in text:
+        failures.append("citation graph hides the diagram on a narrow screen")
+    if "Scroll or pinch to zoom." not in text:
+        failures.append("citation graph is missing the scroll hint")
+    if "graph-map" not in text:
+        failures.append("citation graph is missing the map")
     families = catalog["families"]
     for family in families:
         for edge in family.get("cites") or []:

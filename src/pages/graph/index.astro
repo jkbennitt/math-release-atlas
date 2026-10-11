@@ -83,7 +83,8 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
       nodes.length === 0 ? (
         <p>No families are linked yet, so there is no map.</p>
       ) : (
-        <p class="map-fallback">On a narrow screen the diagram is hidden. Every edge is in the list below.</p>
+        <p class="map-hint">Scroll or pinch to zoom.</p>
+        <div class="graph-scroll">
         <svg
           class="graph-map"
           viewBox={`0 0 ${size} ${size}`}
@@ -156,6 +157,7 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             </a>
           ))}
         </svg>
+        </div>
       )
     }
 

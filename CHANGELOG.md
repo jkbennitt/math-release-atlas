@@ -3,9 +3,10 @@
 ## 0.4.7
 
 - OpenAI's comparator-challenge families are a Lean challenge statement. That segment's legend entry is "Lean challenge only". A release whose notes say some claims are not formalized stays "partly in Lean", including on a narrow screen. The two use different swatches, and the legend lists only the segments that appear. OpenAI's caption stays "135 result in Lean · 107 challenge only · 130 paper only".
-- Share colors step in lightness, and the partly-in-Lean segment is hatched, so every segment stays distinct in grayscale. Each fill is at least 3:1 on #f3efe6. The card and the home bars use the same swatches.
+- Share colors step in lightness, and the partly-in-Lean segment is hatched, so every segment stays distinct in grayscale. Each fill is at least 3:1 on #f3efe6. Neighboring fills stay at least 1.5:1 apart. The card and the home bars use the same swatches.
 - On a narrow screen the share bars are 10px tall and the outline is removed, so the outline no longer covers the fill.
 - Each home bar's screen-reader label is checked against the catalogue, the same way the percent and the caption are.
+- The citation map stays visible on a narrow screen. It sits in a sideways-scrolling frame at least 640px wide, with the hint "Scroll or pinch to zoom." Cite lines, topic lines, and labels stay at least 3:1 on the light paper and on the dark map.
 
 ## 0.4.6
 
