@@ -72,14 +72,18 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
       <p class="meta"><a href={`${base}source/anthropic/`}>Source page</a></p>
     </section>
   </div>
-  <div class="stats">
-    <div class="stat"><b>{counts.families}</b><span>families</span></div>
-    <div class="stat"><b>{counts.manuscripts}</b><span>manuscripts</span></div>
-    <div class="stat"><b>{counts.main_result_formalized}</b><span>formalized main results</span></div>
-    <div class="stat">
-      <b>{counts.comparator_challenge_only}</b><span>comparator challenge only</span>
+  <section class="snapshot">
+    <h2>OpenAI Math in this snapshot</h2>
+    <p class="meta">These four counts are the OpenAI Math catalogue only. The table also lists AlphaProof Nexus and Anthropic.</p>
+    <div class="stats">
+      <div class="stat"><b>{counts.families}</b><span>families</span></div>
+      <div class="stat"><b>{counts.manuscripts}</b><span>manuscripts</span></div>
+      <div class="stat"><b>{counts.main_result_formalized}</b><span>formalized main results</span></div>
+      <div class="stat">
+        <b>{counts.comparator_challenge_only}</b><span>comparator challenge only</span>
+      </div>
     </div>
-  </div>
+  </section>
   <p class="provenance">
     {counts.none} families have no Lean formalization in this snapshot.
     Upstream review status: <strong>{atlas.upstream.review_status}</strong>.
@@ -133,6 +137,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
         <option value="comparator-challenge-only">Comparator challenge only ({counts.comparator_challenge_only})</option>
         <option value="none">No Lean formalization ({counts.none})</option>
         <option value="new-result">New result ({anthropic.counts.new_results})</option>
+        <option value="deposited">Deposited ({alphaproof.counts.lean_files})</option>
         <option value="formalization">Formalization ({anthropic.counts.formalizations})</option>
       </select>
     </label>
@@ -216,29 +221,34 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
                 {family.reasoning_trace && (
                   <p class="meta"><a href={family.reasoning_trace.url}>Reasoning summary</a></p>
                 )}
-                {family.lenses.length > 0 && (
-                  <ul class="notes">
-                    {family.lenses.map((lens) => (
-                      <li>
-                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {family.related.length > 0 && (
-                  <ul class="notes">
-                    {family.related.map((item) => (
-                      <li>
-                        <a href={`#f-${item.to}`}>{item.to}</a>
-                        {" "}({item.kind === "shared-topic" ? "our grouping, not a citation" : item.kind}): {item.why}
-                        <span class="meta"> Source: {item.source}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {(family.lenses.length > 0 || family.related.length > 0) && (
+                  <details>
+                    <summary>Lenses and groupings</summary>
+                    {family.lenses.length > 0 && (
+                      <ul class="notes">
+                        {family.lenses.map((lens) => (
+                          <li>
+                            <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                            {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {family.related.length > 0 && (
+                      <ul class="notes">
+                        {family.related.map((item) => (
+                          <li>
+                            <a href={`#f-${item.to}`}>{item.to}</a>
+                            {" "}({item.kind === "shared-topic" ? "our grouping, not a citation" : item.kind}): {item.why}
+                            <span class="meta"> Source: {item.source}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </details>
                 )}
               </td>
-              <td data-label="Subject">{family.areas.join(", ")}</td>
+              <td class="subject" data-label="Subject">{family.areas.join(", ")}</td>
               <td data-label="Lean">
                 <span class={`badge ${family.lean.status}`}>{leanLabel(family.lean.status)}</span>
                 {family.lean.status !== "none" && (
@@ -275,23 +285,26 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
                 <a class="direct-upstream" href={record.url}>{record.statement}</a>
               </p>
               {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
-              <p class="meta">Per-row provenance: {record.provenance}</p>
-              <p class="meta"><a class="direct-upstream" href={record.url}>{record.path}</a></p>
-              {record.lenses.length > 0 && (
-                <ul class="notes">
-                  {record.lenses.map((lens) => (
-                    <li>
-                      <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                      {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {record.natural_language_proofs.map((item) => (
-                <p class="meta"><a href={item.url}>{item.path}</a></p>
-              ))}
+              <details>
+                <summary>File and lenses</summary>
+                <p class="meta">Per-row provenance: {record.provenance}</p>
+                <p class="meta"><a class="direct-upstream" href={record.url}>{record.path}</a></p>
+                {record.lenses.length > 0 && (
+                  <ul class="notes">
+                    {record.lenses.map((lens) => (
+                      <li>
+                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {record.natural_language_proofs.map((item) => (
+                  <p class="meta"><a href={item.url}>{item.path}</a></p>
+                ))}
+              </details>
             </td>
-            <td data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
+              <td class="subject" data-label="Subject">{record.category}{record.subcategory ? ` / ${record.subcategory}` : ""}</td>
             <td data-label="Lean"><span class="badge deposited">Deposited</span></td>
             <td data-label="Manuscripts">{record.natural_language_proofs.length}</td>
             <td data-label="Dates">{alphaproof.commit_date}</td>
@@ -332,14 +345,17 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
                   <p class="meta"><a class="direct-upstream" href={release.paper.url}>{release.paper.title}</a> · {release.paper.v1_submitted}</p>
                 )}
                 {release.lenses.length > 0 && (
-                  <ul class="notes">
-                    {release.lenses.map((lens) => (
-                      <li>
-                        <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
-                        {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <details>
+                    <summary>Lenses</summary>
+                    <ul class="notes">
+                      {release.lenses.map((lens) => (
+                        <li>
+                          <a class="tag" href={`${base}lens/${lens.tag}/`}>{lens.tag}</a>
+                          {" "}{lens.why} <span class="meta">Source: {lens.source}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 )}
                 {release.announcement && (
                   <p class="meta">
@@ -348,7 +364,7 @@ const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.cou
                   </p>
                 )}
               </td>
-              <td data-label="Subject">{release.id}</td>
+              <td class="subject" data-label="Subject">{release.id}</td>
               <td data-label="Lean"><span class={`badge ${release.kind}`}>{release.kind_label}</span></td>
               <td data-label="Manuscripts">{release.paper ? 1 : 0}</td>
               <td data-label="Dates">{dated}</td>

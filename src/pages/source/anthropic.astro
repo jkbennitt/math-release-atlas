@@ -63,7 +63,7 @@ function gapBadgeClass(status: string): string {
 
     {
       record.releases.map((release) => (
-        <section id={release.id}>
+        <section id={release.id} class="release">
           <h2>{release.title}</h2>
           <p>
             <span id={`kind-${release.id}`} class={`badge ${release.kind}`}>{release.kind_label}</span>
