@@ -17,6 +17,9 @@ unchecked. A Lean check is not peer review and not a laboratory result.
 
 ## Run locally
 
+Local builds need Node.js 22.12 or newer and the Python packages in
+`requirements.txt`.
+
 ```bash
 python3 -m pip install -r requirements.txt
 npm install
@@ -43,7 +46,7 @@ catalogue that has Lean files. The percent is printed beside the bar, and
 the image alt says it is the share with Lean files. A family catalogue splits Lean status into a
 main result, a comparator challenge, and paper only. A file catalogue counts
 Lean files against the paper gap of results that have no file. A release list
-counts releases that include Lean files, and a formalization keeps that label,
+counts releases that include Lean files. A release whose notes say some claims are not formalized is drawn in the middle color. Its caption says "partly in Lean", and the legend uses the same words. A family catalogue still captions that color "challenge only". A formalization keeps that label,
 including Fermat's Last Theorem. A source that matches none of those shapes,
 or that no longer fits on the card, stops the build. Adding a source that
 does match, or a count changing on sync, updates the card and the alt text
@@ -65,7 +68,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.4.5.
+Package version 0.4.6.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:

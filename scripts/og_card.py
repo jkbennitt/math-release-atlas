@@ -28,6 +28,8 @@ from atlaslib import (
     affiliation_sentence,
     preview_entries,
     published_prefix,
+    claim_word_failures,
+    scan_overclaims,
 )
 
 FONT_DIR = ROOT / "scripts" / "fonts"
@@ -40,8 +42,10 @@ INK = (29, 26, 22)
 MUTED = (78, 72, 63)
 LINE = (221, 212, 198)
 ACCENT = (31, 77, 74)
-MID = (111, 160, 150)
-PAPER_ONLY = (214, 196, 160)
+# Darkened so each fill is at least 3:1 on the page background and on the card paper.
+# #649087 is 3.11:1 on #f3efe6. #93866e is 3.11:1 on #f3efe6.
+MID = (100, 144, 135)
+PAPER_ONLY = (147, 134, 110)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
 
@@ -57,7 +61,7 @@ LEAN_NONE = "none"
 KIND_NEW = "new-result"
 KIND_FORMALIZATION = "formalization"
 _INITIALS = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?")
-_BANNED_WORDS = ("verified", "proved")
+_NOT_FORMALIZED = "NOT FORMALIZED"
 
 LX = 56
 LW = 520
@@ -67,7 +71,7 @@ PANEL_TOP = 40
 PANEL_BOTTOM = 548
 LEGEND = (
     (ACCENT, "result in Lean"),
-    (MID, "Lean challenge only"),
+    (MID, "partly in Lean"),
     (PAPER_ONLY, "paper only"),
 )
 # Room to the right of every bar for the percent, in dark ink.
@@ -181,11 +185,44 @@ def _plural(count: int, singular: str, plural_form: str | None = None) -> str:
     return f"{count} {word}"
 
 
-def _reject_banned(text: str) -> None:
-    lowered = text.lower()
-    for word in _BANNED_WORDS:
-        if word in lowered:
-            raise SystemExit(f"preview card uses {word}")
+def _channel(value: float) -> float:
+    return value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+
+
+def _luminance(color: tuple[int, int, int]) -> float:
+    red, green, blue = (_channel(part / 255) for part in color)
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _contrast(left: tuple[int, int, int], right: tuple[int, int, int]) -> float:
+    lighter = max(_luminance(left), _luminance(right))
+    darker = min(_luminance(left), _luminance(right))
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _require_segment_contrast() -> None:
+    """Each fill reads on the page and on the card. The ink outline reads on the lighter fills."""
+    for name, color in (("accent", ACCENT), ("mid", MID), ("paper", PAPER_ONLY)):
+        for ground_name, ground in (("background", BG), ("paper", PAPER)):
+            ratio = _contrast(color, ground)
+            if ratio < 3:
+                raise SystemExit(f"{name} segment is {ratio:.2f}:1 on the {ground_name}")
+    for name, color in (("mid", MID), ("paper", PAPER_ONLY)):
+        ratio = _contrast(INK, color)
+        if ratio < 3:
+            raise SystemExit(f"segment outline is {ratio:.2f}:1 on {name}")
+
+
+def _fill_segment(draw: ImageDraw.ImageDraw, box: list[int], fill: tuple[int, int, int]) -> None:
+    """A 1px ink outline so neighboring segments stay separate."""
+    draw.rectangle(box, fill=fill, outline=INK, width=1)
+
+
+def _reject_overclaim(text: str) -> None:
+    failures = scan_overclaims(text, "preview card")
+    failures.extend(claim_word_failures(text, "preview card"))
+    if failures:
+        raise SystemExit(failures[0])
 
 
 def _initials(title: str) -> str:
@@ -245,13 +282,16 @@ def _family_row(name: str, org: str, families: list[dict[str, Any]]) -> dict[str
         f"{main} result in Lean{CAPTION_GAP}{challenge} challenge only{CAPTION_GAP}{paper} paper only"
     )
     short_noun = "family" if total == 1 else "families"
-    alt = f"of {total} {short_noun} ({main} result, {challenge} challenge only, {paper} paper only)"
+    alt = f"of {total} {short_noun} ({main} main result, {challenge} challenge only, {paper} paper only)"
     return {
         "name": name,
         "org": org,
         "unit": f"{total} {family_noun}",
         "percent": f"{percent(lean, total)}%",
         "caption": caption,
+        "short_caption": (
+            f"{main} in Lean{CAPTION_GAP}{challenge} challenge{CAPTION_GAP}{paper} paper"
+        ),
         "clause": clause,
         "alt": alt,
         "segments": [(main, ACCENT), (challenge, MID), (paper, PAPER_ONLY)],
@@ -296,6 +336,7 @@ def _file_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "unit": f"{files} {file_noun} + {absent} named in paper",
         "percent": f"{percent(files, total)}%",
         "caption": f"{files} {lean_noun}{CAPTION_GAP}{absent} {series} results in paper, no file",
+        "short_caption": f"{files} Lean{CAPTION_GAP}{absent} no file",
         "clause": f"{files} {who} {lean_noun}",
         "alt": f"({files} {file_noun}, {absent} paper only)",
         "segments": [(files, ACCENT), (absent, PAPER_ONLY)],
@@ -312,7 +353,9 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         raise SystemExit(f"{name} release count disagrees with its release list")
     new_results: list[dict[str, Any]] = []
     formalizations: list[dict[str, Any]] = []
-    with_lean = 0
+    full = 0
+    partial = 0
+    paper = 0
     for release in releases:
         if not isinstance(release, dict):
             raise SystemExit(f"{name} has a release the share card cannot draw")
@@ -327,9 +370,18 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         lean_files = release_counts.get("lean_files") if isinstance(release_counts, dict) else None
         if not isinstance(lean_files, int):
             raise SystemExit(f"{name} has a release without a Lean-file count")
-        if lean_files > 0:
-            with_lean += 1
+        gaps = release.get("gaps")
+        not_formalized = isinstance(gaps, list) and any(
+            isinstance(gap, dict) and gap.get("status") == _NOT_FORMALIZED for gap in gaps
+        )
+        if lean_files <= 0:
+            paper += 1
+        elif not_formalized:
+            partial += 1
+        else:
+            full += 1
     total = len(releases)
+    with_lean = full + partial
     recorded_new = counts.get("new_results")
     recorded_formal = counts.get("formalizations")
     if isinstance(recorded_new, int) and recorded_new != len(new_results):
@@ -343,16 +395,27 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
     new_phrase = _plural(len(new_results), "new result")
     release_noun = "release" if total == 1 else "releases"
     who = name if name == org else f"{org} {name}"
-    paper = total - with_lean
+    if partial:
+        caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}"
+            f"{len(new_results)} new, {formal_phrase}"
+        )
+        short_caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}{formal_phrase}"
+        )
+    else:
+        caption = f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}"
+        short_caption = f"{with_lean} of {total} with Lean"
     return {
         "name": name,
         "org": org,
         "unit": f"{total} {release_noun}",
         "percent": f"{percent(with_lean, total)}%",
-        "caption": f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}",
+        "caption": caption,
+        "short_caption": short_caption,
         "clause": f"{total} {who} {release_noun}",
         "alt": f"({with_lean} of {total}; {new_phrase}, {_plural(len(formalizations), 'formalization')})",
-        "segments": [(with_lean, ACCENT), (paper, PAPER_ONLY)],
+        "segments": [(full, ACCENT), (partial, MID), (paper, PAPER_ONLY)],
     }
 
 
@@ -377,7 +440,10 @@ def share_rows(catalog: dict[str, Any]) -> list[dict[str, Any]]:
     entries = preview_entries(catalog["sources"]["sources"])
     rows = []
     for entry in entries:
-        rows.append(row_for(catalog, entry))
+        row = row_for(catalog, entry)
+        _reject_overclaim(str(row["caption"]))
+        _reject_overclaim(str(row["short_caption"]))
+        rows.append(row)
     if not rows:
         raise SystemExit("preview card has no sources")
     return rows
@@ -413,7 +479,7 @@ def card_alt(catalog: dict[str, Any]) -> str:
         alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {note}. {line}"
     else:
         alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {line}"
-    _reject_banned(alt)
+    _reject_overclaim(alt)
     if len(alt) > SOCIAL_IMAGE_ALT_MAX:
         raise SystemExit(f"preview alt is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
     return alt
@@ -432,9 +498,10 @@ def _headline_lines() -> tuple[ImageFont.FreeTypeFont, list[str]]:
 
 def compose(catalog: dict[str, Any]) -> list[str]:
     """The exact strings the card draws, in paint order. Overflow stops the build."""
+    _require_segment_contrast()
     rows = share_rows(catalog)
     sentence = share_sentence(rows)
-    _reject_banned(sentence)
+    _reject_overclaim(sentence)
     headline_face, headline_lines = _headline_lines()
     sentence_face = font(SANS, 25)
     sentence_lines = wrap_text(sentence_face, sentence, LW)
@@ -472,7 +539,7 @@ def compose(catalog: dict[str, Any]) -> list[str]:
             raise SystemExit("share bar has no room beside the percent")
         if text_width(percent_face, pct) > PERCENT_GUTTER - 8:
             raise SystemExit(f"percent label does not fit beside the bar for {name}")
-        _reject_banned(f"{name} {unit} {pct} {label}")
+        _reject_overclaim(f"{name} {unit} {pct} {label}")
         lines.extend([name, unit, pct, label])
         y = (y + 42) + 36 + 50
     legend_y = y + 2
@@ -569,7 +636,7 @@ def render(catalog: dict[str, Any]) -> Image.Image:
         cursor = ix
         for index, (count, color) in enumerate(segments):
             width = round(bar_w * count / total) if index < len(segments) - 1 else ix + bar_w - cursor
-            draw.rectangle([cursor, bar_y, cursor + width, bar_y + bar_h], fill=color)
+            _fill_segment(draw, [cursor, bar_y, cursor + width, bar_y + bar_h], color)
             cursor += width
         paint(
             percent_face,
@@ -583,7 +650,7 @@ def render(catalog: dict[str, Any]) -> Image.Image:
     legend_y = y + 2
     cursor = ix
     for color, label in LEGEND:
-        draw.rectangle([cursor, legend_y, cursor + 18, legend_y + 18], fill=color)
+        _fill_segment(draw, [cursor, legend_y, cursor + 18, legend_y + 18], color)
         paint(caption_face, label, (cursor + 26, ink_top(caption_face, label, legend_y + 1)), INK)
         cursor += 26 + text_width(caption_face, label) + 22
 
@@ -599,6 +666,56 @@ def png_bytes(image: Image.Image) -> bytes:
     return buffer.getvalue()
 
 
+_ROLE = {
+    ACCENT: "lean",
+    MID: "challenge",
+    PAPER_ONLY: "paper",
+}
+SHARE_HEADING = "Share of each catalogue with Lean files"
+
+
+def share_document(catalog: dict[str, Any]) -> dict[str, Any]:
+    """The bars, percents, and legend the site draws. Same rows as the card."""
+    if SHARE_HEADING.upper() != PANEL_TITLE:
+        raise SystemExit("share heading drifted from the card panel title")
+    rows = share_rows(catalog)
+    painted = []
+    for row in rows:
+        segments = []
+        for count, color in row["segments"]:
+            if count <= 0:
+                continue
+            role = _ROLE.get(color)
+            if role is None:
+                raise SystemExit(f"{row['name']} has a segment color the site cannot draw")
+            segments.append({"count": count, "role": role})
+        if not segments:
+            raise SystemExit(f"{row['name']} has an empty share bar")
+        painted.append(
+            {
+                "name": row["name"],
+                "unit": row["unit"],
+                "percent": row["percent"],
+                "caption": row["caption"],
+                "shortCaption": row["short_caption"],
+                "segments": segments,
+            }
+        )
+    return {
+        "headline": HEADLINE,
+        "shareHeading": SHARE_HEADING,
+        "sentence": share_sentence(rows),
+        "legend": [{"role": _ROLE[color], "label": label} for color, label in LEGEND],
+        "rows": painted,
+    }
+
+
+def write_share_document(catalog: dict[str, Any]) -> None:
+    dest = ROOT / "src" / "generated" / "share.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(share_document(catalog), indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     payload = json.loads(FAMILIES_JSON.read_text(encoding="utf-8"))
     sources = payload["sources"]["sources"]
@@ -608,6 +725,7 @@ def main() -> int:
     dest = ROOT / "public" / PREVIEW_IMAGE_NAME
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(png_bytes(image))
+    write_share_document(payload)
     return 0
 
 

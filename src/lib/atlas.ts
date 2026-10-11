@@ -363,9 +363,18 @@ export function formatIso(iso: string): string {
 
 export function dateRange(dates: string[]): string {
   const sorted = [...dates].sort();
-  const first = formatIso(sorted[0]);
-  const last = formatIso(sorted[sorted.length - 1]);
-  return first === last ? first : `${first} – ${last}`;
+  const [year1, month1, day1] = sorted[0].split("-").map(Number);
+  const [year2, month2, day2] = sorted[sorted.length - 1].split("-").map(Number);
+  if (year1 === year2 && month1 === month2 && day1 === day2) {
+    return formatIso(sorted[0]);
+  }
+  if (year1 === year2 && month1 === month2) {
+    return `${day1}–${day2} ${MONTHS[month1 - 1]} ${year1}`;
+  }
+  if (year1 === year2) {
+    return `${day1} ${MONTHS[month1 - 1]}–${day2} ${MONTHS[month2 - 1]} ${year1}`;
+  }
+  return `${formatIso(sorted[0])}–${formatIso(sorted[sorted.length - 1])}`;
 }
 
 export function shortSha(commit: string): string {

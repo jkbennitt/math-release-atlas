@@ -23,6 +23,10 @@ function compare(left: HTMLTableRowElement, right: HTMLTableRowElement, key: Sor
   }
 }
 
+function norm(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 function isSortKey(value: string): value is SortKey {
   switch (value) {
     case "id":
@@ -64,9 +68,23 @@ export function mountTable(): void {
     for (const row of tbody.querySelectorAll<HTMLTableRowElement>("tr")) {
       const areas = (row.dataset.areas ?? "").split("|");
       const lenses = (row.dataset.lenses ?? "").split("|").filter((item) => item !== "");
+      const lensForArea =
+        areaValue === ""
+          ? ""
+          : ([...lens.options].find(
+              (option) => option.value !== "" && norm(option.dataset.label ?? "") === norm(areaValue),
+            )?.value ?? "");
+      const lensLabel = lensValue === "" ? "" : (lens.selectedOptions[0]?.dataset.label ?? "");
+      const areaForLens =
+        lensLabel === ""
+          ? ""
+          : ([...area.options].find((option) => option.value !== "" && norm(option.value) === norm(lensLabel))
+              ?.value ?? "");
       const matchesQuery = query === "" || (row.textContent ?? "").toLowerCase().includes(query);
-      const matchesArea = areaValue === "" || areas.includes(areaValue);
-      const matchesLens = lensValue === "" || lenses.includes(lensValue);
+      const matchesArea =
+        areaValue === "" || areas.includes(areaValue) || (lensForArea !== "" && lenses.includes(lensForArea));
+      const matchesLens =
+        lensValue === "" || lenses.includes(lensValue) || (areaForLens !== "" && areas.includes(areaForLens));
       const matchesLean = leanValue === "" || row.dataset.lean === leanValue;
       const matchesSource = sourceValue === "" || row.dataset.source === sourceValue;
       const keep = matchesQuery && matchesArea && matchesLens && matchesLean && matchesSource;

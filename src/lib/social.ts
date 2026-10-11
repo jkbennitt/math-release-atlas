@@ -18,6 +18,9 @@ const LEAN_CHALLENGE = "comparator-challenge-only";
 const LEAN_NONE = "none";
 const KIND_NEW = "new-result";
 const KIND_FORMALIZATION = "formalization";
+// Whole words only, matching claim_word_hits in scripts/atlaslib.py.
+const CLAIM_WORD =
+  /\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b/i;
 
 interface ShareGap {
   id?: string;
@@ -91,12 +94,10 @@ function plural(count: number, singular: string, pluralForm?: string): string {
   return `${count} ${word}`;
 }
 
-function rejectBanned(text: string): void {
-  const lowered = text.toLowerCase();
-  for (const word of ["verified", "proved"]) {
-    if (lowered.includes(word)) {
-      throw new Error(`preview card uses ${word}`);
-    }
+function rejectClaimWords(text: string, label: string): void {
+  const hit = text.match(CLAIM_WORD);
+  if (hit) {
+    throw new Error(`${label} uses a claim word: ${hit[0]}`);
   }
 }
 
@@ -177,7 +178,7 @@ function familyRow(name: string, org: string, families: Family[]): ShareRow {
     name,
     org,
     percent: `${percent(main + challenge, total)}%`,
-    alt: `of ${total} ${familyNoun} (${main} result, ${challenge} challenge only, ${paper} paper only)`,
+    alt: `of ${total} ${familyNoun} (${main} main result, ${challenge} challenge only, ${paper} paper only)`,
   };
 }
 
@@ -341,7 +342,7 @@ export function previewAltFromCatalogue(): string {
   const alt = note
     ? `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${note}. ${line}`
     : `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${line}`;
-  rejectBanned(alt);
+  rejectClaimWords(alt, "preview alt");
   if (alt.length > SOCIAL_IMAGE_ALT_MAX) {
     throw new Error(`preview alt is ${alt.length} characters, over ${SOCIAL_IMAGE_ALT_MAX}`);
   }

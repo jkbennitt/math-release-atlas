@@ -9,18 +9,18 @@ const base = import.meta.env.BASE_URL;
   title="Sources · Math Release Atlas"
   description="The three pinned catalogues in this unofficial atlas, with commits, licenses, and sync methods."
 >
-  <article class="prose">
+  <article class="prose source-page">
     <h1>Sources</h1>
-    <p>
-      Each record on this site carries a source id. Family pages stay at <code>/f/&lt;id&gt;/</code>.
-      AlphaProof Nexus rows and the Anthropic releases live on the source pages below.
+    <p class="summary-lead">
+      Three pinned catalogues. Each record on this site carries a source id.
+      Family pages stay at <code>/f/&lt;id&gt;/</code>.
     </p>
-    <ul>
+    <div class="receipts">
       {
         atlas.sources.sources.map((source) => (
-          <li>
-            <strong>{source.name}</strong>
-            <span class="meta"> {source.id}</span>
+          <details open>
+            <summary>{source.name}</summary>
+            <p class="meta">{source.id}</p>
             <p>
               {source.org}. Repository <a href={source.repo}>{source.repo}</a>. Commit{" "}
               <a href={`${source.repo}/commit/${source.commit}`}>
@@ -46,10 +46,13 @@ const base = import.meta.env.BASE_URL;
                 .
               </p>
             ))}
-          </li>
+          </details>
         ))
       }
-    </ul>
+    </div>
+    <p>
+      <a href={`${base}source/openai-math/`}>OpenAI Math catalogue</a>
+    </p>
     <p>
       <a href={`${base}source/alphaproof-nexus/`}>AlphaProof Nexus counts and scope notes</a>
       {" · "}

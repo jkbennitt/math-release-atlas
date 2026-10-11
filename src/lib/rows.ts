@@ -63,6 +63,78 @@ export function lensCarriers(): { lenses: LensNote[] }[] {
   ];
 }
 
+type KnownGapStatus =
+  | "NOT IN COMPARATOR"
+  | "NOT FORMALIZED"
+  | "NOTED"
+  | "PARTIAL"
+  | "MATCH"
+  | "MORE THAN PAPER"
+  | "MISSING";
+
+function isKnownGapStatus(status: string): status is KnownGapStatus {
+  switch (status) {
+    case "NOT IN COMPARATOR":
+    case "NOT FORMALIZED":
+    case "NOTED":
+    case "PARTIAL":
+    case "MATCH":
+    case "MORE THAN PAPER":
+    case "MISSING":
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function gapPlainStatus(status: string): string {
+  if (!isKnownGapStatus(status)) {
+    throw new Error(`unknown gap status: ${status}`);
+  }
+  switch (status) {
+    case "NOT IN COMPARATOR":
+      return "Not in the comparator";
+    case "NOT FORMALIZED":
+      return "Not formalized";
+    case "NOTED":
+      return "Noted";
+    case "PARTIAL":
+      return "Part of the paper count";
+    case "MATCH":
+      return "Matches the paper";
+    case "MORE THAN PAPER":
+      return "More than the paper";
+    case "MISSING":
+      return "Not recorded";
+    default: {
+      const exhaustive: never = status;
+      return exhaustive;
+    }
+  }
+}
+
+export function provenanceLine(value: string): string {
+  if (value === "MISSING") {
+    return "no per-file agent record";
+  }
+  return value;
+}
+
+export function sourceChip(source: CatalogueSource): string {
+  switch (source) {
+    case "openai-math":
+      return "OpenAI";
+    case "alphaproof-nexus":
+      return "APN";
+    case "anthropic":
+      return "Anthropic";
+    default: {
+      const exhaustive: never = source;
+      return exhaustive;
+    }
+  }
+}
+
 function sourceBadge(source: CatalogueSource): { label: string; className: string } {
   switch (source) {
     case "openai-math":

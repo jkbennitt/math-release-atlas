@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { atlas, shortSha } from "../../lib/atlas";
+import { atlas, formatIso, shortSha } from "../../lib/atlas";
+import { gapPlainStatus } from "../../lib/rows";
 
 const base = import.meta.env.BASE_URL;
 const record = atlas.anthropic;
@@ -24,10 +25,12 @@ function gapBadgeClass(status: string): string {
   title="Anthropic · Math Release Atlas"
   description="Three Anthropic releases pinned to upstream commits, with derived Lean-file counts and the gaps this atlas records."
 >
-  <article class="prose">
+  <article class="prose source-page">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>Anthropic</h1>
     <p>
+      <span class="badge source-anthropic">Pinned releases</span>
+      {" "}
       {record.source.org}. Repository{" "}
       <a href={record.source.repo}>{record.source.repo}</a>.
       Commit <a href={`${record.source.repo}/commit/${record.source.commit}`}><code>{record.source.commit}</code></a>{" "}
@@ -36,152 +39,163 @@ function gapBadgeClass(status: string): string {
       commit <a href={`${flt.repo}/commit/${flt.commit}`}><code>{flt.commit}</code></a>{" "}
       ({shortSha(flt.commit)}).
     </p>
-    <p>{record.check_wording}</p>
+    <p class="summary-lead">{record.check_wording}</p>
     <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
 
-    <h2>Counts at these commits</h2>
-    <ul id="anthropic-counts">
-      {record.count_lines.map((line) => <li>{line}</li>)}
-    </ul>
+    <div class="receipts">
+      <details open>
+        <summary>Counts at these commits</summary>
+        <ul id="anthropic-counts">
+          {record.count_lines.map((line) => <li>{line}</li>)}
+        </ul>
+      </details>
 
-    <h2>Identifier scan</h2>
-    <p>
-      {record.identifiers.method}. Erdős ids {record.identifiers.erdos.length}.
-      OEIS ids {record.identifiers.oeis.length}. Stacks ids {record.identifiers.stacks.length}.
-    </p>
+      <details>
+        <summary>Identifier scan</summary>
+        <p>
+          {record.identifiers.method}. Erdős ids {record.identifiers.erdos.length}.
+          OEIS ids {record.identifiers.oeis.length}. Stacks ids {record.identifiers.stacks.length}.
+        </p>
+      </details>
 
-    <h2>Upstream quotations</h2>
-    <p>These sentences are the sources’ wording, quoted here.</p>
-    {
-      record.quotations.map((quotation) => (
-        <blockquote data-upstream="quotation">
-          {quotation.text}
-          <span class="meta"> Source: {quotation.source}.</span>
-        </blockquote>
-      ))
-    }
+      <details>
+        <summary>Upstream quotations</summary>
+        <p>These sentences are the sources’ wording, quoted here.</p>
+        {
+          record.quotations.map((quotation) => (
+            <blockquote data-upstream="quotation">
+              {quotation.text}
+              <span class="meta"> Source: {quotation.source}.</span>
+            </blockquote>
+          ))
+        }
+      </details>
+    </div>
 
     {
       record.releases.map((release) => (
-        <section id={release.id}>
+        <section id={release.id} class="release">
           <h2>{release.title}</h2>
-          <p>
+          <p class="status-line">
             <span id={`kind-${release.id}`} class={`badge ${release.kind}`}>{release.kind_label}</span>
           </p>
           <p>{release.statement}</p>
-          <p class="meta">
-            Repository <a href={release.tree_url}>{release.path || release.repo}</a>.
-            Commit <a href={`${release.repo}/commit/${release.commit}`}><code>{shortSha(release.commit)}</code></a>,
-            committed {release.commit_date}. Toolchain <code>{release.lean_toolchain}</code>.
-            License: {release.license}.
-          </p>
-          <p class="meta">Commit message: “{release.commit_subject}”</p>
-          {
-            release.paper && (
-              <p>
-                Paper <a href={release.paper.url}>{release.paper.title}</a>,
-                arXiv {release.paper.id}. v1 submitted {release.paper.v1_submitted}.
-                {release.paper.v2_submitted ? <> v2 submitted {release.paper.v2_submitted}.</> : null}
-              </p>
-            )
-          }
-          {
-            release.announcement ? (
-              <p>
-                Announcement <a href={release.announcement}>{release.announcement}</a>
-                {release.announcement_date ? <>, dated {release.announcement_date}</> : null}.
-              </p>
-            ) : null
-          }
-          {
-            release.tag && (
-              <p class="meta">
-                Tag <code>{release.tag.name}</code> object <code>{release.tag.tag_object}</code> peels to
-                commit <code>{release.tag.commit}</code>.
-              </p>
-            )
-          }
-          {release.scope_notes.map((note) => <p class="caution">{note}</p>)}
-          <ul>
+          <ul class="gap-list">
             {release.gaps.map((gap) => (
               <li id={`gap-${gap.id}`}>
-                <span class={`badge ${gapBadgeClass(gap.status)}`}>{gap.status}</span>
-                {" "}Label: {gap.label.endsWith(".") ? gap.label : gap.label + "."}
+                <span class={`badge ${gapBadgeClass(gap.status)}`}>{gapPlainStatus(gap.status)}</span>
+                {" "}{gap.label}
               </li>
             ))}
           </ul>
-          {
-            release.axioms && release.axioms.length > 0 && (
-              <p>Axioms named in formalization.yaml: {release.axioms.join(", ")}.</p>
-            )
-          }
-          <ul class="links">
-            {release.license_files.map((item) => (
-              <li>
-                <a href={item.url}>{item.path}</a>
-                <span class="meta"> · Apache-2.0 · sha256 {item.sha256}</span>
-              </li>
-            ))}
-            {release.statement_files.map((item) => (
-              <li>
-                <a href={item.url}>{item.path}</a>
-                <span class="meta"> · {item.role}</span>
-              </li>
-            ))}
-            {release.id === "zeta23" && (
-              <>
+          <details open>
+            <summary>Receipts</summary>
+            <p class="meta">
+              Repository <a href={release.tree_url}>{release.path || release.repo}</a>.
+              Commit <a href={`${release.repo}/commit/${release.commit}`}><code>{shortSha(release.commit)}</code></a>,
+              committed {formatIso(release.commit_date)}. Toolchain <code>{release.lean_toolchain}</code>.
+              License: {release.license}.
+            </p>
+            <p class="meta">Commit message: “{release.commit_subject}”</p>
+            {
+              release.paper && (
+                <p>
+                  Paper <a href={release.paper.url}>{release.paper.title}</a>,
+                  arXiv {release.paper.id}. v1 submitted {formatIso(release.paper.v1_submitted)}.
+                  {release.paper.v2_submitted ? <> v2 submitted {formatIso(release.paper.v2_submitted)}.</> : null}
+                </p>
+              )
+            }
+            {
+              release.announcement ? (
+                <p>
+                  Announcement <a href={release.announcement}>{release.announcement}</a>
+                  {release.announcement_date ? <>, dated {formatIso(release.announcement_date)}</> : null}.
+                </p>
+              ) : null
+            }
+            {
+              release.tag && (
+                <p class="meta">
+                  Tag <code>{release.tag.name}</code> object <code>{release.tag.tag_object}</code> peels to
+                  commit <code>{release.tag.commit}</code>.
+                </p>
+              )
+            }
+            {release.scope_notes.map((note) => <p class="caution">{note}</p>)}
+            {
+              release.axioms && release.axioms.length > 0 && (
+                <p>Axioms named in formalization.yaml: {release.axioms.join(", ")}.</p>
+              )
+            }
+            <ul class="links">
+              {release.license_files.map((item) => (
                 <li>
-                  <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator.json`}>zeta23/comparator.json</a>
-                  <span class="meta"> · headline comparator configuration</span>
+                  <a href={item.url}>{item.path}</a>
+                  <span class="meta"> · Apache-2.0 · sha256 {item.sha256}</span>
                 </li>
+              ))}
+              {release.statement_files.map((item) => (
                 <li>
-                  <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator-xiprime.json`}>zeta23/comparator-xiprime.json</a>
-                  <span class="meta"> · xi-prime comparator configuration</span>
+                  <a href={item.url}>{item.path}</a>
+                  <span class="meta"> · {item.role}</span>
                 </li>
-              </>
-            )}
-            {release.id === "3sum-apsp" && (
-              <li>
-                <a href={`${release.repo}/blob/${release.commit}/3sum-apsp/comparator-paperstatements.json`}>3sum-apsp/comparator-paperstatements.json</a>
-                <span class="meta"> · paper-statements comparator configuration</span>
-              </li>
-            )}
-          </ul>
-          {
-            release.headline_theorems.length > 0 && (
-              <>
-                <h3>Headline names</h3>
-                <ul class="links">
-                  {release.headline_theorems.map((name) => (
-                    <li><code>{name}</code></li>
-                  ))}
-                </ul>
-              </>
-            )
-          }
-          {
-            release.xi_prime_theorems.length > 0 && (
-              <>
-                <h3>Xi-prime names</h3>
-                <ul class="links">
-                  {release.xi_prime_theorems.map((name) => (
-                    <li><code>{name}</code></li>
-                  ))}
-                </ul>
-              </>
-            )
-          }
+              ))}
+              {release.id === "zeta23" && (
+                <>
+                  <li>
+                    <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator.json`}>zeta23/comparator.json</a>
+                    <span class="meta"> · headline comparator configuration</span>
+                  </li>
+                  <li>
+                    <a href={`${release.repo}/blob/${release.commit}/zeta23/comparator-xiprime.json`}>zeta23/comparator-xiprime.json</a>
+                    <span class="meta"> · xi-prime comparator configuration</span>
+                  </li>
+                </>
+              )}
+              {release.id === "3sum-apsp" && (
+                <li>
+                  <a href={`${release.repo}/blob/${release.commit}/3sum-apsp/comparator-paperstatements.json`}>3sum-apsp/comparator-paperstatements.json</a>
+                  <span class="meta"> · paper-statements comparator configuration</span>
+                </li>
+              )}
+            </ul>
+            {
+              release.headline_theorems.length > 0 && (
+                <>
+                  <h3>Headline names</h3>
+                  <ul class="links">
+                    {release.headline_theorems.map((name) => (
+                      <li><code>{name}</code></li>
+                    ))}
+                  </ul>
+                </>
+              )
+            }
+            {
+              release.xi_prime_theorems.length > 0 && (
+                <>
+                  <h3>Xi-prime names</h3>
+                  <ul class="links">
+                    {release.xi_prime_theorems.map((name) => (
+                      <li><code>{name}</code></li>
+                    ))}
+                  </ul>
+                </>
+              )
+            }
+          </details>
         </section>
       ))
     }
     {
       record.skipped_directories.length > 0 && (
-        <>
-          <h2>Directories that are not releases</h2>
+        <details class="receipts">
+          <summary>Directories that are not releases</summary>
           <ul id="skipped-directories">
             {record.skipped_directories.map((name) => <li>{name}</li>)}
           </ul>
-        </>
+        </details>
       )
     }
   </article>

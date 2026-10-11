@@ -689,17 +689,24 @@ def alphaproof_self_test() -> list[str]:
         aligned = rendered_gaps(pinned_oeis, pinned_attempted, provenance_gap)
         if "The repository has no per-file agent record." not in aligned:
             failures.append("gap rows were not rendered from the AlphaProof page template")
+        if "Newline count in erdos_problems_attempted.txt: 352." not in aligned:
+            failures.append("gap rows dropped the newline-count note")
         if atlaslib.check_gap_elements(aligned, pinned_gaps):
             failures.append(f"aligned gap rows failed: {atlaslib.check_gap_elements(aligned, pinned_gaps)}")
-        swapped_badge = aligned.replace(
-            '<span class="badge missing">MISSING</span>',
-            '<span class="badge partial">PARTIAL</span>',
+        dropped_sentence = aligned.replace(
+            "The repository has no per-file agent record.",
+            "A note was removed.",
             1,
         )
-        if ": MISSING" not in swapped_badge:
-            failures.append("provenance fixture lost the repeated status")
-        if not atlaslib.check_gap_elements(swapped_badge, pinned_gaps):
-            failures.append("a swapped provenance badge passed because the row repeats : MISSING")
+        if not atlaslib.check_gap_elements(dropped_sentence, pinned_gaps):
+            failures.append("a gap row without the plain-English provenance sentence passed")
+        leaked_token = aligned.replace(
+            "The repository has no per-file agent record.",
+            "The repository has no per-file agent record. MISSING",
+            1,
+        )
+        if "MISSING" not in leaked_token or not atlaslib.check_gap_elements(leaked_token, pinned_gaps):
+            failures.append("a raw MISSING token in a gap row passed")
         template_cases = (
             (alphaproof.oeis_count_gap(44), pinned_attempted, provenance_gap),
             (alphaproof.oeis_count_gap(50), pinned_attempted, provenance_gap),
@@ -718,10 +725,10 @@ def alphaproof_self_test() -> list[str]:
                     continue
                 if gap["status"] != "PARTIAL" and "Absent" in atlaslib._visible_text(row):
                     failures.append(f"the page template rendered Absent for {gap['status']}")
-            if oeis_gap["status"] in ("MATCH", "MORE THAN PAPER") and f">{oeis_gap['status']}</span>" not in page:
-                failures.append(f"template badge did not show {oeis_gap['status']}")
-            if attempted_gap["status"] == "MORE THAN PAPER" and ">MORE THAN PAPER</span>" not in page:
-                failures.append("template badge did not show MORE THAN PAPER for the attempted list")
+            visible_page = atlaslib._visible_text(page)
+            for gap in (oeis_gap, attempted_gap, provenance):
+                if gap["status"] in visible_page:
+                    failures.append(f"template rendered status token {gap['status']}")
         match_gap = alphaproof.oeis_count_gap(44)
         match_page = rendered_gaps(match_gap, pinned_attempted, provenance_gap)
         leaked = match_page.replace(
@@ -737,11 +744,22 @@ def alphaproof_self_test() -> list[str]:
         if "source.preview.fragment" not in social or "family.lean.status" not in social or "lean_files" not in social:
             failures.append("social alt text does not read each catalogue")
         badge_page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
-        for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
-            if f'case "{status}":' not in badge_page:
-                failures.append(f"source page badge does not handle {status}")
-        if 'id={`gap-${oeis?.id}`}' not in badge_page or "oeis.absent > 0" not in badge_page:
-            failures.append("source page does not key gap rows or gate Absent")
+        if "display: none" in badge_page or "gap-code" in badge_page or "aria-hidden" in badge_page:
+            failures.append("AlphaProof page hides a status token")
+        for needle in ("{oeis?.status}", "{attempted?.status}", "{provenance?.status}"):
+            if needle in badge_page:
+                failures.append(f"AlphaProof page still prints {needle}")
+        for phrase in (
+            "{oeis?.repo_files}",
+            "{oeis?.paper_count}",
+            "{attempted?.repo_entries}",
+            "{attempted?.paper_attempted}",
+            "The repository has no per-file agent record.",
+            "oeis.absent > 0",
+            "id={`gap-${oeis?.id}`}",
+        ):
+            if phrase not in badge_page:
+                failures.append(f"AlphaProof page dropped {phrase}")
         page_check = inspect.getsource(atlaslib.check_alphaproof_pages)
         if '"PARTIAL"' in page_check:
             failures.append("AlphaProof page check still requires the literal PARTIAL")
@@ -1012,6 +1030,17 @@ def anthropic_self_test() -> list[str]:
     for status in ("NOT IN COMPARATOR", "NOT FORMALIZED", "NOTED"):
         if f'case "{status}":' not in page:
             failures.append(f"Anthropic source page badge does not handle {status}")
+    rows_source = (ROOT / "src" / "lib" / "rows.ts").read_text(encoding="utf-8")
+    for phrase in ("Not in the comparator", "Not formalized", "Noted"):
+        if phrase not in rows_source:
+            failures.append(f"gap labels are missing {phrase!r}")
+    if "unknown gap status" not in rows_source or "toLowerCase()" in rows_source:
+        failures.append("gapPlainStatus sentence-cases an unknown status instead of failing the build")
+    openai_page = (ROOT / "src" / "pages" / "source" / "openai-math.astro").read_text(encoding="utf-8")
+    if "Unchecked" in openai_page or "review_status" not in openai_page:
+        failures.append("OpenAI source page hard-codes the review badge")
+    if "{gap.status}" in page:
+        failures.append("Anthropic source page still prints the raw gap status")
     if 'id={`gap-${gap.id}`}' not in page or 'id={`kind-${release.id}`}' not in page:
         failures.append("Anthropic source page does not key gap rows or kind badges")
     if "{gap.label}." in page:
@@ -2043,6 +2072,36 @@ def spacing_self_test() -> list[str]:
     return failures
 
 
+def _home_share_fixture(document: dict) -> str:
+    """The share markup the dist check compares with the catalogue."""
+    items = []
+    for row in document["rows"]:
+        segments = "".join(
+            f'<span class="seg seg-{segment["role"]}" style="flex-grow: {segment["count"]}"></span>'
+            for segment in row["segments"]
+        )
+        items.append(
+            "<li>"
+            f"<span>{row['name']}</span>"
+            f"<span class=\"share-unit\">{row['unit']}</span>"
+            f"<span class=\"share-pct\">{row['percent']}</span>"
+            f"{segments}"
+            f"<p class=\"share-caption share-caption-full\">{row['caption']}</p>"
+            f"<p class=\"share-caption share-caption-short\">{row['shortCaption']}</p>"
+            "</li>"
+        )
+    legend = "".join(
+        f"<li><span class=\"swatch seg-{item['role']}\"></span>{item['label']}</li>"
+        for item in document["legend"]
+    )
+    return (
+        '<section class="share">'
+        f"<ol class=\"share-rows\">{''.join(items)}</ol>"
+        f"<ul class=\"share-legend\">{legend}</ul>"
+        "</section>"
+    )
+
+
 def preview_self_test() -> list[str]:
     """A built page fails without og:image, without twitter:card, or with a relative image."""
     failures: list[str] = []
@@ -2247,13 +2306,36 @@ def preview_self_test() -> list[str]:
     formal_letters = "".join(
         word[0].upper() for word in re.findall(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?", formal_title)
     )
-    release_caption = (
-        f"{with_lean} of {len(releases)} with Lean  ·  {new_results} new results, "
-        f"{formalizations} formalization ({formal_letters})"
+    full = sum(
+        1
+        for release in releases
+        if release["counts"]["lean_files"] > 0
+        and not any(gap["status"] == "NOT FORMALIZED" for gap in release["gaps"])
     )
+    partial = sum(
+        1
+        for release in releases
+        if release["counts"]["lean_files"] > 0
+        and any(gap["status"] == "NOT FORMALIZED" for gap in release["gaps"])
+    )
+    if partial:
+        release_caption = (
+            f"{full} in Lean  ·  {partial} partly in Lean  ·  {new_results} new, "
+            f"{formalizations} formalization ({formal_letters})"
+        )
+        release_short = (
+            f"{full} in Lean  ·  {partial} partly in Lean  ·  "
+            f"{formalizations} formalization ({formal_letters})"
+        )
+    else:
+        release_caption = (
+            f"{with_lean} of {len(releases)} with Lean  ·  {new_results} new results, "
+            f"{formalizations} formalization ({formal_letters})"
+        )
+        release_short = f"{with_lean} of {len(releases)} with Lean"
     release_percent = f"{round(100 * with_lean / len(releases))}%"
     family_alt = (
-        f"of {family_total} families ({main} result, {challenge} challenge only, {paper} paper only)"
+        f"of {family_total} families ({main} main result, {challenge} challenge only, {paper} paper only)"
     )
     file_alt = f"({files} files, {absent} paper only)"
     release_alt = (
@@ -2277,6 +2359,43 @@ def preview_self_test() -> list[str]:
             failures.append(f"preview card omitted {piece!r}")
     if absent > 0 and file_percent == "100%":
         failures.append("paper gap was left out of the file-catalogue share")
+    share_doc = og_card.share_document(catalog)
+    matched_rows = [row for row in share_doc["rows"] if row["caption"] == release_caption]
+    if len(matched_rows) != 1 or matched_rows[0]["shortCaption"] != release_short:
+        failures.append(f"narrow share caption dropped the formalization: {share_doc['rows']}")
+    legend_labels = [item["label"] for item in share_doc["legend"]]
+    if legend_labels != ["result in Lean", "partly in Lean", "paper only"]:
+        failures.append(f"share legend drifted: {legend_labels}")
+    claim_phrases = (
+        "71 Lean files proved",
+        "3 of 3 releases verified",
+        "Anthropic proved Fermat's Last Theorem.",
+        "OpenAI Math 65% proven",
+    )
+    for phrase in claim_phrases:
+        if not atlaslib.claim_word_hits(phrase):
+            failures.append(f"claim word was allowed: {phrase!r}")
+    if atlaslib.claim_word_hits("The commit was approved.") or atlaslib.claim_word_hits("AlphaProof Nexus"):
+        failures.append("a whole-word ban matched inside another word")
+    social_source = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
+    if r"\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b" not in social_source:
+        failures.append("social alt text dropped the claim-word ban")
+    css = (ROOT / "src" / "styles" / "global.css").read_text(encoding="utf-8")
+    if ".seg-challenge { background: #649087; }" not in css or ".seg-paper { background: #93866e; }" not in css:
+        failures.append("share bar colors drifted from the card")
+    if "box-shadow: inset 0 0 0 1px var(--ink)" not in css:
+        failures.append("share bars dropped the segment outline")
+    share_html = _home_share_fixture(share_doc)
+    share_problems = atlaslib.check_home_share(share_html, catalog)
+    if share_problems:
+        failures.append(f"home share fixture was rejected: {share_problems}")
+    mutated = share_html.replace(">65%<", ">75%<", 1)
+    mutated_problems = atlaslib.check_home_share(mutated, catalog)
+    if not any("65%" in item and "75%" in item for item in mutated_problems):
+        failures.append(f"a share percent mutated from 65% to 75% was accepted: {mutated_problems}")
+    proved_share = share_html.replace("paper only", "paper only proved", 1)
+    if not any("claim word" in item for item in atlaslib.check_home_share(proved_share, catalog)):
+        failures.append("a claim word in the home share section was accepted")
     image = og_card.render(catalog)
     blob = og_card.png_bytes(image)
     if og_card.png_bytes(og_card.render(catalog)) != blob:

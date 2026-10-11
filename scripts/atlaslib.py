@@ -2112,6 +2112,22 @@ def bare_result_claims(text: str) -> list[str]:
     return failures
 
 
+# Whole words. "approved" and "AlphaProof" do not match; "proofs" does not match.
+CLAIM_WORD_RE = re.compile(
+    r"\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b",
+    re.IGNORECASE,
+)
+
+
+def claim_word_hits(text: str) -> list[str]:
+    """Case-insensitive whole-word hits for the share card, its alt, and the home share."""
+    return [match.group(0) for match in CLAIM_WORD_RE.finditer(text)]
+
+
+def claim_word_failures(text: str, label: str) -> list[str]:
+    return [f"{label} uses a claim word: {hit}" for hit in claim_word_hits(text)]
+
+
 def scan_overclaims(text: str, label: str, extra_allowed: set[str] | None = None) -> list[str]:
     """Flag a sentence that claims a guarded problem itself was proved, solved, or settled.
 
@@ -3059,10 +3075,8 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
             failures.append(f"alt text is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
         if "per-row provenance" in alt or "OEIS" in alt:
             failures.append("alt text includes a gap status")
-        lowered_alt = alt.lower()
-        for banned in ("verified", "proved"):
-            if banned in lowered_alt:
-                failures.append(f"alt text uses {banned}")
+        failures.extend(scan_overclaims(alt, "alt text"))
+        failures.extend(claim_word_failures(alt, "alt text"))
         for entry in entries:
             if entry["name"] not in alt:
                 failures.append(f"alt text omits {entry['name']}")
@@ -3121,10 +3135,8 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
     for banned in ("PARTIAL", "MATCH", "MISSING"):
         if banned in drawn_text:
             failures.append(f"preview card still shows {banned}")
-    lowered = drawn_text.lower()
-    for banned in ("verified", "proved"):
-        if banned in lowered:
-            failures.append(f"preview card uses {banned}")
+    failures.extend(scan_overclaims(drawn_text, "preview card"))
+    failures.extend(claim_word_failures(drawn_text, "preview card"))
     return failures
 
 
@@ -3369,9 +3381,11 @@ def alphaproof_badge_class(status: str | None) -> str:
 
 def _render_gap_li(var: str, body: str, gap: dict[str, Any]) -> str:
     class_expr = "class={`badge ${gapBadgeClass(" + var + "?.status)}`}"
-    if class_expr not in body:
-        raise AtlasError(f"{var} gap template is missing the badge class")
-    rendered = body.replace(class_expr, f'class="badge {alphaproof_badge_class(gap.get("status"))}"', 1)
+    rendered = body
+    if class_expr in rendered:
+        rendered = rendered.replace(
+            class_expr, f'class="badge {alphaproof_badge_class(gap.get("status"))}"', 1
+        )
     absent_expr = (
         "{"
         + var
@@ -3417,8 +3431,29 @@ def render_alphaproof_gap_rows(gaps_by_role: dict[str, dict[str, Any]]) -> str:
     return "\n".join(_render_gap_li(var, found[var], gaps_by_role[var]) for var in expected)
 
 
+_PLAIN_GAP_STATUS = {
+    "NOT IN COMPARATOR": "Not in the comparator",
+    "NOT FORMALIZED": "Not formalized",
+    "NOTED": "Noted",
+}
+_RAW_GAP_TOKENS = (
+    "NOT IN COMPARATOR",
+    "NOT FORMALIZED",
+    "NOTED",
+    "MORE THAN PAPER",
+    "PARTIAL",
+    "MATCH",
+    "MISSING",
+)
+
+
+def gap_plain_status(status: str) -> str | None:
+    """Sentence-case label for a release gap. Count gaps use their data sentence instead."""
+    return _PLAIN_GAP_STATUS.get(status)
+
+
 def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str]:
-    """Each gap's badge span is its status, and its label is inside its own row."""
+    """Each gap row shows its label and a plain-English sentence, not a status token."""
     failures: list[str] = []
     for gap in gaps:
         gap_id = gap.get("id")
@@ -3431,13 +3466,30 @@ def check_gap_elements(detail_html: str, gaps: list[dict[str, Any]]) -> list[str
             failures.append(f"page is missing {element_id}")
             continue
         visible = _visible_text(fragment)
-        status = gap.get("status")
         label = gap.get("label")
-        shown = _badge_text(fragment)
-        if not isinstance(status, str) or shown != status:
-            failures.append(f"{element_id} badge is {shown!r}, expected status {status!r}")
         if not isinstance(label, str) or label not in visible:
             failures.append(f"{element_id} is missing label {label!r}")
+        status = gap.get("status")
+        plain = gap_plain_status(status) if isinstance(status, str) else None
+        if plain and plain not in visible:
+            failures.append(f"{element_id} is missing {plain!r}")
+        repo_files = gap.get("repo_files")
+        paper_count = gap.get("paper_count")
+        if isinstance(repo_files, int) and isinstance(paper_count, int):
+            phrase = f"{repo_files} of the {paper_count}"
+            if phrase not in visible:
+                failures.append(f"{element_id} is missing {phrase!r}")
+        repo_entries = gap.get("repo_entries")
+        paper_attempted = gap.get("paper_attempted")
+        if isinstance(repo_entries, int) and isinstance(paper_attempted, int):
+            phrase = f"{repo_entries} of the {paper_attempted}"
+            if phrase not in visible:
+                failures.append(f"{element_id} is missing {phrase!r}")
+        if gap_id == "per-row-provenance" and "The repository has no per-file agent record." not in visible:
+            failures.append(f"{element_id} is missing the plain-English provenance sentence")
+        for token in _RAW_GAP_TOKENS:
+            if token in visible:
+                failures.append(f"{element_id} still shows {token}")
         if "absent" not in gap:
             continue
         absent = gap.get("absent")
@@ -3524,6 +3576,15 @@ def check_alphaproof_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
             failures.append(f"AlphaProof page is missing {phrase!r}")
     if "352 vs 353" in detail_text:
         failures.append("AlphaProof page still shows the false attempted-count label")
+    attempted_gap = next(
+        (gap for gap in alphaproof["gaps"] if gap.get("id") == "erdos-attempted"),
+        None,
+    )
+    newlines = attempted_gap.get("repo_newlines") if isinstance(attempted_gap, dict) else None
+    if isinstance(newlines, int):
+        newline_note = f"Newline count in erdos_problems_attempted.txt: {newlines}."
+        if newline_note not in detail_text:
+            failures.append("AlphaProof page dropped the newline-count note")
     failures.extend(check_cross_source_page(cross.read_text(encoding="utf-8"), joined))
     for record in alphaproof["records"]:
         if record["path"] not in detail_text or record["statement"] not in detail_text:
@@ -3602,6 +3663,9 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     failures.extend(check_gap_elements(detail_raw, gaps))
     if anthropic["check_wording"] not in detail_text:
         failures.append("Anthropic page is missing the check wording")
+    sync = anthropic.get("source", {}).get("sync") if isinstance(anthropic.get("source"), dict) else None
+    if not isinstance(sync, str) or not sync or f"Sync: {sync}" not in detail_text:
+        failures.append("Anthropic page dropped the sync note")
     if anthropic["identifiers"]["method"] not in detail_text:
         failures.append("Anthropic page is missing the identifier method")
     for quotation in anthropic["quotations"]:
@@ -3636,8 +3700,11 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         if release["kind"] == "formalization" and "New result" in visible:
             failures.append("home formalization row contains New result")
         for gap in release["gaps"]:
-            if gap["status"] not in visible or gap["label"] not in visible:
+            plain = gap_plain_status(str(gap.get("status") or ""))
+            if not plain or plain not in visible or gap["label"] not in visible:
                 failures.append(f"Anthropic row {release['id']} is missing gap {gap['id']}")
+            if gap["status"] in visible:
+                failures.append(f"Anthropic row {release['id']} still shows {gap['status']}")
         kind = _element_inner(detail_raw, f"kind-{release['id']}")
         if kind is None:
             failures.append(f"Anthropic page is missing kind-{release['id']}")
@@ -3752,7 +3819,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     if source_phrase not in tight_text(source_path.read_text(encoding="utf-8")):
         failures.append("source index runs the catalogue links together")
     apn_html = apn_path.read_text(encoding="utf-8")
-    apn_intro = re.search(r"<h1>AlphaProof Nexus</h1>\s*<p>(.*?)</p>", apn_html, re.DOTALL)
+    apn_intro = re.search(r"<h1>AlphaProof Nexus</h1>\s*<p\b[^>]*>(.*?)</p>", apn_html, re.DOTALL)
     apn_source = catalog["alphaproof"]["source"]
     apn_commit = str(apn_source["commit"])
     apn_phrases = [
@@ -3765,7 +3832,7 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     for phrase in missing_spaced_phrases(apn_html, apn_phrases):
         failures.append(f"AlphaProof page is missing spaced text {phrase!r}")
     anthropic_html = anthropic_path.read_text(encoding="utf-8")
-    anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p>(.*?)</p>", anthropic_html, re.DOTALL)
+    anthropic_intro = re.search(r"<h1>Anthropic</h1>\s*<p\b[^>]*>(.*?)</p>", anthropic_html, re.DOTALL)
     an_commit = str(anthropic_source["commit"])
     flt_commit = str(flt["commit"])
     an_phrases = [
@@ -3822,6 +3889,67 @@ def check_home_layout(dist: Path) -> list[str]:
     return []
 
 
+_SHARE_SECTION_RE = re.compile(r'<section class="share"[^>]*>.*?</section>', re.DOTALL)
+_SHARE_ROWS_RE = re.compile(r'<ol class="share-rows">(.*?)</ol>', re.DOTALL)
+_SHARE_LEGEND_RE = re.compile(r'<ul class="share-legend">(.*?)</ul>', re.DOTALL)
+_SHARE_ITEM_RE = re.compile(r"<li\b[^>]*>(.*?)</li>", re.DOTALL)
+_SHARE_SEG_RE = re.compile(
+    r'class="seg seg-([a-z]+)"[^>]*style="flex-grow:\s*(\d+)"',
+)
+_SHARE_PCT_RE = re.compile(r'class="share-pct"[^>]*>\s*([^<]+?)\s*<')
+
+
+def check_home_share(index_html: str, catalog: dict[str, Any]) -> list[str]:
+    """Home bars, percents, and captions must match the catalogue share rows."""
+    failures: list[str] = []
+    section_match = _SHARE_SECTION_RE.search(index_html)
+    if section_match is None:
+        return ["home page is missing the share section"]
+    section = section_match.group(0)
+    failures.extend(claim_word_failures(section, "home share section"))
+    try:
+        import og_card
+    except ImportError as exc:
+        return failures + [f"share card is unavailable: {exc}"]
+    try:
+        document = og_card.share_document(catalog)
+    except SystemExit as exc:
+        return failures + [f"share rows did not render: {exc}"]
+    rows_match = _SHARE_ROWS_RE.search(section)
+    legend_match = _SHARE_LEGEND_RE.search(section)
+    if rows_match is None or legend_match is None:
+        return failures + ["home share section is missing its rows or legend"]
+    items = _SHARE_ITEM_RE.findall(rows_match.group(1))
+    rows = document["rows"]
+    if len(items) != len(rows):
+        failures.append(f"home share renders {len(items)} bars, data has {len(rows)}")
+    for row, item in zip(rows, items):
+        name = str(row["name"])
+        visible = _visible_text(item)
+        if name not in visible:
+            failures.append(f"home share bar is missing {name}")
+            continue
+        percent_match = _SHARE_PCT_RE.search(item)
+        shown = percent_match.group(1) if percent_match else ""
+        if shown != row["percent"]:
+            failures.append(f"{name} share percent is {shown!r}, data has {row['percent']!r}")
+        caption = re.sub(r"\s+", " ", str(row["caption"])).strip()
+        short_caption = re.sub(r"\s+", " ", str(row["shortCaption"])).strip()
+        if caption not in visible:
+            failures.append(f"{name} share caption does not match the data")
+        if short_caption not in visible:
+            failures.append(f"{name} short share caption does not match the data")
+        drawn = _SHARE_SEG_RE.findall(item)
+        expected = [(segment["role"], str(segment["count"])) for segment in row["segments"]]
+        if drawn != expected:
+            failures.append(f"{name} share bar is {drawn}, data has {expected}")
+    legend_items = [_visible_text(item) for item in _SHARE_ITEM_RE.findall(legend_match.group(1))]
+    expected_legend = [str(item["label"]) for item in document["legend"]]
+    if legend_items != expected_legend:
+        failures.append(f"home share legend is {legend_items}, data has {expected_legend}")
+    return failures
+
+
 def check_dist(dist: Path) -> list[str]:
     failures: list[str] = []
     pages = sorted(dist.rglob("*.html"))
@@ -3856,6 +3984,7 @@ def check_dist(dist: Path) -> list[str]:
     for claim in bare_result_claims(prepared):
         failures.append(f"built site: {claim}")
     index_html = index.read_text(encoding="utf-8")
+    failures.extend(check_home_share(index_html, catalog))
     about_html = about.read_text(encoding="utf-8")
     index_text = html.unescape(index_html)
     about_text = html.unescape(about_html)

@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { atlas, shortSha } from "../../lib/atlas";
+import { atlas, formatIso, shortSha } from "../../lib/atlas";
+import { provenanceLine } from "../../lib/rows";
 
 const base = import.meta.env.BASE_URL;
 const record = atlas.alphaproof;
@@ -9,91 +10,88 @@ const commit = record.source.commit;
 const oeis = record.gaps.find((gap) => gap.id === "oeis-count");
 const attempted = record.gaps.find((gap) => gap.id === "erdos-attempted");
 const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
-
-function gapBadgeClass(status: string | undefined): string {
-  switch (status) {
-    case "PARTIAL":
-      return "partial";
-    case "MATCH":
-      return "match";
-    case "MORE THAN PAPER":
-      return "more-than-paper";
-    case "MISSING":
-      return "missing";
-    case undefined:
-      return "";
-    default:
-      return status.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  }
-}
 ---
 
 <Base
   title="AlphaProof Nexus · Math Release Atlas"
   description="Lean files deposited in the AlphaProof Nexus results repository, with paper counts and the gaps this atlas does not fill."
 >
-  <article class="prose">
+  <article class="prose source-page">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>AlphaProof Nexus</h1>
+    <p class="status-line">
+      <span class="badge deposited">Deposited</span>
+      <span>{record.check_wording}</span>
+    </p>
     <p>
       Google DeepMind. Repository{" "}
       <a href={record.source.repo}>{record.source.repo}</a>.
       Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
-      ({shortSha(commit)}), committed {record.commit_date}, message “{record.commit_subject}”.
+      ({shortSha(commit)}), committed {formatIso(record.commit_date)}, message “{record.commit_subject}”.
       Paper <a href={record.paper.url}>{record.paper.title}</a>,
-      arXiv {record.paper.id}. v1 submitted {record.paper.v1_submitted}. v2 submitted {record.paper.v2_submitted}.
+      arXiv {record.paper.id}. v1 submitted {formatIso(record.paper.v1_submitted)}. v2 submitted {formatIso(record.paper.v2_submitted)}.
     </p>
-    <p>{record.check_wording}</p>
-    <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
-
-    <h2>Counts at this commit</h2>
-    <ul id="alphaproof-counts">
-      <li>{counts.erdos} Erdős Lean files.</li>
-      <li>{counts.oeis_files} OEIS Lean files.</li>
-      <li>{counts.stacks} Stacks Lean files.</li>
-      <li>{counts.ai_collaborator} AI collaborator Lean files.</li>
-      <li>{counts.lean_files} Lean files in total.</li>
-      <li>{counts.natural_language_pdfs} natural-language PDFs, linked where the filename corresponds.</li>
-    </ul>
-    <p class="meta">
-      AI collaborator folders:
-      {Object.entries(record.subcounts).map(([name, value]) => `${name} ${value}`).join(", ")}.
+    <p class="summary-lead">
+      {counts.lean_files} Lean files at this commit, read against the paper’s own counts.
     </p>
 
-    <h2>Gaps</h2>
-    <ul>
-      <li id={`gap-${oeis?.id}`}>
-        <span class={`badge ${gapBadgeClass(oeis?.status)}`}>{oeis?.status}</span>
-        {" "}OEIS paper count {oeis?.paper_count}/{oeis?.paper_attempted}. Repository Lean files {oeis?.repo_files}.
-        {oeis && oeis.absent !== undefined && oeis.absent > 0 ? <> Absent {oeis.absent}.</> : null}
-        {" "}Label: {oeis?.label}.
-      </li>
-      <li id={`gap-${attempted?.id}`}>
-        <span class={`badge ${gapBadgeClass(attempted?.status)}`}>{attempted?.status}</span>
-        {" "}Paper attempted {attempted?.paper_attempted}. Newline count in erdos_problems_attempted.txt:
-        {attempted?.repo_newlines}. Non-empty lines: {attempted?.repo_entries}. Label: {attempted?.label}.
-      </li>
-      <li id={`gap-${provenance?.id}`}>
-        <span class={`badge ${gapBadgeClass(provenance?.status)}`}>{provenance?.status}</span>
-        {" "}{provenance?.label}: {provenance?.status}. The repository has no per-file agent record.
-      </li>
-    </ul>
+    <div class="receipts">
+      <details open>
+        <summary>Counts at this commit</summary>
+        <ul id="alphaproof-counts">
+          <li>{counts.erdos} Erdős Lean files.</li>
+          <li>{counts.oeis_files} OEIS Lean files.</li>
+          <li>{counts.stacks} Stacks Lean files.</li>
+          <li>{counts.ai_collaborator} AI collaborator Lean files.</li>
+          <li>{counts.lean_files} Lean files in total.</li>
+          <li>{counts.natural_language_pdfs} natural-language PDFs, linked where the filename corresponds.</li>
+        </ul>
+        <p class="meta">
+          AI collaborator folders:
+          {Object.entries(record.subcounts).map(([name, value]) => `${name} ${value}`).join(", ")}.
+        </p>
+      </details>
 
-    <h2>Upstream quotations</h2>
-    <p>These sentences are the paper’s wording, quoted here.</p>
-    <blockquote data-upstream="abstract">{record.paper.abstract_claim}</blockquote>
-    <blockquote data-upstream="table">{record.paper.table1_caption}</blockquote>
-    <blockquote data-upstream="density">{record.paper.density_note}</blockquote>
-    <blockquote data-upstream="agent-a">{record.paper.agent_a}</blockquote>
+      <details open>
+        <summary>Gaps against the paper</summary>
+        <ul>
+          <li id={`gap-${oeis?.id}`}>
+            OEIS: {oeis?.repo_files} of the {oeis?.paper_count} the paper claims are in the repo.
+            {oeis && oeis.absent !== undefined && oeis.absent > 0 ? <> Absent {oeis.absent}.</> : null}
+            {" "}Label: {oeis?.label}.
+          </li>
+          <li id={`gap-${attempted?.id}`}>
+            Attempted list: {attempted?.repo_entries} of the {attempted?.paper_attempted} the paper lists are in the file.
+            Newline count in erdos_problems_attempted.txt: {attempted?.repo_newlines}.
+            {" "}Label: {attempted?.label}.
+          </li>
+          <li id={`gap-${provenance?.id}`}>
+            Label: {provenance?.label}. The repository has no per-file agent record.
+          </li>
+        </ul>
+      </details>
 
-    <h2>Source-level agent note</h2>
-    <p>{record.provenance.agent_d}</p>
-    <p>{record.provenance.agent_a}</p>
-    <p>{record.provenance.lean_paper} Repository toolchain: <code>{record.lean_toolchain}</code>.</p>
-    <p>
-      Upstream CI workflow <code>{record.upstream_ci}</code>.{" "}
-      {record.check_wording}
-    </p>
+      <details>
+        <summary>Upstream quotations</summary>
+        <p>These sentences are the paper’s wording, quoted here.</p>
+        <blockquote data-upstream="abstract">{record.paper.abstract_claim}</blockquote>
+        <blockquote data-upstream="table">{record.paper.table1_caption}</blockquote>
+        <blockquote data-upstream="density">{record.paper.density_note}</blockquote>
+        <blockquote data-upstream="agent-a">{record.paper.agent_a}</blockquote>
+      </details>
+
+      <details>
+        <summary>Pinned commit</summary>
+        <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
+        <p>{record.provenance.agent_d}</p>
+        <p>{record.provenance.agent_a}</p>
+        <p>{record.provenance.lean_paper} Repository toolchain: <code>{record.lean_toolchain}</code>.</p>
+        <p>
+          Upstream CI workflow <code>{record.upstream_ci}</code>.{" "}
+          {record.check_wording}
+        </p>
+      </details>
+    </div>
 
     <h2>Lean files</h2>
     {
@@ -106,7 +104,7 @@ function gapBadgeClass(status: string | undefined): string {
             {item.category === "ErdosProblems"
               ? `Problem id ${item.problem_id}`
               : `Filename stem ${item.problem_id}`}.
-            Per-row provenance: {item.provenance}.
+            Per-row provenance: {provenanceLine(item.provenance)}.
           </p>
           {item.scope_notes.map((note) => (
             <p class="caution">{note}</p>

@@ -1,0 +1,63 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, shortSha } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+const source = atlas.sources.sources.find((item) => item.id === "openai-math");
+if (!source) {
+  throw new Error("openai-math source is missing");
+}
+const commit = atlas.upstream.commit;
+const counts = atlas.counts;
+const reviewStatus = atlas.upstream.review_status.trim();
+if (!reviewStatus) {
+  throw new Error("upstream review status is empty");
+}
+const reviewBadge = reviewStatus.charAt(0).toUpperCase() + reviewStatus.slice(1);
+---
+
+<Base
+  title="Manuscript catalogue · Math Release Atlas"
+  description="The public math manuscript catalogue at one pinned commit, with family counts and the upstream review status."
+>
+  <article class="prose source-page">
+    <p class="meta"><a href={`${base}source/`}>All sources</a></p>
+    <h1>Manuscript catalogue</h1>
+    <p class="status-line">
+      <span class="badge none">{reviewBadge}</span>
+      <span>
+        Upstream review is {atlas.upstream.review_status}. A Lean check is not peer review and not a laboratory result.
+      </span>
+    </p>
+    <p class="summary-lead">
+      {source.name}: {counts.families} result families and {counts.manuscripts} manuscripts, pinned to one commit of the public catalogue.
+    </p>
+    <div class="receipts">
+      <details open>
+        <summary>Pinned commit</summary>
+        <p>
+          {source.org}. Repository <a href={source.repo}>{source.repo}</a>.
+          Commit <a href={`${source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
+          ({shortSha(commit)}).
+        </p>
+        <p class="meta">License: {source.license}. Sync: {source.sync}.</p>
+        <p class="meta">Formalization scope: {atlas.upstream.formalization_scope}</p>
+      </details>
+      <details open>
+        <summary>Manuscripts</summary>
+        <ul class="links">
+          <li>
+            <a href={`${source.repo}/blob/${commit}/overview.pdf`}>Overview PDF</a>
+          </li>
+          <li>
+            <a href={`${source.repo}/blob/${commit}/CONTENTS.md`}>Manuscript map</a>
+          </li>
+        </ul>
+        <p class="meta">
+          {counts.main_result_formalized} formalized main results, {counts.comparator_challenge_only} comparator challenges,
+          and {counts.none} families with no Lean formalization. Family pages stay at <code>/f/&lt;id&gt;/</code>.
+        </p>
+      </details>
+    </div>
+  </article>
+</Base>

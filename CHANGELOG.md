@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.6
+
+- The home page leads with the share bars and a one-line table. Dates stay on one line. At a narrow width the bars and captions shrink, using a shorter caption taken from the same counts.
+- Anthropic gap badges read "Not in the comparator", "Not formalized", and "Noted". AlphaProof gap rows state the paper counts in plain English. The checks read those sentences and the data fields.
+- Family pages and the source pages lead with a badge, a plain-English status, and one summary. Manuscripts, Lean files, the comparator, and pinned commits sit in grouped receipts. The source index links an OpenAI Math page.
+- A release whose notes say some claims are not formalized is drawn in the middle color. Its caption says "partly in Lean", including on a narrow screen, and the legend uses the same words. A family catalogue still captions that color "challenge only". The alt says "135 main result".
+- The card, the alt, and the home share section go through the overclaim scan and a whole-word ban on verified, verify, proved, proven, proof, confirmed, certified, and solved.
+- The share bars use darker teal and tan, each at least 3:1 on the page, with a 1px ink outline. The built bars, percents, and captions are checked against the catalogue.
+- Local builds need Node.js 22.12 or newer and `pip install -r requirements.txt`.
+
 ## 0.4.5
 
 - The share card shows the portion of each catalogue that has Lean files: one percent bar per registered source, a headline, and a sentence built from the catalogue counts. The percent is printed beside the bar. Family catalogues split Lean status into a main result, a comparator challenge, and paper only. A file catalogue keeps the paper gap in the denominator. A release list counts releases that include Lean files and labels a formalization as a formalization, including Fermat's Last Theorem.
