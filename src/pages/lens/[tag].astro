@@ -68,7 +68,12 @@ const counts = lensSourceCounts(tag);
             </p>
             <p>{item.why}</p>
             <p class="meta">
-              Source: <a href={item.lensSource}>{item.lensSource}</a>
+              Source:{" "}
+              {item.lensSource.startsWith("https://") ? (
+                <a href={item.lensSource}>{item.lensSource}</a>
+              ) : (
+                item.lensSource
+              )}
             </p>
           </li>
         ))

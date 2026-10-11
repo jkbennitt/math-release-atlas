@@ -2,7 +2,7 @@ id: "364"
 lenses:
   - tag: plasma-kinetic
     why: "The family treats kinetic limits from Newtonian particle systems to the Boltzmann equation."
-    source: "Upstream family 364 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L828"
 community:
   status: claimed
   evidence: []

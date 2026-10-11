@@ -3,7 +3,7 @@ import Base from "../../layouts/Base.astro";
 import { atlas, formatIso, shortSha, type Family } from "../../lib/atlas";
 import { communityLabelFor, lensLabelFor } from "../../lib/lenses";
 import { leanLabel } from "../../lib/lean";
-import { openaiDirectLinks } from "../../lib/rows";
+import { openaiUpstreamLinks } from "../../lib/rows";
 
 export function getStaticPaths() {
   return atlas.families.map((family) => ({
@@ -22,7 +22,7 @@ const status = family.community?.status ?? "claimed";
 const statusLabel = communityLabelFor(status);
 const history = family.community?.history ?? [];
 const commit = family.upstream_sha;
-const direct = openaiDirectLinks(family);
+const direct = openaiUpstreamLinks(family);
 ---
 
 <Base

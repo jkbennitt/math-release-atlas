@@ -44,7 +44,7 @@ PINNED_ZETA_TAG = "v1.0"
 PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "f4c3e0ed551670824ac611b3299220b734fb4690c9e15382b2c288e865a59b54"
+PINNED_ANTHROPIC_DIGEST = "3afffd4234faae8b198da3757e05a2efb13860b6b99b163a063334a027e25d62"
 
 RELEASE_IDS = ("zeta23", "3sum-apsp", "fermat-last-theorem")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp")
@@ -535,7 +535,7 @@ def assemble(
             "paper": {
                 "id": "2608.13637",
                 "title": "More than two thirds of the zeta zeros are simple and on the critical line",
-                "url": "https://arxiv.org/abs/2608.13637",
+                "url": "https://arxiv.org/abs/2608.13637v1",
                 "v1_submitted": "2026-08-13",
                 "v2_submitted": "2026-08-19",
             },
@@ -594,7 +594,7 @@ def assemble(
                     "Truly Subquadratic 3SUM and Truly Subcubic APSP via Triangles "
                     "in Sparse Lopsided Graphs"
                 ),
-                "url": "https://arxiv.org/abs/2610.06783",
+                "url": "https://arxiv.org/abs/2610.06783v1",
                 "v1_submitted": "2026-10-05",
                 "v2_submitted": None,
             },

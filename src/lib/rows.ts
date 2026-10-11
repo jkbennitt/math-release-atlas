@@ -28,17 +28,18 @@ export interface LensRow {
 }
 
 export function openaiDirectHref(family: Family): string {
-  if (family.manuscripts.length === 1) {
-    return family.manuscripts[0].pdf;
-  }
-  return `${atlas.upstream.repo}/tree/${family.upstream_sha}/preprints`;
+  return `${atlas.upstream.repo}/blob/${family.upstream_sha}/overview.tex#L${family.overview_line}`;
 }
 
 export function openaiDirectLinks(family: Family): DirectLink[] {
-  if (family.manuscripts.length === 1) {
-    return [{ href: family.manuscripts[0].pdf, label: "Manuscript" }];
-  }
-  return [{ href: openaiDirectHref(family), label: "Preprint folder" }];
+  return family.manuscripts.map((item, index) => ({
+    href: item.pdf,
+    label: family.manuscripts.length === 1 ? "Manuscript" : `Manuscript ${index + 1}`,
+  }));
+}
+
+export function openaiUpstreamLinks(family: Family): DirectLink[] {
+  return [{ href: openaiDirectHref(family), label: "Overview entry" }, ...openaiDirectLinks(family)];
 }
 
 export function alphaproofDirectLinks(record: AlphaProofRecord): DirectLink[] {
@@ -94,7 +95,7 @@ export function lensRows(tag: string): LensRow[] {
         atlasPath: `f/${family.id}/`,
         idLabel: family.id,
         title: family.title,
-        direct: openaiDirectLinks(family),
+        direct: openaiUpstreamLinks(family),
         why: lens.why,
         lensSource: lens.source,
       });

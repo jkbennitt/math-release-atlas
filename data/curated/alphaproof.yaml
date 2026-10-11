@@ -62,35 +62,35 @@ records:
   "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically irreducible algebras."
+        why: "The deposited file states that a directed colimit of geometrically irreducible algebras is geometrically irreducible, where geometric irreducibility means the prime spectrum stays irreducible after base change."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_of_directed_colimit.lean"
   "APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically irreducible algebras."
+        why: "The deposited file states that geometric irreducibility of algebras is transitive along a scalar tower."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_GeometricallyIrreducibleAlgebra_transitive.lean"
   "APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically irreducible algebras."
+        why: "The deposited file states equivalent conditions for a geometrically irreducible algebra, including an irreducible prime spectrum after base change to a separable finite extension, a separable closure, and an algebraically closed field."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_geometrically_irreducible_tfae.lean"
   "APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically irreducible algebras."
+        why: "The deposited file states a bijection of minimal primes for a tensor product with a geometrically irreducible algebra."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/AlgebrasOverFields_minimalPrimes_bijection_of_geometrically_IrreducibleAlgebra.lean"
   "APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically reduced algebras."
+        why: "The deposited file states that geometric reducedness of an algebra is unchanged by a separable algebraic extension of the base field."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isGeometricallyReduced_iff_of_separable_algebraic.lean"
   "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically reduced algebras."
+        why: "The deposited file states that the tensor product of a reduced algebra with a separable field extension stays reduced."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separable.lean"
   "APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean":
     lenses:
       - tag: algebraic-geometry
-        why: "The deposited Lean file is named as a lemma about geometrically reduced algebras."
+        why: "The deposited file states that the tensor product of a reduced algebra with a separably generated field extension stays reduced."
         source: "https://github.com/google-deepmind/alphaproof-nexus-results/blob/0647711a71183c1ea492ad60860776617ce1ea88/APNOutputs/StacksProject/GeometricallyReduced_isReduced_tensorProduct_of_separablyGenerated.lean"

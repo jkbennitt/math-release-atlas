@@ -2,7 +2,7 @@ id: "279"
 lenses:
   - tag: quantum-information
     why: "The family treats exact quantum factoring over a fixed finite gate set."
-    source: "Upstream family 279 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L647"
 community:
   status: claimed
   evidence: []

@@ -67,6 +67,7 @@ from atlaslib import (
     load_curated,
     load_status_approvals,
     parse_catalogue_lens,
+    _href_is_pinned,
     materialize_upstream,
     merge_data,
     parse_contents,
@@ -1709,6 +1710,54 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         message = expect_error(label, func)
         if message:
             failures.append(message)
+
+    record_url = f"https://example.com/{pinned}/file.lean"
+
+    def catalogue_lens_record_url_mismatch() -> None:
+        parse_catalogue_lens(
+            {
+                "tag": "algebraic-geometry",
+                "why": "The deposited file states a prime spectrum.",
+                "source": f"https://example.com/{pinned}/other.lean",
+            },
+            "catalogue lens",
+            pinned,
+            record_url=record_url,
+        )
+
+    message = expect_error("catalogue lens record url", catalogue_lens_record_url_mismatch)
+    if message:
+        failures.append(message)
+    try:
+        matched = parse_catalogue_lens(
+            {
+                "tag": "algebraic-geometry",
+                "why": "The deposited file states a prime spectrum.",
+                "source": record_url,
+            },
+            "catalogue lens",
+            pinned,
+            record_url=record_url,
+        )
+    except AtlasError as exc:
+        failures.append(f"catalogue lens record url match rejected: {exc}")
+        matched = None
+    if matched is not None and matched["source"] != record_url:
+        failures.append("catalogue lens record url match changed the source")
+
+    own = "a" * 40
+    foreign = "b" * 40
+    pinned_href = f"https://github.com/openai/math/blob/{own}/overview.tex#L12"
+    if _href_is_pinned(pinned_href, foreign):
+        failures.append("a foreign commit counts as a pin")
+    if not _href_is_pinned(pinned_href, own):
+        failures.append("the source commit does not count as a pin")
+    if _href_is_pinned("https://arxiv.org/abs/2608.13637", own):
+        failures.append("an unversioned arXiv link counts as pinned")
+    if not _href_is_pinned("https://arxiv.org/abs/2608.13637v1", own):
+        failures.append("an arXiv v1 link does not count as pinned")
+    if _href_is_pinned("Upstream family 090 summary", own):
+        failures.append("prose counts as a pinned link")
     message = expect_error("curated solved", solved_curated)
     if message:
         failures.append(message)

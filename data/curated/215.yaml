@@ -2,7 +2,7 @@ id: "215"
 lenses:
   - tag: condensed-matter
     why: "The family treats the continuum limit of the two-dimensional O(3) model and O(4) mass asymptotics."
-    source: "Upstream family 215 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L513"
 community:
   status: claimed
   evidence: []

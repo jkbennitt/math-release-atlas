@@ -2,7 +2,7 @@ id: "223"
 lenses:
   - tag: condensed-matter
     why: "The family treats critical random-cluster interfaces, including Ising and Fortuin–Kasteleyn loops."
-    source: "Upstream family 223 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L529"
 community:
   status: claimed
   evidence: []

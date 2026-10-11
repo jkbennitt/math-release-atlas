@@ -60,6 +60,7 @@ export interface Family {
   source: string;
   title: string;
   areas: string[];
+  overview_line: number;
   upstream_summary: string;
   manuscripts: Manuscript[];
   lean: {

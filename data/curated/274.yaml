@@ -2,7 +2,7 @@ id: "274"
 lenses:
   - tag: quantum-information
     why: "The family treats whether constant-depth quantum circuits with Toffoli gates can compute parity."
-    source: "Upstream family 274 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L637"
 community:
   status: claimed
   evidence: []

@@ -2,7 +2,7 @@ id: "264"
 lenses:
   - tag: gravity-qft
     why: "The family treats strong cosmic censorship near two-ended Kerr data."
-    source: "Upstream family 264 summary, commit adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L617"
 community:
   status: claimed
   evidence: []
