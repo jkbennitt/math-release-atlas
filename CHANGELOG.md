@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5
+
+- The share card shows the portion of each catalogue that has Lean files: one percent bar per registered source, a headline, and a sentence built from the catalogue counts. The percent is printed beside the bar. Family catalogues split Lean status into a main result, a comparator challenge, and paper only. A file catalogue keeps the paper gap in the denominator. A release list counts releases that include Lean files and labels a formalization as a formalization, including Fermat's Last Theorem.
+- The image alt says that percent is the share with Lean files.
+- The generated image alt describes that card. It names every registered source, states that Fermat's Last Theorem is a formalization, and states that the atlas is unofficial and not affiliated with the registered organizations. It stays within 420 characters. Gap statuses such as per-row provenance stay on the source pages.
+- The build fails when an image alt is over 420 characters, a description is over 200, a Twitter title is over 70, or an image URL is not absolute https.
+
 ## 0.4.4
 
 - Lens tags cover AlphaProof Nexus and Anthropic records as well as OpenAI Math families. Four math-subject lenses — number theory, combinatorics, algebraic geometry, and analysis — are applied only where the pinned upstream text supports them. Each tag has a why and a source URL.

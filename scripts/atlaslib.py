@@ -31,8 +31,18 @@ OPENAI_SOURCE_ID = "openai-math"
 PREVIEW_IMAGE_NAME = "og.png"
 PREVIEW_WIDTH = 1200
 PREVIEW_HEIGHT = 630
+# Entry-only alt text compacts "result families" above this length.
+# The share-card alt, which the built pages use, stays within SOCIAL_IMAGE_ALT_MAX.
+PREVIEW_ALT_MAX = 300
+SOCIAL_IMAGE_ALT_MAX = 420
+SOCIAL_DESCRIPTION_MAX = 200
+TWITTER_TITLE_MAX = 70
 # ASCII apostrophe (U+0027). The card fonts have no glyph for U+2019.
 FLT_PREVIEW_NOTE = "Fermat's Last Theorem: Formalization, not a new result"
+# Gap-status clauses belong on the source page, not in the image alt.
+_GAP_STATUS_RE = re.compile(
+    r",\s*(?:OEIS \d+ of \d+ in paper \([^)]*\)|attempted list [^,]+|per-row provenance [^,]+)"
+)
 RIEMANN_SENTENCE = "It is not the Riemann Hypothesis."
 PINNED_SOURCE_ORGS = {
     "openai-math": "OpenAI",
@@ -42,7 +52,7 @@ PINNED_SOURCE_ORGS = {
 
 
 def oeis_preview_phrase(oeis_files: int, paper_count: int, status: str) -> str:
-    """OEIS wording on the card and in the alt text. Counts come from the snapshot."""
+    """OEIS wording in the preview fragment. Counts come from the snapshot."""
     return f"OEIS {oeis_files} of {paper_count} in paper ({status})"
 
 
@@ -99,15 +109,79 @@ def preview_entries(sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [preview_entry(source) for source in sources]
 
 
+def _formalization_note(entry: dict[str, Any]) -> str:
+    blob = f"{entry.get('fragment', '')}\n{entry.get('detail', '')}"
+    if FLT_PREVIEW_NOTE in blob:
+        return FLT_PREVIEW_NOTE
+    return ""
+
+
+def _count_phrases(entry: dict[str, Any], compact: bool) -> list[str]:
+    """Numeric tiles only. Status-word tiles stay on the source page."""
+    phrases: list[str] = []
+    for tile in entry.get("tiles") or []:
+        if not isinstance(tile, dict):
+            continue
+        value = tile.get("value")
+        label = tile.get("label")
+        if not isinstance(value, str) or not isinstance(label, str):
+            continue
+        if not value.isdigit() or not label:
+            continue
+        if compact and label == "result families":
+            label = "families"
+        phrases.append(f"{value} {label}")
+    return phrases
+
+
+def _fragment_clause(entry: dict[str, Any], compact: bool) -> str:
+    fragment = _GAP_STATUS_RE.sub("", str(entry.get("fragment") or ""))
+    fragment = fragment.replace(FLT_PREVIEW_NOTE, "")
+    if compact:
+        fragment = fragment.replace(" result families", " families")
+    return re.sub(r"\s{2,}", " ", fragment).strip(" .,")
+
+
+def _preview_clause(entry: dict[str, Any], compact: bool) -> str:
+    name = str(entry.get("name") or "")
+    phrases = _count_phrases(entry, compact)
+    if phrases and name:
+        lead, *rest = phrases
+        if rest and _formalization_note(entry):
+            return f"{name}: {lead} ({', '.join(rest)})"
+        if rest:
+            return f"{name}: {lead}, {', '.join(rest)}"
+        return f"{name}: {lead}"
+    return _fragment_clause(entry, compact)
+
+
+def _assemble_preview_alt(entries: list[dict[str, Any]], compact: bool) -> str:
+    body = ". ".join(clause for clause in (_preview_clause(entry, compact) for entry in entries) if clause)
+    note = ""
+    for entry in entries:
+        note = _formalization_note(entry)
+        if note:
+            break
+    affiliation = affiliation_sentence([str(entry["org"]) for entry in entries])
+    if note:
+        return f"Math Release Atlas: {body}. {note}. {affiliation}"
+    return f"Math Release Atlas: {body}. {affiliation}"
+
+
 def preview_alt(entries: list[dict[str, Any]]) -> str:
-    """Sentence on the card image and in og:image:alt. Keep it free of claim verbs."""
+    """Entry-only image alt for a fixture that has no catalogue loaded.
+
+    Built pages use card_alt(), which describes the share card. This sentence
+    still names every source and keeps the formalization note and the
+    affiliation line. Gap statuses stay on the source page. When the full tile
+    labels exceed PREVIEW_ALT_MAX, "result families" is written "families".
+    """
     if not entries:
         raise AtlasError("preview has no sources")
-    body = ", plus ".join(str(entry["fragment"]) for entry in entries)
-    return (
-        f"Math Release Atlas: {body}. "
-        f"{affiliation_sentence([str(entry['org']) for entry in entries])}"
-    )
+    sentence = _assemble_preview_alt(entries, compact=False)
+    if len(sentence) <= PREVIEW_ALT_MAX:
+        return sentence
+    return _assemble_preview_alt(entries, compact=True)
 
 
 def resolve_preview_path(root: dict[str, Any], path: list[str]) -> Any:
@@ -2732,6 +2806,7 @@ def check_social_preview(
     label: str,
     prefix: str,
     entries: list[dict[str, Any]] | None = None,
+    catalog: dict[str, Any] | None = None,
 ) -> list[str]:
     """Fail when a built page cannot produce a large-image link preview."""
     tags = social_meta(html_text)
@@ -2752,7 +2827,7 @@ def check_social_preview(
     for key in required_properties:
         if not properties.get(key, "").strip():
             failures.append(f"{label} is missing {key}")
-    for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image"):
+    for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image", "twitter:image:alt"):
         if not names.get(key, "").strip():
             failures.append(f"{label} is missing {key}")
     image = properties.get("og:image", "").strip()
@@ -2797,14 +2872,48 @@ def check_social_preview(
         failures.append(f"{label} twitter:image does not match og:image")
     if tags["canonical"].strip() and properties.get("og:url", "").strip() and tags["canonical"] != properties.get("og:url"):
         failures.append(f"{label} canonical does not match og:url")
-    if entries is not None and properties.get("og:image:alt", "").strip():
-        expected = preview_alt(entries)
-        if properties.get("og:image:alt") != expected:
-            failures.append(f"{label} og:image:alt does not match the catalogue counts")
-        twitter_alt = names.get("twitter:image:alt", "")
-        if twitter_alt and twitter_alt != expected:
-            failures.append(f"{label} twitter:image:alt does not match the catalogue counts")
+    for field, value, limit in (
+        ("og:image:alt", properties.get("og:image:alt", ""), SOCIAL_IMAGE_ALT_MAX),
+        ("twitter:image:alt", names.get("twitter:image:alt", ""), SOCIAL_IMAGE_ALT_MAX),
+        ("og:description", properties.get("og:description", ""), SOCIAL_DESCRIPTION_MAX),
+        ("twitter:description", names.get("twitter:description", ""), SOCIAL_DESCRIPTION_MAX),
+        ("twitter:title", names.get("twitter:title", ""), TWITTER_TITLE_MAX),
+    ):
+        if value and len(value) > limit:
+            failures.append(f"{label} {field} is {len(value)} characters, over {limit}")
+    if properties.get("og:image:alt", "").strip() and (catalog is not None or entries is not None):
+        expected = _expected_image_alt(entries, catalog)
+        if isinstance(expected, str):
+            if properties.get("og:image:alt") != expected:
+                failures.append(f"{label} og:image:alt does not match the catalogue counts")
+            twitter_alt = names.get("twitter:image:alt", "")
+            if twitter_alt and twitter_alt != expected:
+                failures.append(f"{label} twitter:image:alt does not match the catalogue counts")
+        else:
+            failures.extend(expected)
     return failures
+
+
+def _expected_image_alt(
+    entries: list[dict[str, Any]] | None,
+    catalog: dict[str, Any] | None,
+) -> str | list[str]:
+    """The share-card alt when the catalogue is loaded, otherwise the entry sentence."""
+    if catalog is not None:
+        try:
+            import og_card
+        except ImportError as exc:
+            return [f"preview alt is unavailable: {exc}"]
+        try:
+            return og_card.card_alt(catalog)
+        except SystemExit as exc:
+            return [f"preview alt does not fit: {exc}"]
+    if entries is None:
+        return ["preview alt has no catalogue"]
+    try:
+        return preview_alt(entries)
+    except AtlasError as exc:
+        return [str(exc)]
 
 
 def png_dimensions(data: bytes) -> tuple[int, int] | None:
@@ -2833,8 +2942,7 @@ def check_preview_image(dist: Path, catalog: dict[str, Any] | None = None) -> li
         # og_card imports atlaslib. A local import avoids a cycle at load time.
         import og_card
 
-        entries = preview_entries(catalog["sources"]["sources"])
-        expected = og_card.png_bytes(og_card.render(entries))
+        expected = og_card.png_bytes(og_card.render(catalog))
     except (KeyError, TypeError, AtlasError, SystemExit, ImportError, OSError) as exc:
         return [f"og.png could not be rendered from the registry: {exc}"]
     if data != expected:
@@ -2938,14 +3046,28 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
     if failures:
         return failures
     try:
-        alt = preview_alt(entries)
-    except AtlasError as exc:
-        return [str(exc)]
-    for entry in entries:
-        if entry["name"] not in alt:
-            failures.append(f"alt text omits {entry['name']}")
-        if entry["org"] not in alt:
-            failures.append(f"alt text omits {entry['org']}")
+        import og_card
+    except ImportError as exc:
+        return failures + [f"preview card is unavailable: {exc}"]
+    try:
+        alt = og_card.card_alt(catalog)
+    except SystemExit as exc:
+        failures.append(f"preview card does not fit: {exc}")
+        alt = ""
+    if alt:
+        if len(alt) > SOCIAL_IMAGE_ALT_MAX:
+            failures.append(f"alt text is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
+        if "per-row provenance" in alt or "OEIS" in alt:
+            failures.append("alt text includes a gap status")
+        lowered_alt = alt.lower()
+        for banned in ("verified", "proved"):
+            if banned in lowered_alt:
+                failures.append(f"alt text uses {banned}")
+        for entry in entries:
+            if entry["name"] not in alt:
+                failures.append(f"alt text omits {entry['name']}")
+            if entry["org"] not in alt:
+                failures.append(f"alt text omits {entry['org']}")
     pinned_orgs: list[str] = []
     for source in sources:
         source_id = str(source.get("id"))
@@ -2977,26 +3099,32 @@ def preview_disagreements(catalog: dict[str, Any]) -> list[str]:
             continue
         if source.get("preview") != expected:
             failures.append(f"{source['id']} preview disagrees with the catalogue counts")
+    if not alt:
+        return failures
     try:
-        import og_card
-    except ImportError as exc:
-        return failures + [f"preview card is unavailable: {exc}"]
-    drawn = og_card.planned_text(entries)
+        drawn = og_card.planned_text(catalog)
+        og_card.render(catalog)
+    except SystemExit as exc:
+        failures.append(f"preview card does not fit: {exc}")
+        return failures
+    drawn_text = "\n".join(drawn)
     for entry in entries:
         if entry["name"] not in drawn:
             failures.append(f"preview card omits {entry['name']}")
-        for tile in entry["tiles"]:
-            if tile["value"] not in drawn or tile["label"] not in drawn:
-                failures.append(f"preview card omits {entry['id']} {tile['label']}")
-        drawn_text = " ".join(drawn)
-        if entry["detail"] and entry["detail"] not in drawn_text:
-            failures.append(f"preview card omits the {entry['id']} detail")
-        if entry["id"] == "anthropic" and FLT_PREVIEW_NOTE not in drawn_text:
-            failures.append("preview card omits the formalization note")
-    try:
-        og_card.render(entries)
-    except SystemExit as exc:
-        failures.append(f"preview card does not fit: {exc}")
+    if "SHARE OF EACH CATALOGUE WITH LEAN FILES" not in drawn_text:
+        failures.append("preview card omits the share panel")
+    if "AI math claims:" not in drawn_text:
+        failures.append("preview card omits the headline")
+    if any(FLT_PREVIEW_NOTE in f"{entry['fragment']}\n{entry['detail']}" for entry in entries):
+        if "formalization" not in drawn_text:
+            failures.append("preview card omits the formalization")
+    for banned in ("PARTIAL", "MATCH", "MISSING"):
+        if banned in drawn_text:
+            failures.append(f"preview card still shows {banned}")
+    lowered = drawn_text.lower()
+    for banned in ("verified", "proved"):
+        if banned in lowered:
+            failures.append(f"preview card uses {banned}")
     return failures
 
 
@@ -3018,7 +3146,7 @@ def check_link_previews(dist: Path) -> list[str]:
             failures.append(f"catalogue preview is unreadable: {exc}")
     for page in pages:
         label = page.relative_to(dist).as_posix()
-        failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, entries))
+        failures.extend(check_social_preview(page.read_text(encoding="utf-8"), label, prefix, entries, catalog))
     failures.extend(check_preview_image(dist, catalog))
     failures.extend(check_named_previews(dist))
     return failures
@@ -3045,10 +3173,18 @@ def check_preview_source() -> list[str]:
         if banned in card:
             failures.append(f"preview card hardcodes {banned}")
     social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-    if "source.preview.fragment" not in social or "source.org" not in social:
-        failures.append("social alt text does not read each source preview")
-    if ", plus " not in social or "not affiliated with" not in social:
+    if (
+        "source.preview.fragment" not in social
+        or "source.name" not in social
+        or "source.org" not in social
+        or "family.lean.status" not in social
+        or "lean_files" not in social
+    ):
+        failures.append("social alt text does not read each catalogue")
+    if "not affiliated with" not in social or "Share with Lean files" not in social:
         failures.append("social alt text does not use the shared preview sentence")
+    if ", plus " in social:
+        failures.append("social alt text pastes preview fragments together")
     for banned in ("AlphaProof", "Anthropic", "OpenAI"):
         if banned in social:
             failures.append(f"social alt text hardcodes {banned}")
