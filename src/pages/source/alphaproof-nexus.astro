@@ -62,6 +62,7 @@ const provenance = record.gaps.find((gap) => gap.id === "per-row-provenance");
           </li>
           <li id={`gap-${attempted?.id}`}>
             Attempted list: {attempted?.repo_entries} of the {attempted?.paper_attempted} the paper lists are in the file.
+            Newline count in erdos_problems_attempted.txt: {attempted?.repo_newlines}.
             {" "}Label: {attempted?.label}.
           </li>
           <li id={`gap-${provenance?.id}`}>

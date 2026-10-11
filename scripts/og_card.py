@@ -28,6 +28,7 @@ from atlaslib import (
     affiliation_sentence,
     preview_entries,
     published_prefix,
+    claim_word_failures,
     scan_overclaims,
 )
 
@@ -41,8 +42,10 @@ INK = (29, 26, 22)
 MUTED = (78, 72, 63)
 LINE = (221, 212, 198)
 ACCENT = (31, 77, 74)
-MID = (111, 160, 150)
-PAPER_ONLY = (214, 196, 160)
+# Darkened so each fill is at least 3:1 on the page background and on the card paper.
+# #649087 is 3.11:1 on #f3efe6. #93866e is 3.11:1 on #f3efe6.
+MID = (100, 144, 135)
+PAPER_ONLY = (147, 134, 110)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
 
@@ -68,7 +71,7 @@ PANEL_TOP = 40
 PANEL_BOTTOM = 548
 LEGEND = (
     (ACCENT, "result in Lean"),
-    (MID, "not the whole claim"),
+    (MID, "partly in Lean"),
     (PAPER_ONLY, "paper only"),
 )
 # Room to the right of every bar for the percent, in dark ink.
@@ -182,8 +185,42 @@ def _plural(count: int, singular: str, plural_form: str | None = None) -> str:
     return f"{count} {word}"
 
 
+def _channel(value: float) -> float:
+    return value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+
+
+def _luminance(color: tuple[int, int, int]) -> float:
+    red, green, blue = (_channel(part / 255) for part in color)
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _contrast(left: tuple[int, int, int], right: tuple[int, int, int]) -> float:
+    lighter = max(_luminance(left), _luminance(right))
+    darker = min(_luminance(left), _luminance(right))
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _require_segment_contrast() -> None:
+    """Each fill reads on the page and on the card. The ink outline reads on the lighter fills."""
+    for name, color in (("accent", ACCENT), ("mid", MID), ("paper", PAPER_ONLY)):
+        for ground_name, ground in (("background", BG), ("paper", PAPER)):
+            ratio = _contrast(color, ground)
+            if ratio < 3:
+                raise SystemExit(f"{name} segment is {ratio:.2f}:1 on the {ground_name}")
+    for name, color in (("mid", MID), ("paper", PAPER_ONLY)):
+        ratio = _contrast(INK, color)
+        if ratio < 3:
+            raise SystemExit(f"segment outline is {ratio:.2f}:1 on {name}")
+
+
+def _fill_segment(draw: ImageDraw.ImageDraw, box: list[int], fill: tuple[int, int, int]) -> None:
+    """A 1px ink outline so neighboring segments stay separate."""
+    draw.rectangle(box, fill=fill, outline=INK, width=1)
+
+
 def _reject_overclaim(text: str) -> None:
     failures = scan_overclaims(text, "preview card")
+    failures.extend(claim_word_failures(text, "preview card"))
     if failures:
         raise SystemExit(failures[0])
 
@@ -360,10 +397,12 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
     who = name if name == org else f"{org} {name}"
     if partial:
         caption = (
-            f"{full} in Lean{CAPTION_GAP}{partial} not formalized{CAPTION_GAP}"
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}"
             f"{len(new_results)} new, {formal_phrase}"
         )
-        short_caption = f"{full} in Lean{CAPTION_GAP}{partial} not formalized"
+        short_caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}{formal_phrase}"
+        )
     else:
         caption = f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}"
         short_caption = f"{with_lean} of {total} with Lean"
@@ -401,7 +440,10 @@ def share_rows(catalog: dict[str, Any]) -> list[dict[str, Any]]:
     entries = preview_entries(catalog["sources"]["sources"])
     rows = []
     for entry in entries:
-        rows.append(row_for(catalog, entry))
+        row = row_for(catalog, entry)
+        _reject_overclaim(str(row["caption"]))
+        _reject_overclaim(str(row["short_caption"]))
+        rows.append(row)
     if not rows:
         raise SystemExit("preview card has no sources")
     return rows
@@ -456,6 +498,7 @@ def _headline_lines() -> tuple[ImageFont.FreeTypeFont, list[str]]:
 
 def compose(catalog: dict[str, Any]) -> list[str]:
     """The exact strings the card draws, in paint order. Overflow stops the build."""
+    _require_segment_contrast()
     rows = share_rows(catalog)
     sentence = share_sentence(rows)
     _reject_overclaim(sentence)
@@ -593,7 +636,7 @@ def render(catalog: dict[str, Any]) -> Image.Image:
         cursor = ix
         for index, (count, color) in enumerate(segments):
             width = round(bar_w * count / total) if index < len(segments) - 1 else ix + bar_w - cursor
-            draw.rectangle([cursor, bar_y, cursor + width, bar_y + bar_h], fill=color)
+            _fill_segment(draw, [cursor, bar_y, cursor + width, bar_y + bar_h], color)
             cursor += width
         paint(
             percent_face,
@@ -607,7 +650,7 @@ def render(catalog: dict[str, Any]) -> Image.Image:
     legend_y = y + 2
     cursor = ix
     for color, label in LEGEND:
-        draw.rectangle([cursor, legend_y, cursor + 18, legend_y + 18], fill=color)
+        _fill_segment(draw, [cursor, legend_y, cursor + 18, legend_y + 18], color)
         paint(caption_face, label, (cursor + 26, ink_top(caption_face, label, legend_y + 1)), INK)
         cursor += 26 + text_width(caption_face, label) + 22
 

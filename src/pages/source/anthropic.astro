@@ -40,6 +40,7 @@ function gapBadgeClass(status: string): string {
       ({shortSha(flt.commit)}).
     </p>
     <p class="summary-lead">{record.check_wording}</p>
+    <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
 
     <div class="receipts">
       <details open>

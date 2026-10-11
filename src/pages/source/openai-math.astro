@@ -9,6 +9,11 @@ if (!source) {
 }
 const commit = atlas.upstream.commit;
 const counts = atlas.counts;
+const reviewStatus = atlas.upstream.review_status.trim();
+if (!reviewStatus) {
+  throw new Error("upstream review status is empty");
+}
+const reviewBadge = reviewStatus.charAt(0).toUpperCase() + reviewStatus.slice(1);
 ---
 
 <Base
@@ -19,7 +24,7 @@ const counts = atlas.counts;
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
     <h1>Manuscript catalogue</h1>
     <p class="status-line">
-      <span class="badge none">Unchecked</span>
+      <span class="badge none">{reviewBadge}</span>
       <span>
         Upstream review is {atlas.upstream.review_status}. A Lean check is not peer review and not a laboratory result.
       </span>

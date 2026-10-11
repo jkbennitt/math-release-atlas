@@ -46,7 +46,7 @@ catalogue that has Lean files. The percent is printed beside the bar, and
 the image alt says it is the share with Lean files. A family catalogue splits Lean status into a
 main result, a comparator challenge, and paper only. A file catalogue counts
 Lean files against the paper gap of results that have no file. A release list
-counts releases that include Lean files. A release whose notes say some claims are not formalized is drawn in the middle color, and the legend reads "not the whole claim". A formalization keeps that label,
+counts releases that include Lean files. A release whose notes say some claims are not formalized is drawn in the middle color. Its caption says "partly in Lean", and the legend uses the same words. A family catalogue still captions that color "challenge only". A formalization keeps that label,
 including Fermat's Last Theorem. A source that matches none of those shapes,
 or that no longer fits on the card, stops the build. Adding a source that
 does match, or a count changing on sync, updates the card and the alt text

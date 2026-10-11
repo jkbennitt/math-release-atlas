@@ -89,8 +89,7 @@ function isKnownGapStatus(status: string): status is KnownGapStatus {
 
 export function gapPlainStatus(status: string): string {
   if (!isKnownGapStatus(status)) {
-    const head = status.trim().charAt(0).toUpperCase();
-    return head + status.trim().slice(1).toLowerCase();
+    throw new Error(`unknown gap status: ${status}`);
   }
   switch (status) {
     case "NOT IN COMPARATOR":

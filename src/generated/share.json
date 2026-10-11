@@ -9,7 +9,7 @@
     },
     {
       "role": "challenge",
-      "label": "not the whole claim"
+      "label": "partly in Lean"
     },
     {
       "role": "paper",
@@ -59,8 +59,8 @@
       "name": "Anthropic",
       "unit": "3 releases",
       "percent": "100%",
-      "caption": "2 in Lean  \u00b7  1 not formalized  \u00b7  2 new, 1 formalization (FLT)",
-      "shortCaption": "2 in Lean  \u00b7  1 not formalized",
+      "caption": "2 in Lean  \u00b7  1 partly in Lean  \u00b7  2 new, 1 formalization (FLT)",
+      "shortCaption": "2 in Lean  \u00b7  1 partly in Lean  \u00b7  1 formalization (FLT)",
       "segments": [
         {
           "count": 2,
