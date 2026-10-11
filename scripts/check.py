@@ -2080,11 +2080,13 @@ def _home_share_fixture(document: dict) -> str:
             f'<span class="seg seg-{segment["role"]}" style="flex-grow: {segment["count"]}"></span>'
             for segment in row["segments"]
         )
+        aria = f"{row['name']} {row['percent']}. {row['caption']}"
         items.append(
             "<li>"
             f"<span>{row['name']}</span>"
             f"<span class=\"share-unit\">{row['unit']}</span>"
             f"<span class=\"share-pct\">{row['percent']}</span>"
+            f"<div class=\"share-bar\" role=\"img\" aria-label=\"{aria}\"></div>"
             f"{segments}"
             f"<p class=\"share-caption share-caption-full\">{row['caption']}</p>"
             f"<p class=\"share-caption share-caption-short\">{row['shortCaption']}</p>"
@@ -2364,8 +2366,46 @@ def preview_self_test() -> list[str]:
     if len(matched_rows) != 1 or matched_rows[0]["shortCaption"] != release_short:
         failures.append(f"narrow share caption dropped the formalization: {share_doc['rows']}")
     legend_labels = [item["label"] for item in share_doc["legend"]]
-    if legend_labels != ["result in Lean", "partly in Lean", "paper only"]:
+    expected_legend = [style.label for style in og_card.legend_for(og_card.share_rows(catalog))]
+    if legend_labels != expected_legend:
         failures.append(f"share legend drifted: {legend_labels}")
+    if "partly in Lean" in family_caption:
+        failures.append("OpenAI caption calls the challenge segment partly in Lean")
+    openai_row = next(row for row in share_doc["rows"] if row["name"] == "OpenAI Math")
+    challenge_segments = [segment for segment in openai_row["segments"] if segment["count"] == challenge]
+    if len(challenge_segments) != 1:
+        failures.append(f"OpenAI middle segment could not be read from the data: {openai_row['segments']}")
+    else:
+        middle_role = challenge_segments[0]["role"]
+        middle_label = next(item["label"] for item in share_doc["legend"] if item["role"] == middle_role)
+        if middle_label == "partly in Lean":
+            failures.append("OpenAI's middle segment is labeled 'partly in Lean'")
+        if middle_label != "Lean challenge only":
+            failures.append(f"OpenAI's middle segment is labeled {middle_label!r}")
+        if middle_role == "partial":
+            failures.append("OpenAI's middle segment uses the partly-in-Lean swatch")
+    partial_labels = [item["label"] for item in share_doc["legend"] if item["role"] == "partial"]
+    if partial_labels != ["partly in Lean"]:
+        failures.append(f"partly-in-Lean legend drifted: {partial_labels}")
+    challenge_style = og_card.style_for("challenge")
+    partial_style = og_card.style_for("partial")
+    if challenge_style.label == partial_style.label or challenge_style.fill == partial_style.fill:
+        failures.append("challenge and partial share a legend swatch")
+    if not partial_style.hatch or challenge_style.hatch:
+        failures.append("the partly-in-Lean swatch is not the hatched one")
+    hidden = og_card.legend_for(
+        [{"segments": [(2, "lean"), (0, "challenge"), (0, "partial"), (1, "paper")]}]
+    )
+    hidden_labels = [style.label for style in hidden]
+    if hidden_labels != ["result in Lean", "paper only"]:
+        failures.append(f"legend listed a segment that does not appear: {hidden_labels}")
+    if "partly in Lean" in hidden_labels or "Lean challenge only" in hidden_labels:
+        failures.append("an absent middle segment stayed in the legend")
+    release_only = [style.label for style in og_card.legend_for([{"segments": [(2, "lean"), (1, "partial")]}])]
+    if release_only != ["result in Lean", "partly in Lean"]:
+        failures.append(f"release legend drifted: {release_only}")
+    if "Lean challenge only" not in drawn:
+        failures.append("preview card omitted the Lean challenge only legend")
     claim_phrases = (
         "71 Lean files proved",
         "3 of 3 releases verified",
@@ -2381,10 +2421,30 @@ def preview_self_test() -> list[str]:
     if r"\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b" not in social_source:
         failures.append("social alt text dropped the claim-word ban")
     css = (ROOT / "src" / "styles" / "global.css").read_text(encoding="utf-8")
-    if ".seg-challenge { background: #649087; }" not in css or ".seg-paper { background: #93866e; }" not in css:
-        failures.append("share bar colors drifted from the card")
+
+    def segment_hex(role: str) -> str:
+        red, green, blue = og_card.style_for(role).fill
+        return f"#{red:02x}{green:02x}{blue:02x}"
+
+    challenge_hex = segment_hex("challenge")
+    partial_hex = segment_hex("partial")
+    paper_hex = segment_hex("paper")
+    if f".seg-challenge {{ background: {challenge_hex}; }}" not in css:
+        failures.append("share bar challenge color drifted from the card")
+    if f".seg-paper {{ background: {paper_hex}; }}" not in css:
+        failures.append("share bar paper color drifted from the card")
+    partial_rule = (
+        f".seg-partial {{ background-color: {partial_hex}; "
+        f"background-image: repeating-linear-gradient(45deg, {partial_hex} 0 3px, #1d1a16 3px 4px); }}"
+    )
+    if partial_rule not in css:
+        failures.append("share bar partial swatch drifted from the card")
+    if challenge_hex == partial_hex:
+        failures.append("challenge and partial use the same fill")
     if "box-shadow: inset 0 0 0 1px var(--ink)" not in css:
         failures.append("share bars dropped the segment outline")
+    if ".share-bar { height: 10px; }" not in css or ".share-bar .seg { box-shadow: none; }" not in css:
+        failures.append("narrow share bars stayed short or kept the outline")
     share_html = _home_share_fixture(share_doc)
     share_problems = atlaslib.check_home_share(share_html, catalog)
     if share_problems:
@@ -2396,6 +2456,17 @@ def preview_self_test() -> list[str]:
     proved_share = share_html.replace("paper only", "paper only proved", 1)
     if not any("claim word" in item for item in atlaslib.check_home_share(proved_share, catalog)):
         failures.append("a claim word in the home share section was accepted")
+    openai_aria = f"{openai_row['name']} {openai_row['percent']}. {openai_row['caption']}"
+    relabeled_aria = openai_aria.replace("challenge only", "partly in Lean")
+    relabeled_share = share_html.replace(f'aria-label="{openai_aria}"', f'aria-label="{relabeled_aria}"', 1)
+    if relabeled_share == share_html:
+        failures.append("OpenAI screen-reader label was not in the share fixture")
+    relabeled_problems = atlaslib.check_home_share(relabeled_share, catalog)
+    if not any("screen-reader label" in item and "partly in Lean" in item for item in relabeled_problems):
+        failures.append(f"an OpenAI screen-reader label of 'partly in Lean' was accepted: {relabeled_problems}")
+    missing_aria = share_html.replace(f' aria-label="{openai_aria}"', "", 1)
+    if not any("screen-reader label" in item for item in atlaslib.check_home_share(missing_aria, catalog)):
+        failures.append("a share bar without a screen-reader label was accepted")
     image = og_card.render(catalog)
     blob = og_card.png_bytes(image)
     if og_card.png_bytes(og_card.render(catalog)) != blob:

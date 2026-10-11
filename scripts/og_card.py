@@ -13,6 +13,7 @@ from __future__ import annotations
 import io
 import json
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
@@ -42,12 +43,16 @@ INK = (29, 26, 22)
 MUTED = (78, 72, 63)
 LINE = (221, 212, 198)
 ACCENT = (31, 77, 74)
-# Darkened so each fill is at least 3:1 on the page background and on the card paper.
-# #649087 is 3.11:1 on #f3efe6. #93866e is 3.11:1 on #f3efe6.
-MID = (100, 144, 135)
+# Lightness steps, each at least 3:1 on #f3efe6. #286460 is 5.94:1, #ac7348 is 3.45:1,
+# #93866e is 3.11:1. The partly-in-Lean segment is hatched so it stays apart from the tan.
+CHALLENGE = (40, 100, 96)
+PARTIAL = (172, 115, 72)
 PAPER_ONLY = (147, 134, 110)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
+HATCH_STEP = 4
+# Rendered bar swatches stay at least this far apart on a 0–255 gray ramp.
+GRAY_GAP = 12
 
 BRAND = "Math Release Atlas"
 HEADLINE = "AI math claims: on paper, or in Lean?"
@@ -69,14 +74,30 @@ RX = 624
 RW = 520
 PANEL_TOP = 40
 PANEL_BOTTOM = 548
-LEGEND = (
-    (ACCENT, "result in Lean"),
-    (MID, "partly in Lean"),
-    (PAPER_ONLY, "paper only"),
-)
 # Room to the right of every bar for the percent, in dark ink.
 PERCENT_GUTTER = 72
 SHARE_LABEL = "Share with Lean files"
+LEGEND_SWATCH = 18
+LEGEND_GAP = 22
+LEGEND_LINE = 22
+
+
+@dataclass(frozen=True)
+class SegmentStyle:
+    role: str
+    label: str
+    fill: tuple[int, int, int]
+    hatch: bool
+
+
+# Order is the legend order. A role is listed only when some bar has a positive count.
+STYLES: tuple[SegmentStyle, ...] = (
+    SegmentStyle("lean", "result in Lean", ACCENT, False),
+    SegmentStyle("challenge", "Lean challenge only", CHALLENGE, False),
+    SegmentStyle("partial", "partly in Lean", PARTIAL, True),
+    SegmentStyle("paper", "paper only", PAPER_ONLY, False),
+)
+_STYLE_BY_ROLE = {style.role: style for style in STYLES}
 
 
 def font(name: str, size: int) -> ImageFont.FreeTypeFont:
@@ -200,22 +221,121 @@ def _contrast(left: tuple[int, int, int], right: tuple[int, int, int]) -> float:
     return (lighter + 0.05) / (darker + 0.05)
 
 
+def style_for(role: str) -> SegmentStyle:
+    style = _STYLE_BY_ROLE.get(role)
+    if style is None:
+        raise SystemExit(f"share card has no swatch for {role}")
+    return style
+
+
+def legend_for(rows: list[dict[str, Any]]) -> list[SegmentStyle]:
+    """Legend entries for roles that actually appear, in swatch order."""
+    present: set[str] = set()
+    for row in rows:
+        for count, role in row["segments"]:
+            if role not in _STYLE_BY_ROLE:
+                raise SystemExit(f"share card has no swatch for {role}")
+            if count > 0:
+                present.add(role)
+    return [style for style in STYLES if style.role in present]
+
+
+def _legend_lines(
+    styles: list[SegmentStyle],
+    face: ImageFont.FreeTypeFont,
+    width: int,
+) -> list[list[SegmentStyle]]:
+    lines: list[list[SegmentStyle]] = []
+    current: list[SegmentStyle] = []
+    cursor = 0
+    for style in styles:
+        item = 26 + text_width(face, style.label)
+        if item > width:
+            raise SystemExit(f"legend does not fit: {style.label}")
+        extra = LEGEND_GAP if current else 0
+        if current and cursor + extra + item > width:
+            lines.append(current)
+            current = [style]
+            cursor = item
+            continue
+        cursor += extra + item
+        current.append(style)
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _legend_height(line_count: int) -> int:
+    if line_count <= 0:
+        return 0
+    return LEGEND_SWATCH + (line_count - 1) * LEGEND_LINE
+
+
+def _fill_segment(
+    image: Image.Image,
+    box: list[int],
+    fill: tuple[int, int, int],
+    hatch: bool,
+) -> None:
+    """A 1px ink outline so neighboring segments stay separate. One role is hatched."""
+    x0, y0, x1, y1 = (int(value) for value in box)
+    width, height = x1 - x0, y1 - y0
+    if width <= 0 or height <= 0:
+        return
+    if hatch:
+        tile = Image.new("RGB", (width, height), fill)
+        tile_draw = ImageDraw.Draw(tile)
+        for offset in range(-height, width + height, HATCH_STEP):
+            tile_draw.line([(offset, 0), (offset + height, height)], fill=INK, width=1)
+        image.paste(tile, (x0, y0))
+        ImageDraw.Draw(image).rectangle([x0, y0, x1, y1], outline=INK, width=1)
+        return
+    ImageDraw.Draw(image).rectangle([x0, y0, x1, y1], fill=fill, outline=INK, width=1)
+
+
+def _mean_gray(image: Image.Image) -> float:
+    pixels = list(image.convert("L").getdata())
+    return sum(pixels) / len(pixels)
+
+
+def _swatch_grays(scale: int) -> list[tuple[str, float]]:
+    """Gray means of the bar swatches. scale=3 is a 400px-wide card."""
+    grays: list[tuple[str, float]] = []
+    width, height = 120 * scale, 36 * scale
+    for style in STYLES:
+        image = Image.new("RGB", (width, height), BG)
+        _fill_segment(image, [0, 0, width, height], style.fill, style.hatch)
+        if scale != 1:
+            image = image.resize((width // scale, height // scale), Image.Resampling.LANCZOS)
+        grays.append((style.role, _mean_gray(image)))
+    return grays
+
+
+def _require_gray_gap(grays: list[tuple[str, float]], label: str) -> None:
+    for index, (left_role, left) in enumerate(grays):
+        for right_role, right in grays[index + 1 :]:
+            gap = abs(left - right)
+            if gap < GRAY_GAP:
+                raise SystemExit(
+                    f"{left_role} and {right_role} are {gap:.1f} gray apart {label}"
+                )
+
+
 def _require_segment_contrast() -> None:
-    """Each fill reads on the page and on the card. The ink outline reads on the lighter fills."""
-    for name, color in (("accent", ACCENT), ("mid", MID), ("paper", PAPER_ONLY)):
+    """Each fill reads on the page and on the card. Swatches stay apart in grayscale."""
+    for style in STYLES:
         for ground_name, ground in (("background", BG), ("paper", PAPER)):
-            ratio = _contrast(color, ground)
+            ratio = _contrast(style.fill, ground)
             if ratio < 3:
-                raise SystemExit(f"{name} segment is {ratio:.2f}:1 on the {ground_name}")
-    for name, color in (("mid", MID), ("paper", PAPER_ONLY)):
-        ratio = _contrast(INK, color)
+                raise SystemExit(f"{style.role} segment is {ratio:.2f}:1 on the {ground_name}")
+    for style in STYLES:
+        if style.role not in {"partial", "paper"}:
+            continue
+        ratio = _contrast(INK, style.fill)
         if ratio < 3:
-            raise SystemExit(f"segment outline is {ratio:.2f}:1 on {name}")
-
-
-def _fill_segment(draw: ImageDraw.ImageDraw, box: list[int], fill: tuple[int, int, int]) -> None:
-    """A 1px ink outline so neighboring segments stay separate."""
-    draw.rectangle(box, fill=fill, outline=INK, width=1)
+            raise SystemExit(f"segment outline is {ratio:.2f}:1 on {style.role}")
+    _require_gray_gap(_swatch_grays(1), "at full size")
+    _require_gray_gap(_swatch_grays(3), "at a 400px-wide downscale")
 
 
 def _reject_overclaim(text: str) -> None:
@@ -294,7 +414,7 @@ def _family_row(name: str, org: str, families: list[dict[str, Any]]) -> dict[str
         ),
         "clause": clause,
         "alt": alt,
-        "segments": [(main, ACCENT), (challenge, MID), (paper, PAPER_ONLY)],
+        "segments": [(main, "lean"), (challenge, "challenge"), (paper, "paper")],
     }
 
 
@@ -339,7 +459,7 @@ def _file_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "short_caption": f"{files} Lean{CAPTION_GAP}{absent} no file",
         "clause": f"{files} {who} {lean_noun}",
         "alt": f"({files} {file_noun}, {absent} paper only)",
-        "segments": [(files, ACCENT), (absent, PAPER_ONLY)],
+        "segments": [(files, "lean"), (absent, "paper")],
     }
 
 
@@ -415,7 +535,7 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "short_caption": short_caption,
         "clause": f"{total} {who} {release_noun}",
         "alt": f"({with_lean} of {total}; {new_phrase}, {_plural(len(formalizations), 'formalization')})",
-        "segments": [(full, ACCENT), (partial, MID), (paper, PAPER_ONLY)],
+        "segments": [(full, "lean"), (partial, "partial"), (paper, "paper")],
     }
 
 
@@ -542,15 +662,12 @@ def compose(catalog: dict[str, Any]) -> list[str]:
         _reject_overclaim(f"{name} {unit} {pct} {label}")
         lines.extend([name, unit, pct, label])
         y = (y + 42) + 36 + 50
+    legend_lines = _legend_lines(legend_for(rows), caption_face, iw)
     legend_y = y + 2
-    if legend_y + 20 > 540:
+    if legend_y + _legend_height(len(legend_lines)) > 540:
         raise SystemExit(f"right panel too tall: {legend_y}")
-    cursor = ix
-    for _color, label in LEGEND:
-        if cursor + 26 + text_width(caption_face, label) > ix + iw:
-            raise SystemExit(f"legend does not fit: {label}")
-        lines.append(label)
-        cursor += 26 + text_width(caption_face, label) + 22
+    for legend_line in legend_lines:
+        lines.extend(style.label for style in legend_line)
     return lines
 
 
@@ -631,12 +748,12 @@ def render(catalog: dict[str, Any]) -> Image.Image:
         bar_y = y + 42
         bar_h = 36
         bar_w = iw - PERCENT_GUTTER
-        segments = [(count, color) for count, color in row["segments"] if count > 0]
-        total = sum(count for count, _color in segments)
+        segments = [(count, style_for(role)) for count, role in row["segments"] if count > 0]
+        total = sum(count for count, _style in segments)
         cursor = ix
-        for index, (count, color) in enumerate(segments):
+        for index, (count, style) in enumerate(segments):
             width = round(bar_w * count / total) if index < len(segments) - 1 else ix + bar_w - cursor
-            _fill_segment(draw, [cursor, bar_y, cursor + width, bar_y + bar_h], color)
+            _fill_segment(image, [cursor, bar_y, cursor + width, bar_y + bar_h], style.fill, style.hatch)
             cursor += width
         paint(
             percent_face,
@@ -648,11 +765,18 @@ def render(catalog: dict[str, Any]) -> Image.Image:
         y = bar_y + bar_h + 50
 
     legend_y = y + 2
-    cursor = ix
-    for color, label in LEGEND:
-        _fill_segment(draw, [cursor, legend_y, cursor + 18, legend_y + 18], color)
-        paint(caption_face, label, (cursor + 26, ink_top(caption_face, label, legend_y + 1)), INK)
-        cursor += 26 + text_width(caption_face, label) + 22
+    for line_index, legend_line in enumerate(_legend_lines(legend_for(rows), caption_face, iw)):
+        cursor = ix
+        top = legend_y + line_index * LEGEND_LINE
+        for style in legend_line:
+            _fill_segment(
+                image,
+                [cursor, top, cursor + LEGEND_SWATCH, top + LEGEND_SWATCH],
+                style.fill,
+                style.hatch,
+            )
+            paint(caption_face, style.label, (cursor + 26, ink_top(caption_face, style.label, top + 1)), INK)
+            cursor += 26 + text_width(caption_face, style.label) + LEGEND_GAP
 
     if drawn != expected:
         raise SystemExit("preview card omitted a registered source")
@@ -666,11 +790,6 @@ def png_bytes(image: Image.Image) -> bytes:
     return buffer.getvalue()
 
 
-_ROLE = {
-    ACCENT: "lean",
-    MID: "challenge",
-    PAPER_ONLY: "paper",
-}
 SHARE_HEADING = "Share of each catalogue with Lean files"
 
 
@@ -682,12 +801,10 @@ def share_document(catalog: dict[str, Any]) -> dict[str, Any]:
     painted = []
     for row in rows:
         segments = []
-        for count, color in row["segments"]:
+        for count, role in row["segments"]:
             if count <= 0:
                 continue
-            role = _ROLE.get(color)
-            if role is None:
-                raise SystemExit(f"{row['name']} has a segment color the site cannot draw")
+            style_for(role)
             segments.append({"count": count, "role": role})
         if not segments:
             raise SystemExit(f"{row['name']} has an empty share bar")
@@ -705,7 +822,7 @@ def share_document(catalog: dict[str, Any]) -> dict[str, Any]:
         "headline": HEADLINE,
         "shareHeading": SHARE_HEADING,
         "sentence": share_sentence(rows),
-        "legend": [{"role": _ROLE[color], "label": label} for color, label in LEGEND],
+        "legend": [{"role": style.role, "label": style.label} for style in legend_for(rows)],
         "rows": painted,
     }
 

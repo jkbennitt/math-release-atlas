@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.7
+
+- OpenAI's comparator-challenge families are a Lean challenge statement. That segment's legend entry is "Lean challenge only". A release whose notes say some claims are not formalized stays "partly in Lean", including on a narrow screen. The two use different swatches, and the legend lists only the segments that appear. OpenAI's caption stays "135 result in Lean · 107 challenge only · 130 paper only".
+- Share colors step in lightness, and the partly-in-Lean segment is hatched, so every segment stays distinct in grayscale. Each fill is at least 3:1 on #f3efe6. The card and the home bars use the same swatches.
+- On a narrow screen the share bars are 10px tall and the outline is removed, so the outline no longer covers the fill.
+- Each home bar's screen-reader label is checked against the catalogue, the same way the percent and the caption are.
+
 ## 0.4.6
 
 - The home page leads with the share bars and a one-line table. Dates stay on one line. At a narrow width the bars and captions shrink, using a shorter caption taken from the same counts.

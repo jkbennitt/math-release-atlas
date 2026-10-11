@@ -9,6 +9,10 @@
     },
     {
       "role": "challenge",
+      "label": "Lean challenge only"
+    },
+    {
+      "role": "partial",
       "label": "partly in Lean"
     },
     {
@@ -68,7 +72,7 @@
         },
         {
           "count": 1,
-          "role": "challenge"
+          "role": "partial"
         }
       ]
     }

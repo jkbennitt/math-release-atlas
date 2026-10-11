@@ -213,6 +213,19 @@ try {
         continue;
       }
       const home = route.name === "home";
+      if (home && width === 390) {
+        const barHeights = await page.evaluate(() =>
+          [...document.querySelectorAll(".share-bar")].map((node) => node.getBoundingClientRect().height),
+        );
+        if (barHeights.length === 0) {
+          failures.push("home at 390px: share bars are missing");
+        }
+        for (const height of barHeights) {
+          if (height < 10) {
+            failures.push(`home at 390px: share bar is ${height.toFixed(1)}px`);
+          }
+        }
+      }
       if (home) {
         await page.locator("[data-family-table]").waitFor();
         if (width === 1024) {
