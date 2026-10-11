@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.5
+
+- The generated image alt text stays within 300 characters so X can validate the summary card. It still names every registered source, states that Fermat's Last Theorem is a formalization, and states that the atlas is unofficial and not affiliated with the registered organizations. Gap statuses such as per-row provenance stay on the source pages.
+- The build fails when an image alt is over 420 characters, a description is over 200, a Twitter title is over 70, or an image URL is not absolute https.
+
 ## 0.4.4
 
 - Lens tags cover AlphaProof Nexus and Anthropic records as well as OpenAI Math families. Four math-subject lenses — number theory, combinatorics, algebraic geometry, and analysis — are applied only where the pinned upstream text supports them. Each tag has a why and a source URL.

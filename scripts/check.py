@@ -651,8 +651,13 @@ def alphaproof_self_test() -> list[str]:
                     "detail": preview["detail"],
                 },
             ]
-            if phrase not in preview_alt(entries) or status not in preview_alt(entries):
-                failures.append(f"alt text dropped {status}")
+            alt_text = preview_alt(entries)
+            if phrase not in preview["fragment"] or status not in preview["fragment"]:
+                failures.append(f"AlphaProof preview dropped {status}")
+            if status in alt_text or "per-row provenance" in alt_text:
+                failures.append(f"alt text includes the {status} gap status")
+            if "AlphaProof Nexus" not in alt_text or "OpenAI Math" not in alt_text:
+                failures.append("alt text dropped a source name")
             if "MATCH" not in preview["fragment"] or "MISSING" not in preview["fragment"]:
                 failures.append(f"AlphaProof preview dropped a status label: {preview['fragment']}")
             try:
@@ -735,7 +740,7 @@ def alphaproof_self_test() -> list[str]:
         ):
             failures.append("Absent leak passed for a MATCH row rendered from the page template")
         social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-        if "source.preview.fragment" not in social:
+        if "source.preview.tiles" not in social or "source.preview.fragment" not in social:
             failures.append("social alt text does not render each source preview")
         badge_page = (ROOT / "src" / "pages" / "source" / "alphaproof-nexus.astro").read_text(encoding="utf-8")
         for status in ("PARTIAL", "MATCH", "MORE THAN PAPER"):
@@ -1022,7 +1027,7 @@ def anthropic_self_test() -> list[str]:
     if "percolation" in page.lower():
         failures.append("Anthropic source page names percolation")
     social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
-    if "source.preview.fragment" not in social or "source.org" not in social:
+    if "source.preview.tiles" not in social or "source.preview.fragment" not in social or "source.org" not in social:
         failures.append("social alt text does not read each source preview")
     anthropic_preview = anthropic.anthropic_preview(
         {
@@ -2074,6 +2079,50 @@ def preview_self_test() -> list[str]:
     missing_card = good.replace('<meta name="twitter:card" content="summary_large_image" />', "")
     if not any("missing twitter:card" in item for item in check_social_preview(missing_card, "fixture", prefix, openai_only)):
         failures.append("a page missing twitter:card was accepted")
+    long_alt = "x" * (atlaslib.SOCIAL_IMAGE_ALT_MAX + 1)
+    long_alt_page = good.replace(alt, long_alt)
+    long_alt_failures = check_social_preview(long_alt_page, "fixture", prefix)
+    if not any(f"og:image:alt is {len(long_alt)} characters, over {atlaslib.SOCIAL_IMAGE_ALT_MAX}" in item for item in long_alt_failures):
+        failures.append(f"an over-long og:image:alt was accepted: {long_alt_failures}")
+    if not any(f"twitter:image:alt is {len(long_alt)} characters, over {atlaslib.SOCIAL_IMAGE_ALT_MAX}" in item for item in long_alt_failures):
+        failures.append(f"an over-long twitter:image:alt was accepted: {long_alt_failures}")
+    long_description = "d" * (atlaslib.SOCIAL_DESCRIPTION_MAX + 1)
+    long_description_page = good.replace(description, long_description)
+    long_description_failures = check_social_preview(long_description_page, "fixture", prefix)
+    if not any(
+        f"og:description is {len(long_description)} characters, over {atlaslib.SOCIAL_DESCRIPTION_MAX}" in item
+        for item in long_description_failures
+    ):
+        failures.append(f"an over-long og:description was accepted: {long_description_failures}")
+    if not any(
+        f"twitter:description is {len(long_description)} characters, over {atlaslib.SOCIAL_DESCRIPTION_MAX}" in item
+        for item in long_description_failures
+    ):
+        failures.append(f"an over-long twitter:description was accepted: {long_description_failures}")
+    long_title = "T" * (atlaslib.TWITTER_TITLE_MAX + 1)
+    long_title_page = good.replace(
+        f'<meta name="twitter:title" content="{title}" />',
+        f'<meta name="twitter:title" content="{long_title}" />',
+    )
+    long_title_failures = check_social_preview(long_title_page, "fixture", prefix)
+    if not any(
+        f"twitter:title is {len(long_title)} characters, over {atlaslib.TWITTER_TITLE_MAX}" in item
+        for item in long_title_failures
+    ):
+        failures.append(f"an over-long twitter:title was accepted: {long_title_failures}")
+    http_image = "http://jkbennitt.github.io/math-release-atlas/og.png"
+    http_og = good.replace(
+        f'<meta property="og:image" content="{image}" />',
+        f'<meta property="og:image" content="{http_image}" />',
+    )
+    if not any("og:image is not absolute" in item for item in check_social_preview(http_og, "fixture", prefix, openai_only)):
+        failures.append("an http og:image was accepted")
+    http_twitter = good.replace(
+        f'<meta name="twitter:image" content="{image}" />',
+        f'<meta name="twitter:image" content="{http_image}" />',
+    )
+    if not any("twitter:image is not absolute" in item for item in check_social_preview(http_twitter, "fixture", prefix, openai_only)):
+        failures.append("an http twitter:image was accepted")
     header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 1200, 630)
     if png_dimensions(header + b"\x08\x02\x00\x00\x00") != (1200, 630):
         failures.append("png header parse failed")
@@ -2092,13 +2141,19 @@ def preview_self_test() -> list[str]:
         },
     ]
     rich_alt = preview_alt(rich_entries)
-    if "OEIS 38 of 44 in paper (PARTIAL)" not in rich_alt or "MATCH" not in rich_alt or "MISSING" not in rich_alt:
-        failures.append("preview alt dropped an AlphaProof status")
+    if (
+        "OEIS 38 of 44 in paper (PARTIAL)" in rich_alt
+        or "per-row provenance" in rich_alt
+        or "MISSING" in rich_alt
+    ):
+        failures.append(f"preview alt kept an AlphaProof gap status: {rich_alt}")
+    if "AlphaProof Nexus" not in rich_alt or "OpenAI Math" not in rich_alt:
+        failures.append(f"preview alt dropped a source: {rich_alt}")
     rich_page = good.replace(alt, rich_alt)
     if check_social_preview(rich_page, "fixture", prefix, rich_entries):
-        failures.append("preview alt with the OEIS paper status was rejected")
+        failures.append("preview alt without the gap statuses was rejected")
     if not any("og:image:alt" in item for item in check_social_preview(good, "fixture", prefix, rich_entries)):
-        failures.append("a preview alt without the OEIS paper status was accepted")
+        failures.append("a preview alt without the catalogue sentence was accepted")
     anthropic_entries = [
         *rich_entries,
         {
@@ -2123,6 +2178,18 @@ def preview_self_test() -> list[str]:
         failures.append("preview alt named Anthropic without a registered source")
     catalog = read_json(FAMILIES_JSON)
     entries = atlaslib.preview_entries(catalog["sources"]["sources"])
+    catalogue_alt = preview_alt(entries)
+    if len(catalogue_alt) > atlaslib.PREVIEW_ALT_MAX:
+        failures.append(f"catalogue alt is {len(catalogue_alt)} characters")
+    if "per-row provenance" in catalogue_alt or "OEIS" in catalogue_alt:
+        failures.append(f"catalogue alt includes a gap status: {catalogue_alt}")
+    if atlaslib.FLT_PREVIEW_NOTE not in catalogue_alt:
+        failures.append(f"catalogue alt omits the formalization note: {catalogue_alt}")
+    for source_name in ("OpenAI Math", "AlphaProof Nexus", "Anthropic"):
+        if source_name not in catalogue_alt:
+            failures.append(f"catalogue alt omits {source_name}: {catalogue_alt}")
+    if not catalogue_alt.endswith("Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."):
+        failures.append(f"catalogue alt dropped the affiliation: {catalogue_alt}")
     image = og_card.render(entries)
     blob = og_card.png_bytes(image)
     if og_card.png_bytes(og_card.render(entries)) != blob:

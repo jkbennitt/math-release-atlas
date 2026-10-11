@@ -42,18 +42,24 @@ catalogue is merged. Adding or removing a source, or a count changing on
 sync, updates the card, the alt text, and the social text without an edit to
 the card. The image spells Erdos in ASCII because the card fonts have an
 empty box for ő. The alt text is the same sentence as `preview_alt()` in
-`scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`:
-unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic. Those
-organization names are pinned, so renaming one fails the check. The Anthropic
-panel and the alt text add Fermat's Last Theorem: Formalization, not a new
-result, with an ASCII apostrophe, because the card font has no curly
-apostrophe. The check fails if the card, the alt text, or the social text
-omits a registered source, omits that formalization note, disagrees with the
-catalogue counts, or skips a source that has no derivation. The built
-`og.png` must match a fresh render byte for byte, so a blank or stale image
-of the right size fails. It also fails if any built page is missing
-`og:image` or `twitter:card`, or if `og:image` is not absolute.
-Package version 0.4.4.
+`scripts/atlaslib.py` and `previewImageAlt` in `src/lib/social.ts`. It names
+every registered source and that source's counts. Gap statuses, including
+per-row provenance, stay on the source pages, and the sentence stays within
+300 characters. It says the atlas is unofficial, not affiliated with OpenAI,
+Google DeepMind, or Anthropic. Those organization names are pinned, so
+renaming one fails the check. The Anthropic panel and the alt text add
+Fermat's Last Theorem: Formalization, not a new result, with an ASCII
+apostrophe, because the card font has no curly apostrophe. The check fails
+if the card, the alt text, or the social text omits a registered source,
+omits that formalization note, disagrees with the catalogue counts, or skips
+a source that has no derivation. The built `og.png` must match a fresh render
+byte for byte, so a blank or stale image of the right size fails. It also
+fails if any built page is missing `og:image` or `twitter:card`, if
+`og:image` or `twitter:image` is not an absolute https URL, if
+`twitter:image:alt` or `og:image:alt` is over 420 characters, if
+`twitter:description` or `og:description` is over 200 characters, or if
+`twitter:title` is over 70 characters.
+Package version 0.4.5.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
