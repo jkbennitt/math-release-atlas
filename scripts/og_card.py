@@ -70,6 +70,9 @@ LEGEND = (
     (MID, "Lean challenge only"),
     (PAPER_ONLY, "paper only"),
 )
+# Room to the right of every bar for the percent, in dark ink.
+PERCENT_GUTTER = 72
+SHARE_LABEL = "Share with Lean files"
 
 
 def font(name: str, size: int) -> ImageFont.FreeTypeFont:
@@ -241,9 +244,8 @@ def _family_row(name: str, org: str, families: list[dict[str, Any]]) -> dict[str
     caption = (
         f"{main} result in Lean{CAPTION_GAP}{challenge} challenge only{CAPTION_GAP}{paper} paper only"
     )
-    alt = (
-        f"of {total} {family_noun} ({main} result in Lean, {challenge} challenge only, {paper} paper only)"
-    )
+    short_noun = "family" if total == 1 else "families"
+    alt = f"of {total} {short_noun} ({main} result, {challenge} challenge only, {paper} paper only)"
     return {
         "name": name,
         "org": org,
@@ -295,7 +297,7 @@ def _file_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "percent": f"{percent(files, total)}%",
         "caption": f"{files} {lean_noun}{CAPTION_GAP}{absent} {series} results in paper, no file",
         "clause": f"{files} {who} {lean_noun}",
-        "alt": f"({files} {lean_noun}, {absent} named in paper)",
+        "alt": f"({files} {file_noun}, {absent} paper only)",
         "segments": [(files, ACCENT), (absent, PAPER_ONLY)],
     }
 
@@ -349,7 +351,7 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "percent": f"{percent(with_lean, total)}%",
         "caption": f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}",
         "clause": f"{total} {who} {release_noun}",
-        "alt": f"({with_lean} of {total} with Lean, {new_phrase}, {_plural(len(formalizations), 'formalization')})",
+        "alt": f"({with_lean} of {total}; {new_phrase}, {_plural(len(formalizations), 'formalization')})",
         "segments": [(with_lean, ACCENT), (paper, PAPER_ONLY)],
     }
 
@@ -404,13 +406,13 @@ def formalization_note(catalog: dict[str, Any]) -> str:
 def card_alt(catalog: dict[str, Any]) -> str:
     """Image alt for the share card. Names every source and stays within the X limit."""
     rows = share_rows(catalog)
-    body = ". ".join(f"{row['name']}: {row['percent']} {row['alt']}" for row in rows)
+    body = "; ".join(f"{row['name']} {row['percent']} {row['alt']}" for row in rows)
     note = formalization_note(catalog)
     line = affiliation_sentence([str(row["org"]) for row in rows])
     if note:
-        alt = f"{BRAND}. {HEADLINE} {body}. {note}. {line}"
+        alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {note}. {line}"
     else:
-        alt = f"{BRAND}. {HEADLINE} {body}. {line}"
+        alt = f"{BRAND}. {HEADLINE} {SHARE_LABEL}: {body}. {line}"
     _reject_banned(alt)
     if len(alt) > SOCIAL_IMAGE_ALT_MAX:
         raise SystemExit(f"preview alt is {len(alt)} characters, over {SOCIAL_IMAGE_ALT_MAX}")
@@ -465,16 +467,11 @@ def compose(catalog: dict[str, Any]) -> list[str]:
         total = sum(count for count, _color in segments)
         if total <= 0:
             raise SystemExit(f"{name} has an empty share bar")
-        cursor = ix
-        accent_width = 0
-        for index, (count, color) in enumerate(segments):
-            width = round(iw * count / total) if index < len(segments) - 1 else ix + iw - cursor
-            if color == ACCENT:
-                accent_width += width
-            cursor += width
-        pct_width = text_width(percent_face, pct)
-        if accent_width < 12 + pct_width + 8 and accent_width != 0:
-            raise SystemExit(f"percent label does not fit on the Lean segment for {name}")
+        bar_w = iw - PERCENT_GUTTER
+        if bar_w < 120:
+            raise SystemExit("share bar has no room beside the percent")
+        if text_width(percent_face, pct) > PERCENT_GUTTER - 8:
+            raise SystemExit(f"percent label does not fit beside the bar for {name}")
         _reject_banned(f"{name} {unit} {pct} {label}")
         lines.extend([name, unit, pct, label])
         y = (y + 42) + 36 + 50
@@ -566,19 +563,20 @@ def render(catalog: dict[str, Any]) -> Image.Image:
         )
         bar_y = y + 42
         bar_h = 36
+        bar_w = iw - PERCENT_GUTTER
         segments = [(count, color) for count, color in row["segments"] if count > 0]
         total = sum(count for count, _color in segments)
         cursor = ix
-        accent_width = 0
         for index, (count, color) in enumerate(segments):
-            width = round(iw * count / total) if index < len(segments) - 1 else ix + iw - cursor
+            width = round(bar_w * count / total) if index < len(segments) - 1 else ix + bar_w - cursor
             draw.rectangle([cursor, bar_y, cursor + width, bar_y + bar_h], fill=color)
-            if color == ACCENT:
-                accent_width += width
             cursor += width
-        pct_width = text_width(percent_face, pct)
-        pct_fill = MARK_INK if accent_width >= 12 + pct_width + 8 else INK
-        paint(percent_face, pct, (ix + 12, ink_top(percent_face, pct, bar_y + 7)), pct_fill)
+        paint(
+            percent_face,
+            pct,
+            (ix + iw - text_width(percent_face, pct), ink_top(percent_face, pct, bar_y + 7)),
+            INK,
+        )
         paint(caption_face, label, (ix, ink_top(caption_face, label, bar_y + bar_h + 10)), MUTED)
         y = bar_y + bar_h + 50
 

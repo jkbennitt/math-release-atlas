@@ -2092,6 +2092,12 @@ def preview_self_test() -> list[str]:
     missing_card = good.replace('<meta name="twitter:card" content="summary_large_image" />', "")
     if not any("missing twitter:card" in item for item in check_social_preview(missing_card, "fixture", prefix, openai_only)):
         failures.append("a page missing twitter:card was accepted")
+    missing_twitter_alt = good.replace(f'<meta name="twitter:image:alt" content="{alt}" />', "")
+    if not any(
+        "missing twitter:image:alt" in item
+        for item in check_social_preview(missing_twitter_alt, "fixture", prefix, openai_only)
+    ):
+        failures.append("a page missing twitter:image:alt was accepted")
     long_alt = "x" * (atlaslib.SOCIAL_IMAGE_ALT_MAX + 1)
     long_alt_page = good.replace(alt, long_alt)
     long_alt_failures = check_social_preview(long_alt_page, "fixture", prefix)
@@ -2192,8 +2198,14 @@ def preview_self_test() -> list[str]:
     catalog = read_json(FAMILIES_JSON)
     entries = atlaslib.preview_entries(catalog["sources"]["sources"])
     catalogue_alt = og_card.card_alt(catalog)
+    if len(catalogue_alt) > 400:
+        failures.append(
+            f"catalogue alt is {len(catalogue_alt)} characters, leaving no room under 420"
+        )
     if len(catalogue_alt) > atlaslib.SOCIAL_IMAGE_ALT_MAX:
         failures.append(f"catalogue alt is {len(catalogue_alt)} characters")
+    if "Share with Lean files" not in catalogue_alt:
+        failures.append(f"catalogue alt does not say what the percent measures: {catalogue_alt}")
     if "per-row provenance" in catalogue_alt or "OEIS" in catalogue_alt:
         failures.append(f"catalogue alt includes a gap status: {catalogue_alt}")
     if "PARTIAL" in catalogue_alt or "MATCH" in catalogue_alt or "MISSING" in catalogue_alt:
@@ -2240,6 +2252,16 @@ def preview_self_test() -> list[str]:
         f"{formalizations} formalization ({formal_letters})"
     )
     release_percent = f"{round(100 * with_lean / len(releases))}%"
+    family_alt = (
+        f"of {family_total} families ({main} result, {challenge} challenge only, {paper} paper only)"
+    )
+    file_alt = f"({files} files, {absent} paper only)"
+    release_alt = (
+        f"({with_lean} of {len(releases)}; {new_results} new results, {formalizations} formalization)"
+    )
+    for piece in (family_alt, file_alt, release_alt):
+        if piece not in catalogue_alt:
+            failures.append(f"catalogue alt omitted {piece!r}: {catalogue_alt}")
     drawn = "\n".join(og_card.planned_text(catalog))
     for piece in (
         family_caption,

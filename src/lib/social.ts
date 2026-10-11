@@ -12,6 +12,7 @@ export const PREVIEW_HEIGHT = 630;
 const SOCIAL_IMAGE_ALT_MAX = 420;
 const FORMALIZATION_NOTE = "Fermat's Last Theorem: Formalization, not a new result";
 const HEADLINE = "AI math claims: on paper, or in Lean?";
+const SHARE_LABEL = "Share with Lean files";
 const LEAN_MAIN = "main-result-formalized";
 const LEAN_CHALLENGE = "comparator-challenge-only";
 const LEAN_NONE = "none";
@@ -171,12 +172,12 @@ function familyRow(name: string, org: string, families: Family[]): ShareRow {
   if (total <= 0) {
     throw new Error(`${name} has no result families`);
   }
-  const familyNoun = total === 1 ? "result family" : "result families";
+  const familyNoun = total === 1 ? "family" : "families";
   return {
     name,
     org,
     percent: `${percent(main + challenge, total)}%`,
-    alt: `of ${total} ${familyNoun} (${main} result in Lean, ${challenge} challenge only, ${paper} paper only)`,
+    alt: `of ${total} ${familyNoun} (${main} result, ${challenge} challenge only, ${paper} paper only)`,
   };
 }
 
@@ -212,12 +213,12 @@ function fileRow(name: string, org: string, block: ShareBlock): ShareRow {
   if (gapSeries(gapId) === "") {
     throw new Error(`${name} needs one paper gap with an absent count`);
   }
-  const leanNoun = files === 1 ? "Lean file" : "Lean files";
+  const fileNoun = files === 1 ? "file" : "files";
   return {
     name,
     org,
     percent: `${percent(files, total)}%`,
-    alt: `(${files} ${leanNoun}, ${absent} named in paper)`,
+    alt: `(${files} ${fileNoun}, ${absent} paper only)`,
   };
 }
 
@@ -289,7 +290,7 @@ function releaseRow(name: string, org: string, block: ShareBlock): ShareRow {
     name,
     org,
     percent: `${percent(withLean, total)}%`,
-    alt: `(${withLean} of ${total} with Lean, ${plural(newResults, "new result")}, ${plural(formalizations, "formalization")})`,
+    alt: `(${withLean} of ${total}; ${plural(newResults, "new result")}, ${plural(formalizations, "formalization")})`,
   };
 }
 
@@ -334,12 +335,12 @@ function formalizationNote(): string {
 
 export function previewAltFromCatalogue(): string {
   const rows = shareRows();
-  const body = rows.map((row) => `${row.name}: ${row.percent} ${row.alt}`).join(". ");
+  const body = rows.map((row) => `${row.name} ${row.percent} ${row.alt}`).join("; ");
   const note = formalizationNote();
   const line = affiliation(rows.map((row) => row.org));
   const alt = note
-    ? `${SITE_NAME}. ${HEADLINE} ${body}. ${note}. ${line}`
-    : `${SITE_NAME}. ${HEADLINE} ${body}. ${line}`;
+    ? `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${note}. ${line}`
+    : `${SITE_NAME}. ${HEADLINE} ${SHARE_LABEL}: ${body}. ${line}`;
   rejectBanned(alt);
   if (alt.length > SOCIAL_IMAGE_ALT_MAX) {
     throw new Error(`preview alt is ${alt.length} characters, over ${SOCIAL_IMAGE_ALT_MAX}`);

@@ -39,7 +39,8 @@ and writes `public/og.png` at 1200×630. Astro copies that file into `dist/`.
 The card is a share view. The headline is "AI math claims: on paper, or in
 Lean?" One sentence lists every registered catalogue, with its count taken
 from the data. Each source then has one percent bar for the share of that
-catalogue that has Lean files. A family catalogue splits Lean status into a
+catalogue that has Lean files. The percent is printed beside the bar, and
+the image alt says it is the share with Lean files. A family catalogue splits Lean status into a
 main result, a comparator challenge, and paper only. A file catalogue counts
 Lean files against the paper gap of results that have no file. A release list
 counts releases that include Lean files, and a formalization keeps that label,

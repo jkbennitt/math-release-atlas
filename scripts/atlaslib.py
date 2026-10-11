@@ -2827,7 +2827,7 @@ def check_social_preview(
     for key in required_properties:
         if not properties.get(key, "").strip():
             failures.append(f"{label} is missing {key}")
-    for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image"):
+    for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image", "twitter:image:alt"):
         if not names.get(key, "").strip():
             failures.append(f"{label} is missing {key}")
     image = properties.get("og:image", "").strip()
@@ -3181,7 +3181,7 @@ def check_preview_source() -> list[str]:
         or "lean_files" not in social
     ):
         failures.append("social alt text does not read each catalogue")
-    if "not affiliated with" not in social or "result families" not in social:
+    if "not affiliated with" not in social or "Share with Lean files" not in social:
         failures.append("social alt text does not use the shared preview sentence")
     if ", plus " in social:
         failures.append("social alt text pastes preview fragments together")
