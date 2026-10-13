@@ -2,7 +2,7 @@ id: "165"
 lenses:
   - tag: combinatorics
     why: "The upstream overview places this family in the Combinatorics section."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L409"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L409"
 community:
   status: claimed
   evidence: []

@@ -2,7 +2,7 @@ id: "126"
 lenses:
   - tag: computation-hardness
     why: "The family treats semidefinite extension complexity of the perfect matching polytope."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L329"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L329"
 community:
   status: claimed
   evidence: []
