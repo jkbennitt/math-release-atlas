@@ -66,7 +66,7 @@ OEIS_GAP_LABEL = "not in repo / unexplained"
 PROVENANCE_GAP_LABEL = "per-row provenance"
 
 # The cross-source expectation is for these two commits only.
-PINNED_OPENAI_COMMIT = "fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb"
+PINNED_OPENAI_COMMIT = "1581d4cbdd69a0faf34b2089614fe2a814316a6a"
 PINNED_OPENAI_ERDOS = {970: ["021"]}
 PINNED_APN_ERDOS = {12, 26, 125, 138, 152, 741, 846}
 
