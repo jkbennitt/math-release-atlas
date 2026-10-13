@@ -2,7 +2,7 @@ id: "037"
 lenses:
   - tag: algebraic-geometry
     why: "The upstream overview treats singular complex algebraic klt germs."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L152"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L152"
 community:
   status: claimed
   evidence: []

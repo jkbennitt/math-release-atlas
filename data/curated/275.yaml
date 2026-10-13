@@ -2,10 +2,10 @@ id: "275"
 lenses:
   - tag: electronic-structure
     why: "The family treats approximation of continuum Coulomb electronic energy."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L639"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L639"
   - tag: computation-hardness
     why: "The family treats QMA-hardness of approximating continuum Coulomb energy."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L639"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L639"
 community:
   status: claimed
   evidence: []

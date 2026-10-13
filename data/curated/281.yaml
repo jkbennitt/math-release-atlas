@@ -2,7 +2,7 @@ id: "281"
 lenses:
   - tag: quantum-information
     why: "The family treats QAOA on the Sherrington–Kirkpatrick model in the thermodynamic-first limit."
-    source: "https://github.com/openai/math/blob/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/overview.tex#L651"
+    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L651"
 community:
   status: claimed
   evidence: []
