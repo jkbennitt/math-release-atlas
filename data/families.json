@@ -21560,18 +21560,18 @@
           }
         ],
         "preview": {
-          "fragment": "61238 Lean files from Anthropic (3 releases, 2 new results, 1 formalization). Fermat's Last Theorem: Formalization, not a new result",
+          "fragment": "62290 Lean files from Anthropic (4 releases, 3 new results, 1 formalization). Fermat's Last Theorem: Formalization, not a new result",
           "tiles": [
             {
-              "value": "61238",
+              "value": "62290",
               "label": "Lean files"
             },
             {
-              "value": "3",
+              "value": "4",
               "label": "releases"
             },
             {
-              "value": "2",
+              "value": "3",
               "label": "new results"
             },
             {
@@ -21582,7 +21582,7 @@
           "detail": "Fermat's Last Theorem: Formalization, not a new result.",
           "bindings": [
             {
-              "value": "61238",
+              "value": "62290",
               "path": [
                 "anthropic",
                 "counts",
@@ -21590,7 +21590,7 @@
               ]
             },
             {
-              "value": "3",
+              "value": "4",
               "path": [
                 "anthropic",
                 "counts",
@@ -21598,7 +21598,7 @@
               ]
             },
             {
-              "value": "2",
+              "value": "3",
               "path": [
                 "anthropic",
                 "counts",
@@ -23431,7 +23431,7 @@
   },
   "anthropic": {
     "schema_version": 1,
-    "generated_at": "2026-10-28T14:23:15+00:00",
+    "generated_at": "2026-10-28T17:36:35+00:00",
     "source": {
       "id": "anthropic",
       "name": "Anthropic",
@@ -23462,13 +23462,21 @@
       {
         "text": "The authors take full responsibility for this paper.",
         "source": "3SUM paper"
+      },
+      {
+        "text": "The result is purely asymptotic and says nothing about solving formulas in practice.",
+        "source": "eth README"
+      },
+      {
+        "text": "The result was discovered by an internal research Claude model.",
+        "source": "eth README"
       }
     ],
     "counts": {
-      "releases": 3,
-      "new_results": 2,
+      "releases": 4,
+      "new_results": 3,
       "formalizations": 1,
-      "lean_files": 61238
+      "lean_files": 62290
     },
     "identifiers": {
       "erdos": [],
@@ -23476,9 +23484,7 @@
       "stacks": [],
       "method": "explicit erdos_<digits>, oeis_<digits>, an OEIS A-number, or a Stacks project URL in pinned paths and in the statement files fetched for each release"
     },
-    "skipped_directories": [
-      "eth"
-    ],
+    "skipped_directories": [],
     "releases": [
       {
         "id": "zeta23",
@@ -23665,6 +23671,102 @@
         ]
       },
       {
+        "id": "eth",
+        "kind": "new-result",
+        "kind_label": "New result",
+        "title": "A 2^{o(n)} Time Algorithm for 3-SAT",
+        "statement": "Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm for 3-SAT on n variables. eth/README.md says this refutes the Exponential Time Hypothesis and says the result is purely asymptotic. MainResults.lean states the claim for Mathlib multi-stack Turing machines.",
+        "repo": "https://github.com/anthropics/formal-math",
+        "commit": "16a5ce41304fcdaea4e0be7c132e1c361dc26da5",
+        "commit_date": "2026-10-26",
+        "commit_subject": "Add eth: paper and Lean 4 formalization of \"A 2^o(n) Time Algorithm for 3-SAT\" (#31)",
+        "path": "eth",
+        "tree_url": "https://github.com/anthropics/formal-math/tree/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth",
+        "license": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          },
+          {
+            "path": "eth/LICENSE",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/LICENSE",
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+          }
+        ],
+        "lean_toolchain": "leanprover/lean4:v4.33.1",
+        "paper": null,
+        "announcement": null,
+        "announcement_date": null,
+        "tag": null,
+        "counts": {
+          "lean_files": 1052,
+          "headline_theorems": 2
+        },
+        "headline_theorems": [
+          "MainResults.ethIsFalse",
+          "MainResults.mainTheorem"
+        ],
+        "xi_prime_theorems": [],
+        "statement_files": [
+          {
+            "path": "eth/MainResults.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/MainResults.lean",
+            "role": "headline statements"
+          },
+          {
+            "path": "eth/README.md",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/README.md",
+            "role": "project readme"
+          },
+          {
+            "path": "eth/Challenge.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/Challenge.lean",
+            "role": "comparator statements"
+          },
+          {
+            "path": "eth/Solution.lean",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/Solution.lean",
+            "role": "comparator solution module"
+          },
+          {
+            "path": "eth/comparator.json",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/comparator.json",
+            "role": "headline comparator configuration"
+          },
+          {
+            "path": "eth/paper.pdf",
+            "url": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/paper.pdf",
+            "role": "paper"
+          }
+        ],
+        "axioms": [
+          "propext",
+          "Quot.sound",
+          "Classical.choice"
+        ],
+        "scope_notes": [
+          "Upstream file eth/README.md: a deterministic algorithm for 3-SAT on n variables in time 2^{o(n)}. That file says this refutes the Exponential Time Hypothesis. It says the result is purely asymptotic and says nothing about formulas in practice, and it states a #3-SAT counting bound of 2^{O(n log log n / √log n)}.",
+          "MainResults.lean defines ETH as s₃ > 0 and ETHIsFalse as its negation. It defines MainTheorem as one finite-alphabet Mathlib multi-stack Turing machine and one constant, both chosen before k and the formula, that count satisfying assignments of the k-CNF formulas the file names, inside the step bound the file states. The file says a random-access simulation and formula rewriting are not part of the Lean statements.",
+          "comparator.json names MainResults.ethIsFalse and MainResults.mainTheorem. Challenge.lean states those two entries with sorry. eth/README.md names the axioms propext, Classical.choice, and Quot.sound, and pins Lean v4.33.1 with the matching Mathlib. Lean files deposited upstream. This atlas did not run Lean."
+        ],
+        "gaps": [
+          {
+            "id": "eth-usual-machine",
+            "status": "NOTED",
+            "label": "MainResults.lean says a random-access simulation and formula rewriting are not part of the Lean statements. The statements use Mathlib multi-stack Turing machines."
+          }
+        ],
+        "lenses": [
+          {
+            "tag": "computation-hardness",
+            "why": "The deposited MainResults file defines ETHIsFalse as the negation of ETH for deterministic 3-SAT, and MainTheorem as a counting bound for k-CNF formulas on a Mathlib Turing machine.",
+            "source": "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/MainResults.lean"
+          }
+        ]
+      },
+      {
         "id": "fermat-last-theorem",
         "kind": "formalization",
         "kind_label": "Formalization",
@@ -23750,14 +23852,16 @@
       "3sum-apsp: 434 Lean files.",
       "3sum-apsp: 5 headline theorems in EndStatement.",
       "3sum-apsp: 132 theorem names in the paper-statements comparator.",
+      "eth: 1052 Lean files.",
+      "eth: 2 headline theorems in the comparator configuration.",
       "fermat-last-theorem: 60478 Lean files.",
       "fermat-last-theorem: 29511 theorem files.",
       "fermat-last-theorem: 29513 proof files.",
       "fermat-last-theorem: 1450 definition files.",
-      "All releases: 61238 Lean files.",
-      "All releases: 2 new results.",
+      "All releases: 62290 Lean files.",
+      "All releases: 3 new results.",
       "All releases: 1 formalization."
     ],
-    "snapshot_digest": "9e0127890ba9236530d35c74bf9d25a8ba4731f55d7c0e3a1727a20e2b7a0d9d"
+    "snapshot_digest": "361eb9f6289829e2330ca53b427b9594d9dc84daf74feb1f10e7ea0ca36ca24f"
   }
 }
