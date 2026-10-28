@@ -38,13 +38,13 @@ FLT_URL = "https://github.com/anthropics/fermats-last-theorem.git"
 FLT_WEB = "https://github.com/anthropics/fermats-last-theorem"
 ANTHROPIC_SOURCE_ID = "anthropic"
 
-PINNED_FORMAL_MATH_COMMIT = "e1a4e6508154ea59f030480661590a9fe3018011"
+PINNED_FORMAL_MATH_COMMIT = "16a5ce41304fcdaea4e0be7c132e1c361dc26da5"
 PINNED_FLT_COMMIT = "6e837e75355538c7f80bab5b956861e86c4eacc2"
 PINNED_ZETA_TAG = "v1.0"
 PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "3afffd4234faae8b198da3757e05a2efb13860b6b99b163a063334a027e25d62"
+PINNED_ANTHROPIC_DIGEST = "9e0127890ba9236530d35c74bf9d25a8ba4731f55d7c0e3a1727a20e2b7a0d9d"
 
 RELEASE_IDS = ("zeta23", "3sum-apsp", "fermat-last-theorem")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp")
@@ -780,7 +780,7 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
     flt_commit = payload["source"]["also"][0]["commit"]
     if fm_commit != PINNED_FORMAL_MATH_COMMIT or flt_commit != PINNED_FLT_COMMIT:
         return
-    if payload["skipped_directories"]:
+    if payload["skipped_directories"] != ["eth"]:
         raise AtlasError(f"pinned formal-math tree has extra directories: {payload['skipped_directories']}")
     if any(identifiers[key] for key in ("erdos", "oeis", "stacks")):
         raise AtlasError(f"pinned Anthropic identifiers are not empty: {identifiers}")

@@ -3,12 +3,12 @@ records:
     lenses:
       - tag: number-theory
         why: "The deposited challenge file states claims about zeros of the Riemann zeta function and Dirichlet L-functions on the critical line."
-        source: "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/zeta23/Challenge.lean"
+        source: "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/zeta23/Challenge.lean"
   "3sum-apsp":
     lenses:
       - tag: computation-hardness
         why: "The deposited EndStatement file states word-RAM running-time claims for subquadratic 3SUM and subcubic APSP."
-        source: "https://github.com/anthropics/formal-math/blob/e1a4e6508154ea59f030480661590a9fe3018011/3sum-apsp/EndStatement.lean"
+        source: "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/3sum-apsp/EndStatement.lean"
   "fermat-last-theorem":
     lenses:
       - tag: number-theory

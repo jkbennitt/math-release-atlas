@@ -2,7 +2,7 @@ id: "262"
 lenses:
   - tag: electronic-structure
     why: "The family treats sharp Lieb–Thirring inequalities for finite-matrix potentials."
-    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L613"
+    source: "https://github.com/openai/math/blob/7ef5c0cc5ca4b0e072b7a050fca09ab24bc6fa3a/overview.tex#L615"
 community:
   status: claimed
   evidence: []
