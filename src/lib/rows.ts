@@ -46,11 +46,24 @@ export function alphaproofDirectLinks(record: AlphaProofRecord): DirectLink[] {
   return [{ href: record.url, label: "Lean file" }];
 }
 
+export function anthropicStatementHref(release: AnthropicRelease): string {
+  const lean = release.statement_files.find((item) => item.path.endsWith(".lean"));
+  if (lean) {
+    return lean.url;
+  }
+  const readme = release.statement_files.find((item) => /(^|\/)README\.md$/.test(item.path));
+  if (readme) {
+    return readme.url;
+  }
+  throw new Error(`anthropic release ${release.id} has no Lean file or README link`);
+}
+
 export function anthropicDirectLinks(release: AnthropicRelease): DirectLink[] {
   const links: DirectLink[] = [];
   if (release.paper) {
     links.push({ href: release.paper.url, label: "Paper" });
   }
+  links.push({ href: anthropicStatementHref(release), label: "Lean file" });
   links.push({ href: release.tree_url, label: "Lean folder" });
   return links;
 }

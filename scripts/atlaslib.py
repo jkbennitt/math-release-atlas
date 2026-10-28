@@ -2438,6 +2438,35 @@ def check_family_pages(
     return failures
 
 
+def source_chip_href(row_html: str) -> str:
+    """The Source-column chip, which is the row's primary upstream link."""
+    cell = re.search(
+        r'<td\b[^>]*\bdata-label="Source"[^>]*>(.*?)</td>',
+        row_html,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if cell is None:
+        return ""
+    for tag in re.findall(r"<a\b[^>]*>", cell.group(1), flags=re.IGNORECASE):
+        classes = re.search(r'class="([^"]*)"', tag)
+        href = re.search(r'href="([^"]*)"', tag)
+        if classes is None or href is None:
+            continue
+        names = classes.group(1).split()
+        if "chip" in names and "direct-upstream" in names:
+            return html.unescape(href.group(1))
+    return ""
+
+
+def pinned_blob_file(href: str, commit: str) -> bool:
+    """True when href is a blob at commit whose path is a Lean file or a README."""
+    marker = f"/blob/{commit}/"
+    if not href.startswith("https://") or marker not in href:
+        return False
+    path = href.split(marker, 1)[1].split("?", 1)[0].split("#", 1)[0]
+    return path.endswith(".lean") or path.endswith("README.md")
+
+
 def classed_hrefs(fragment: str, class_name: str) -> list[str]:
     found: list[str] = []
     for tag in re.findall(r"<a\b[^>]*>", fragment, flags=re.IGNORECASE):
@@ -3698,6 +3727,12 @@ def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
         if row is None:
             failures.append(f"table is missing Anthropic row {release['id']}")
             continue
+        chip = source_chip_href(row)
+        if not pinned_blob_file(chip, str(release["commit"])):
+            failures.append(
+                f"Anthropic row {release['id']} source link is not a Lean file or README "
+                f"at the pinned commit: {chip}"
+            )
         visible = _visible_text(row)
         if "percolation" in visible.lower():
             failures.append(f"Anthropic row {release['id']} names percolation")

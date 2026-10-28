@@ -68,7 +68,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.4.7.
+Package version 0.4.8.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -288,7 +288,7 @@ requires 9 Erdős Lean files, 38 OEIS Lean files, 11 Stacks Lean files, and
 commit and, under `source.also`, the Fermat commit. The same ancestry check
 runs against each of those repositories, then the recorded trees are fetched
 and compared. While those commits are the pinned ones, the build requires
-326 zeta23 Lean files, 434 3sum-apsp Lean files, and 60478 Fermat Lean files.
+326 zeta23 Lean files, 434 3sum-apsp Lean files, 1052 eth Lean files, and 60478 Fermat Lean files.
 `families.json` must be the merge of the OpenAI snapshot, the curated notes,
 the AlphaProof snapshot, and the Anthropic snapshot.
 Fixed cautions for families 002, 003,
@@ -309,21 +309,27 @@ is named by more than one catalogue. At these pinned commits that list is
 empty. Per-row provenance is
 `MISSING`.
 
-The Anthropic page is three releases, not one row per Lean file. zeta23 and
-3sum-apsp are new results. Fermat's Last Theorem is a formalization of a
+The Anthropic page is four releases, not one row per Lean file. zeta23,
+3sum-apsp, and eth are new results. Fermat's Last Theorem is a formalization of a
 known theorem, and its badge says Formalization. The zeta release is a
 lower bound on the proportion of zeta zeros that are simple and on the
 critical line (more than two thirds). It is not the Riemann Hypothesis.
 Real-number inputs and
 some running-time claims in the 3SUM and APSP paper are not formalized.
-File counts come from the pinned trees. The Fermat README's module count and
+eth is a Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time
+algorithm for 3-SAT, from eth/README.md and eth/MainResults.lean at the pinned
+formal-math commit. That README says this refutes the Exponential Time Hypothesis.
+MainResults.lean states the claim for Mathlib multi-stack Turing machines and says
+a random-access simulation and formula rewriting are not part of the Lean statements.
+The README says the result is purely asymptotic. Each Anthropic row's Source link
+goes to its Lean file at that commit. File counts come from the pinned trees. The Fermat README's module count and
 the `.lean` file count are both shown when they differ. The identifier scan
 reads pinned paths and the statement files fetched for each release. It does
 not read every Lean file in the Fermat repository. At these commits that scan
 finds no Erdős, OEIS, or Stacks ids, and the cross-source page says none are
 shared with OpenAI Math or AlphaProof Nexus. A directory that is not one of
-the three releases is recorded as skipped. At the recorded formal-math commit
-that list is eth, and the page names it without giving it a release section.
+the four releases is recorded as skipped. At the recorded formal-math commit
+that list is empty.
 
 ## License
 

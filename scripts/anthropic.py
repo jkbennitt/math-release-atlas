@@ -4,7 +4,7 @@
 Counts come from ``git ls-tree`` at the commits named in the snapshot.
 Fermat's Last Theorem is not checked out in full: only its statement files
 are fetched, and the Lean-file totals come from the tree listing. Statement
-files are linked, not copied. A directory that is not one of the three
+files are linked, not copied. A directory that is not one of the named
 releases is recorded as skipped and is not given a section.
 """
 
@@ -24,6 +24,7 @@ from atlaslib import (
     FLT_PREVIEW_NOTE,
     ROOT,
     AtlasError,
+    claim_word_hits,
     git,
     materialize_upstream,
     read_json,
@@ -44,17 +45,32 @@ PINNED_ZETA_TAG = "v1.0"
 PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "9e0127890ba9236530d35c74bf9d25a8ba4731f55d7c0e3a1727a20e2b7a0d9d"
+PINNED_ANTHROPIC_DIGEST = "720e827f3d36fcae84fa1f8912b10a9c2d279c388b3eb7bfb371f734a56573d1"
 
-RELEASE_IDS = ("zeta23", "3sum-apsp", "fermat-last-theorem")
-FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp")
+RELEASE_IDS = ("zeta23", "3sum-apsp", "eth", "fermat-last-theorem")
+FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp", "eth")
 IGNORED_TOP_LEVEL = {".github"}
+ETH_HEADLINE = ["MainResults.ethIsFalse", "MainResults.mainTheorem"]
+ETH_AXIOMS = ["propext", "Quot.sound", "Classical.choice"]
+ETH_TOOLCHAIN = "leanprover/lean4:v4.33.1"
+ETH_LEAN_FILES = 1052
+ETH_STATEMENT = (
+    "Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm "
+    "for 3-SAT on n variables. eth/README.md says this refutes the Exponential Time Hypothesis "
+    "and says the result is purely asymptotic. MainResults.lean states the claim for Mathlib "
+    "multi-stack Turing machines."
+)
+ETH_GAP_LABEL = (
+    "MainResults.lean says a random-access simulation and formula rewriting "
+    "are not part of the Lean statements. The statements use Mathlib multi-stack Turing machines."
+)
 
 FORMAL_MATH_SPARSE_PATHS = [
     "/LICENSE",
     "/README.md",
     "/zeta23/**",
     "/3sum-apsp/**",
+    "/eth/**",
 ]
 FLT_SPARSE_PATHS = [
     "/LICENSE",
@@ -88,10 +104,16 @@ THREESUM_DISCOVERY = (
 THREESUM_RESPONSIBILITY = "The authors take full responsibility for this paper."
 ZETA_QUOTE_SOURCE = "zeta arXiv comment"
 THREESUM_QUOTE_SOURCE = "3SUM paper"
+ETH_ASYMPTOTIC = (
+    "The result is purely asymptotic and says nothing about solving formulas in practice."
+)
+ETH_DISCOVERY = "The result was discovered by an internal research Claude model."
+ETH_QUOTE_SOURCE = "eth README"
 QUOTATIONS = (
     {"text": ZETA_ARXIV_COMMENT, "source": ZETA_QUOTE_SOURCE},
     {"text": THREESUM_DISCOVERY, "source": THREESUM_QUOTE_SOURCE},
     {"text": THREESUM_RESPONSIBILITY, "source": THREESUM_QUOTE_SOURCE},
+    {"text": ETH_DISCOVERY, "source": ETH_QUOTE_SOURCE},
 )
 
 ERDOS_RE = re.compile(
@@ -217,6 +239,7 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
     by_id = {release["id"]: release for release in payload["releases"]}
     zeta = by_id["zeta23"]["counts"]
     three = by_id["3sum-apsp"]["counts"]
+    eth = by_id["eth"]["counts"]
     flt = by_id["fermat-last-theorem"]["counts"]
     totals = payload["counts"]
     return [
@@ -226,9 +249,11 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
         f"3sum-apsp: {three['lean_files']} Lean files.",
         f"3sum-apsp: {three['headline_theorems']} headline theorems in EndStatement.",
         f"3sum-apsp: {three['paper_statement_theorems']} theorem names in the paper-statements comparator.",
+        f"eth: {eth['lean_files']} Lean files.",
+        f"eth: {eth['headline_theorems']} headline theorems in the comparator configuration.",
         f"fermat-last-theorem: {flt['lean_files']} Lean files.",
         f"fermat-last-theorem: {flt['theorem_files']} theorem files.",
-        f"fermat-last-theorem: {flt['proof_files']} proof files.",
+        f"fermat-last-theorem: {flt['proof_files']} P2M files.",
         f"fermat-last-theorem: {flt['definition_files']} definition files.",
         f"All releases: {totals['lean_files']} Lean files.",
         f"All releases: {totals['new_results']} new results.",
@@ -409,6 +434,69 @@ def _three_notes() -> list[str]:
     ]
 
 
+def _eth_notes() -> list[str]:
+    return [
+        (
+            "Upstream file eth/README.md: a deterministic algorithm for 3-SAT on n variables in time "
+            "2^{o(n)}. That file says this refutes the Exponential Time Hypothesis. It says the result "
+            "is purely asymptotic and says nothing about formulas in practice, and it states a #3-SAT "
+            "counting bound of 2^{O(n log log n / √log n)}."
+        ),
+        (
+            "MainResults.lean defines ETH as s₃ > 0 and ETHIsFalse as its negation. It defines "
+            "MainTheorem as one finite-alphabet Mathlib multi-stack Turing machine and one constant, "
+            "both chosen before k and the formula, that count satisfying assignments of the k-CNF "
+            "formulas the file names, inside the step bound the file states. The file says a "
+            "random-access simulation and formula rewriting are not part of the Lean statements."
+        ),
+        (
+            "comparator.json names MainResults.ethIsFalse and MainResults.mainTheorem. "
+            "Challenge.lean states those two entries with sorry. eth/README.md names the axioms "
+            "propext, Classical.choice, and Quot.sound, and pins Lean v4.33.1 with the matching Mathlib. "
+            + CHECK_WORDING
+        ),
+    ]
+
+
+def _require_markers(text: str, markers: tuple[str, ...], label: str) -> None:
+    missing = [marker for marker in markers if marker not in text]
+    if missing:
+        raise AtlasError(f"{label} is missing {missing[0]}")
+
+
+def require_eth_lean(payload: dict[str, Any]) -> None:
+    """Reject an eth release with no Lean files, or a snapshot that dropped eth."""
+    releases = payload.get("releases")
+    if not isinstance(releases, list):
+        raise AtlasError("Anthropic snapshot is missing eth")
+    eth = next((item for item in releases if isinstance(item, dict) and item.get("id") == "eth"), None)
+    if not isinstance(eth, dict):
+        raise AtlasError("Anthropic snapshot is missing eth")
+    counts = eth.get("counts")
+    lean = counts.get("lean_files") if isinstance(counts, dict) else None
+    files = eth.get("statement_files")
+    has_lean = isinstance(files, list) and any(
+        isinstance(item, dict) and str(item.get("path", "")).endswith(".lean") for item in files
+    )
+    if isinstance(lean, bool) or not isinstance(lean, int) or lean <= 0 or not has_lean:
+        raise AtlasError("eth release is missing Lean files")
+
+
+def _reject_eth_claim_words(release: dict[str, Any]) -> None:
+    parts = [str(release.get("title") or ""), str(release.get("statement") or "")]
+    notes = release.get("scope_notes") or []
+    if isinstance(notes, list):
+        parts.extend(str(note) for note in notes)
+    gaps = release.get("gaps") or []
+    if isinstance(gaps, list):
+        for gap in gaps:
+            if isinstance(gap, dict):
+                parts.append(str(gap.get("label") or ""))
+    hits = claim_word_hits("\n".join(parts))
+    if hits:
+        raise AtlasError(f"eth release uses a claim word: {hits[0]}")
+
+
 def assemble(
     fm_paths: list[str],
     flt_paths: list[str],
@@ -436,6 +524,12 @@ def assemble(
         "fm:3sum-apsp/README.md",
         "fm:3sum-apsp/comparator-endstatement.json",
         "fm:3sum-apsp/comparator-paperstatements.json",
+        "fm:eth/LICENSE",
+        "fm:eth/README.md",
+        "fm:eth/lean-toolchain",
+        "fm:eth/comparator.json",
+        "fm:eth/MainResults.lean",
+        "fm:eth/Challenge.lean",
         "flt:LICENSE",
         "flt:README.md",
         "flt:lean-toolchain",
@@ -456,9 +550,11 @@ def assemble(
 
     zeta_paths = [path for path in fm_paths if path.startswith("zeta23/")]
     three_paths = [path for path in fm_paths if path.startswith("3sum-apsp/")]
+    eth_paths = [path for path in fm_paths if path.startswith("eth/")]
     zeta_lean = [path for path in zeta_paths if path.endswith(".lean")]
     three_lean = [path for path in three_paths if path.endswith(".lean")]
-    if not zeta_lean or not three_lean:
+    eth_lean = [path for path in eth_paths if path.endswith(".lean")]
+    if not zeta_lean or not three_lean or not eth_lean:
         raise AtlasError("formal-math is missing Lean files for a pinned project")
 
     headline = _theorem_names(_load_json(files["fm:zeta23/comparator.json"], "comparator.json"), "comparator.json")
@@ -473,6 +569,49 @@ def assemble(
     paper_names = _theorem_names(
         _load_json(files["fm:3sum-apsp/comparator-paperstatements.json"], "comparator-paperstatements.json"),
         "comparator-paperstatements.json",
+    )
+    eth_config = _load_json(files["fm:eth/comparator.json"], "eth comparator.json")
+    eth_names = _theorem_names(eth_config, "eth comparator.json")
+    if eth_names != list(ETH_HEADLINE):
+        raise AtlasError(f"eth comparator theorems are {eth_names}")
+    eth_axioms = eth_config.get("permitted_axioms")
+    if eth_axioms != list(ETH_AXIOMS):
+        raise AtlasError(f"eth comparator axioms are {eth_axioms}")
+    for required in (
+        "eth/README.md",
+        "eth/MainResults.lean",
+        "eth/Challenge.lean",
+        "eth/Solution.lean",
+        "eth/comparator.json",
+        "eth/LICENSE",
+        "eth/lean-toolchain",
+        "eth/paper.pdf",
+    ):
+        if required not in fm_paths:
+            raise AtlasError(f"formal-math is missing {required}")
+    _require_markers(
+        files["fm:eth/README.md"],
+        (
+            "Exponential Time Hypothesis (ETH)",
+            "refutes the Exponential Time Hypothesis",
+            "purely asymptotic",
+            "MainResults.lean",
+            "ETHIsFalse",
+            "MainTheorem",
+            ETH_ASYMPTOTIC,
+            ETH_DISCOVERY,
+        ),
+        "eth README",
+    )
+    _require_markers(
+        files["fm:eth/MainResults.lean"],
+        ("def ETH : Prop", "def ETHIsFalse", "def MainTheorem", "not part of the Lean statements"),
+        "eth MainResults.lean",
+    )
+    _require_markers(
+        files["fm:eth/Challenge.lean"],
+        ("theorem MainResults.ethIsFalse", "theorem MainResults.mainTheorem", "sorry"),
+        "eth Challenge.lean",
     )
     flt_counts = classify_flt(flt_paths)
     if "Theorems/Thm_fermat_last_theorem.lean" not in flt_paths:
@@ -494,6 +633,7 @@ def assemble(
 
     zeta_toolchain = files["fm:zeta23/lean-toolchain"].strip()
     three_toolchain = files["fm:3sum-apsp/lean-toolchain"].strip()
+    eth_toolchain = files["fm:eth/lean-toolchain"].strip()
     flt_toolchain = files["flt:lean-toolchain"].strip()
     flt_yaml = files["flt:formalization.yaml"]
     axiom_match = re.findall(r"propext|Classical\.choice|Quot\.sound", flt_yaml)
@@ -512,6 +652,7 @@ def assemble(
     root_license = _license_record(FORMAL_MATH_WEB, fm_commit, "LICENSE", files["fm:LICENSE"])
     zeta_license = _license_record(FORMAL_MATH_WEB, fm_commit, "zeta23/LICENSE", files["fm:zeta23/LICENSE"])
     three_license = _license_record(FORMAL_MATH_WEB, fm_commit, "3sum-apsp/LICENSE", files["fm:3sum-apsp/LICENSE"])
+    eth_license = _license_record(FORMAL_MATH_WEB, fm_commit, "eth/LICENSE", files["fm:eth/LICENSE"])
     flt_license = _license_record(FLT_WEB, flt_commit, "LICENSE", files["flt:LICENSE"])
 
     releases = [
@@ -630,6 +771,73 @@ def assemble(
             ],
         },
         {
+            "id": "eth",
+            "kind": "new-result",
+            "kind_label": "New result",
+            "title": "A 2^{o(n)} Time Algorithm for 3-SAT",
+            "statement": ETH_STATEMENT,
+            "repo": FORMAL_MATH_WEB,
+            "commit": fm_commit,
+            "commit_date": fm_date,
+            "commit_subject": fm_subject,
+            "path": "eth",
+            "tree_url": tree_url(FORMAL_MATH_WEB, fm_commit, "eth"),
+            "license": "Apache-2.0",
+            "license_files": [root_license, eth_license],
+            "lean_toolchain": eth_toolchain,
+            "paper": None,
+            "announcement": None,
+            "announcement_date": None,
+            "tag": None,
+            "counts": {
+                "lean_files": len(eth_lean),
+                "headline_theorems": len(eth_names),
+            },
+            "headline_theorems": eth_names,
+            "xi_prime_theorems": [],
+            "statement_files": [
+                {
+                    "path": "eth/MainResults.lean",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/MainResults.lean"),
+                    "role": "headline statements",
+                },
+                {
+                    "path": "eth/README.md",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/README.md"),
+                    "role": "project readme",
+                },
+                {
+                    "path": "eth/Challenge.lean",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/Challenge.lean"),
+                    "role": "comparator statements",
+                },
+                {
+                    "path": "eth/Solution.lean",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/Solution.lean"),
+                    "role": "comparator solution module",
+                },
+                {
+                    "path": "eth/comparator.json",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/comparator.json"),
+                    "role": "headline comparator configuration",
+                },
+                {
+                    "path": "eth/paper.pdf",
+                    "url": blob_url(FORMAL_MATH_WEB, fm_commit, "eth/paper.pdf"),
+                    "role": "paper",
+                },
+            ],
+            "axioms": list(eth_axioms),
+            "scope_notes": _eth_notes(),
+            "gaps": [
+                {
+                    "id": "eth-usual-machine",
+                    "status": "NOTED",
+                    "label": ETH_GAP_LABEL,
+                }
+            ],
+        },
+        {
             "id": "fermat-last-theorem",
             "kind": "formalization",
             "kind_label": "Formalization",
@@ -734,16 +942,17 @@ def assemble(
 
 
 def assert_anthropic(payload: dict[str, Any]) -> None:
+    require_eth_lean(payload)
     releases = payload["releases"]
     ids = [release["id"] for release in releases]
     if ids != list(RELEASE_IDS):
         raise AtlasError(f"Anthropic releases are {ids}")
     kinds = [release["kind"] for release in releases]
-    if kinds != ["new-result", "new-result", "formalization"]:
+    if kinds != ["new-result", "new-result", "new-result", "formalization"]:
         raise AtlasError(f"Anthropic kinds are {kinds}")
-    if payload["counts"]["releases"] != 3:
+    if payload["counts"]["releases"] != 4:
         raise AtlasError("Anthropic release count drifted")
-    if payload["counts"]["new_results"] != 2 or payload["counts"]["formalizations"] != 1:
+    if payload["counts"]["new_results"] != 3 or payload["counts"]["formalizations"] != 1:
         raise AtlasError("Anthropic kind counts drifted")
     lean_files = sum(release["counts"]["lean_files"] for release in releases)
     if payload["counts"]["lean_files"] != lean_files:
@@ -771,6 +980,13 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
             if not gap.get("id") or not gap.get("status") or not gap.get("label"):
                 raise AtlasError(f"{release['id']} gap is incomplete")
     by_id = {release["id"]: release for release in releases}
+    _reject_eth_claim_words(by_id["eth"])
+    if by_id["eth"]["kind"] != "new-result":
+        raise AtlasError("eth release is not marked as a new result")
+    if by_id["eth"]["statement"] != ETH_STATEMENT or by_id["eth"]["gaps"][0]["label"] != ETH_GAP_LABEL:
+        raise AtlasError("eth wording drifted")
+    if "Lean formalization in the upstream repo" not in by_id["eth"]["statement"]:
+        raise AtlasError("eth statement dropped the formalization wording")
     three_gap = by_id["3sum-apsp"]["gaps"][0]
     if three_gap["status"] != "NOT FORMALIZED" or three_gap["label"] != NOT_FORMALIZED_LABEL:
         raise AtlasError("3sum gap wording drifted")
@@ -780,7 +996,7 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
     flt_commit = payload["source"]["also"][0]["commit"]
     if fm_commit != PINNED_FORMAL_MATH_COMMIT or flt_commit != PINNED_FLT_COMMIT:
         return
-    if payload["skipped_directories"] != ["eth"]:
+    if payload["skipped_directories"] != []:
         raise AtlasError(f"pinned formal-math tree has extra directories: {payload['skipped_directories']}")
     if any(identifiers[key] for key in ("erdos", "oeis", "stacks")):
         raise AtlasError(f"pinned Anthropic identifiers are not empty: {identifiers}")
@@ -790,6 +1006,18 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
     three = by_id["3sum-apsp"]["counts"]
     if (three["lean_files"], three["headline_theorems"]) != (434, 5):
         raise AtlasError(f"pinned 3sum-apsp counts are {three}")
+    eth = by_id["eth"]["counts"]
+    if (eth["lean_files"], eth["headline_theorems"]) != (ETH_LEAN_FILES, len(ETH_HEADLINE)):
+        raise AtlasError(f"pinned eth counts are {eth}")
+    if by_id["eth"]["headline_theorems"] != list(ETH_HEADLINE):
+        raise AtlasError(f"pinned eth theorems are {by_id['eth']['headline_theorems']}")
+    if by_id["eth"]["axioms"] != list(ETH_AXIOMS):
+        raise AtlasError(f"pinned eth axioms are {by_id['eth'].get('axioms')}")
+    if by_id["eth"]["lean_toolchain"] != ETH_TOOLCHAIN:
+        raise AtlasError("pinned eth toolchain drifted")
+    eth_statement_paths = [item["path"] for item in by_id["eth"]["statement_files"]]
+    if "eth/MainResults.lean" not in eth_statement_paths or "eth/README.md" not in eth_statement_paths:
+        raise AtlasError(f"pinned eth statement files are {eth_statement_paths}")
     flt = by_id["fermat-last-theorem"]["counts"]
     if (flt["lean_files"], flt["theorem_files"], flt["proof_files"], flt["definition_files"]) != (
         60478,
@@ -847,6 +1075,12 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
         "fm:3sum-apsp/comparator-paperstatements.json": _read(
             fm_repo / "3sum-apsp" / "comparator-paperstatements.json"
         ),
+        "fm:eth/LICENSE": _read(fm_repo / "eth" / "LICENSE"),
+        "fm:eth/README.md": _read(fm_repo / "eth" / "README.md"),
+        "fm:eth/lean-toolchain": _read(fm_repo / "eth" / "lean-toolchain"),
+        "fm:eth/comparator.json": _read(fm_repo / "eth" / "comparator.json"),
+        "fm:eth/MainResults.lean": _read(fm_repo / "eth" / "MainResults.lean"),
+        "fm:eth/Challenge.lean": _read(fm_repo / "eth" / "Challenge.lean"),
         "flt:LICENSE": _read(flt_repo / "LICENSE"),
         "flt:README.md": _read(flt_repo / "README.md"),
         "flt:lean-toolchain": _read(flt_repo / "lean-toolchain"),
@@ -854,7 +1088,7 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
     }
     fm_paths = list_paths(fm_repo)
     flt_paths = list_paths(flt_repo)
-    for prefix, expected in (("zeta23/", None), ("3sum-apsp/", None)):
+    for prefix, expected in (("zeta23/", None), ("3sum-apsp/", None), ("eth/", None)):
         listed = [path for path in fm_paths if path.startswith(prefix) and path.endswith(".lean")]
         on_disk = sorted(
             path.relative_to(fm_repo).as_posix()

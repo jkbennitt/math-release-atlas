@@ -946,6 +946,14 @@ def ancestry_self_test() -> list[str]:
     return failures
 
 
+def _atlas_error(func) -> str | None:
+    try:
+        func()
+    except AtlasError as exc:
+        return str(exc)
+    return None
+
+
 def anthropic_self_test() -> list[str]:
     """Identifier matching ignores camel-case fragments, and the formalization badge stays separate."""
     failures: list[str] = []
@@ -1049,6 +1057,52 @@ def anthropic_self_test() -> list[str]:
         failures.append("Anthropic source page does not label the source of each quotation")
     if "percolation" in page.lower():
         failures.append("Anthropic source page names percolation")
+    recorded = read_json(ANTHROPIC_JSON)
+    try:
+        assert_anthropic(recorded)
+    except AtlasError as exc:
+        failures.append(f"recorded Anthropic snapshot was rejected: {exc}")
+    else:
+        if recorded["skipped_directories"] != []:
+            failures.append(f"recorded skip list is not empty: {recorded['skipped_directories']}")
+        eth_release = next(item for item in recorded["releases"] if item["id"] == "eth")
+        if eth_release["counts"]["lean_files"] <= 0:
+            failures.append("recorded eth release is missing Lean files")
+        missing_count = copy.deepcopy(recorded)
+        missing_eth = next(item for item in missing_count["releases"] if item["id"] == "eth")
+        missing_eth["counts"]["lean_files"] = 0
+        missing_message = _atlas_error(lambda: assert_anthropic(missing_count))
+        if missing_message is None or "missing Lean files" not in missing_message:
+            failures.append(f"eth release with no Lean-file count was accepted: {missing_message}")
+        missing_paths = copy.deepcopy(recorded)
+        stripped = next(item for item in missing_paths["releases"] if item["id"] == "eth")
+        stripped["statement_files"] = [
+            item for item in stripped["statement_files"] if not str(item["path"]).endswith(".lean")
+        ]
+        path_message = _atlas_error(lambda: assert_anthropic(missing_paths))
+        if path_message is None or "missing Lean files" not in path_message:
+            failures.append(f"eth release with no Lean statement file was accepted: {path_message}")
+        for skipped in (["notes"], ["eth"]):
+            extra = copy.deepcopy(recorded)
+            extra["skipped_directories"] = skipped
+            extra_message = _atlas_error(lambda skipped_payload=extra: assert_anthropic(skipped_payload))
+            if extra_message is None or "extra directories" not in extra_message:
+                failures.append(f"eth payload with skipped {skipped} was accepted: {extra_message}")
+    commit = "16a5ce41304fcdaea4e0be7c132e1c361dc26da5"
+    lean_href = f"https://github.com/anthropics/formal-math/blob/{commit}/eth/MainResults.lean"
+    tree_href = f"https://github.com/anthropics/formal-math/tree/{commit}/eth"
+    chip_row = (
+        '<td data-label="Source">'
+        f'<a class="chip direct-upstream" href="{lean_href}">Anthropic</a>'
+        "</td>"
+    )
+    if atlaslib.source_chip_href(chip_row) != lean_href or not atlaslib.pinned_blob_file(lean_href, commit):
+        failures.append("Anthropic source chip did not keep the Lean file")
+    if atlaslib.pinned_blob_file(tree_href, commit):
+        failures.append("a tree URL was accepted as a Lean file or README")
+    readme_href = f"https://github.com/anthropics/formal-math/blob/{commit}/eth/README.md"
+    if not atlaslib.pinned_blob_file(readme_href, commit):
+        failures.append("a README blob was rejected as a source link")
     social = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
     if (
         "source.preview.fragment" not in social

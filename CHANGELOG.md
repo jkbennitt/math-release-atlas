@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.8
+
+- Anthropic's eth release is in the catalogue: a Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm for 3-SAT, from eth/README.md and eth/MainResults.lean at formal-math 16a5ce41304f. The upstream README says this refutes the Exponential Time Hypothesis. MainResults.lean states that claim for Mathlib multi-stack Turing machines and says a random-access simulation and formula rewriting are not part of the Lean statements. The release is tagged computation-hardness from that file. At this commit the formal-math skip list is empty. Each Anthropic row's Source link goes to its Lean file at the pinned commit.
+
 ## 0.4.7
 
 - OpenAI's comparator-challenge families are a Lean challenge statement. That segment's legend entry is "Lean challenge only". A release whose notes say some claims are not formalized stays "partly in Lean", including on a narrow screen. The two use different swatches, and the legend lists only the segments that appear. OpenAI's caption stays "135 result in Lean · 107 challenge only · 130 paper only".

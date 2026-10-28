@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 import { anthropicLeanRank, atlas, dateRange, formatIso, shortSha, type AlphaProofRecord } from "../lib/atlas";
 import { lensChoices, subjectChoices } from "../lib/filters";
 import { leanLabel, leanRank } from "../lib/lean";
-import { gapPlainStatus, openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
+import { anthropicStatementHref, gapPlainStatus, openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
 import shareDocument from "../generated/share.json";
 
 interface ShareSegment {
@@ -290,7 +290,8 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
         ))}
         {anthropic.releases.map((release) => {
           const dated = release.paper?.v1_submitted ?? release.announcement_date ?? release.commit_date;
-          const titleHref = release.paper?.url ?? release.tree_url;
+          const statementHref = anthropicStatementHref(release);
+          const titleHref = release.paper?.url ?? statementHref;
           return (
             <tr
               id={`an-${release.id}`}
@@ -306,7 +307,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
               data-manuscripts={release.paper ? 1 : 0}
             >
               <td data-label="Source">
-                <a class="chip direct-upstream" href={release.tree_url}>{sourceChip("anthropic")}</a>
+                <a class="chip direct-upstream" href={statementHref}>{sourceChip("anthropic")}</a>
               </td>
               <td class="id" data-label="ID" title={release.id}>{release.id}</td>
               <td data-label="Result">

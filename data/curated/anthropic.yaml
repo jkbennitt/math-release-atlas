@@ -9,6 +9,11 @@ records:
       - tag: computation-hardness
         why: "The deposited EndStatement file states word-RAM running-time claims for subquadratic 3SUM and subcubic APSP."
         source: "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/3sum-apsp/EndStatement.lean"
+  "eth":
+    lenses:
+      - tag: computation-hardness
+        why: "The deposited MainResults file defines ETHIsFalse as the negation of ETH for deterministic 3-SAT, and MainTheorem as a counting bound for k-CNF formulas on a Mathlib Turing machine."
+        source: "https://github.com/anthropics/formal-math/blob/16a5ce41304fcdaea4e0be7c132e1c361dc26da5/eth/MainResults.lean"
   "fermat-last-theorem":
     lenses:
       - tag: number-theory
