@@ -45,7 +45,7 @@ PINNED_ZETA_TAG = "v1.0"
 PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
 # SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
 # Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "361eb9f6289829e2330ca53b427b9594d9dc84daf74feb1f10e7ea0ca36ca24f"
+PINNED_ANTHROPIC_DIGEST = "720e827f3d36fcae84fa1f8912b10a9c2d279c388b3eb7bfb371f734a56573d1"
 
 RELEASE_IDS = ("zeta23", "3sum-apsp", "eth", "fermat-last-theorem")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp", "eth")
@@ -113,7 +113,6 @@ QUOTATIONS = (
     {"text": ZETA_ARXIV_COMMENT, "source": ZETA_QUOTE_SOURCE},
     {"text": THREESUM_DISCOVERY, "source": THREESUM_QUOTE_SOURCE},
     {"text": THREESUM_RESPONSIBILITY, "source": THREESUM_QUOTE_SOURCE},
-    {"text": ETH_ASYMPTOTIC, "source": ETH_QUOTE_SOURCE},
     {"text": ETH_DISCOVERY, "source": ETH_QUOTE_SOURCE},
 )
 
@@ -254,7 +253,7 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
         f"eth: {eth['headline_theorems']} headline theorems in the comparator configuration.",
         f"fermat-last-theorem: {flt['lean_files']} Lean files.",
         f"fermat-last-theorem: {flt['theorem_files']} theorem files.",
-        f"fermat-last-theorem: {flt['proof_files']} proof files.",
+        f"fermat-last-theorem: {flt['proof_files']} P2M files.",
         f"fermat-last-theorem: {flt['definition_files']} definition files.",
         f"All releases: {totals['lean_files']} Lean files.",
         f"All releases: {totals['new_results']} new results.",
