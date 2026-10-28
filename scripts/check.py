@@ -2496,10 +2496,13 @@ def preview_self_test() -> list[str]:
     share_problems = atlaslib.check_home_share(share_html, catalog)
     if share_problems:
         failures.append(f"home share fixture was rejected: {share_problems}")
-    mutated = share_html.replace(">65%<", ">75%<", 1)
+    shown_percent = openai_row["percent"]
+    mutated = share_html.replace(f">{shown_percent}<", ">75%<", 1)
     mutated_problems = atlaslib.check_home_share(mutated, catalog)
-    if not any("65%" in item and "75%" in item for item in mutated_problems):
-        failures.append(f"a share percent mutated from 65% to 75% was accepted: {mutated_problems}")
+    if mutated == share_html or not any(shown_percent in item and "75%" in item for item in mutated_problems):
+        failures.append(
+            f"a share percent mutated from {shown_percent} to 75% was accepted: {mutated_problems}"
+        )
     proved_share = share_html.replace("paper only", "paper only proved", 1)
     if not any("claim word" in item for item in atlaslib.check_home_share(proved_share, catalog)):
         failures.append("a claim word in the home share section was accepted")

@@ -322,8 +322,8 @@ reads pinned paths and the statement files fetched for each release. It does
 not read every Lean file in the Fermat repository. At these commits that scan
 finds no Erdős, OEIS, or Stacks ids, and the cross-source page says none are
 shared with OpenAI Math or AlphaProof Nexus. A directory that is not one of
-the three releases is recorded as skipped. At these commits that list is
-empty, and the page does not render an empty section for it.
+the three releases is recorded as skipped. At the recorded formal-math commit
+that list is eth, and the page names it without giving it a release section.
 
 ## License
 

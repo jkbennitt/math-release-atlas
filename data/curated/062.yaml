@@ -2,7 +2,7 @@ id: "062"
 lenses:
   - tag: algebraic-geometry
     why: "The upstream overview classifies smooth connected complex projective contact manifolds in this entry."
-    source: "https://github.com/openai/math/blob/1581d4cbdd69a0faf34b2089614fe2a814316a6a/overview.tex#L198"
+    source: "https://github.com/openai/math/blob/7ef5c0cc5ca4b0e072b7a050fca09ab24bc6fa3a/overview.tex#L198"
 community:
   status: claimed
   evidence: []
