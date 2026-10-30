@@ -26,6 +26,7 @@ from atlaslib import (
     AtlasError,
     claim_word_hits,
     git,
+    load_upstream_pins,
     materialize_upstream,
     read_json,
     run_git,
@@ -38,14 +39,6 @@ FORMAL_MATH_WEB = "https://github.com/anthropics/formal-math"
 FLT_URL = "https://github.com/anthropics/fermats-last-theorem.git"
 FLT_WEB = "https://github.com/anthropics/fermats-last-theorem"
 ANTHROPIC_SOURCE_ID = "anthropic"
-
-PINNED_FORMAL_MATH_COMMIT = "16a5ce41304fcdaea4e0be7c132e1c361dc26da5"
-PINNED_FLT_COMMIT = "6e837e75355538c7f80bab5b956861e86c4eacc2"
-PINNED_ZETA_TAG = "v1.0"
-PINNED_ZETA_TAG_COMMIT = "3635e74826a4c1fcece7d1cd2b6fa75e43a00510"
-# SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
-# Filled after the first build from those commits and checked on every later build.
-PINNED_ANTHROPIC_DIGEST = "720e827f3d36fcae84fa1f8912b10a9c2d279c388b3eb7bfb371f734a56573d1"
 
 RELEASE_IDS = ("zeta23", "3sum-apsp", "eth", "fermat-last-theorem")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp", "eth")
@@ -941,7 +934,7 @@ def assemble(
     return payload
 
 
-def assert_anthropic(payload: dict[str, Any]) -> None:
+def assert_anthropic(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
     require_eth_lean(payload)
     releases = payload["releases"]
     ids = [release["id"] for release in releases]
@@ -994,7 +987,9 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
         raise AtlasError("Fermat release is not marked as a formalization")
     fm_commit = payload["source"]["commit"]
     flt_commit = payload["source"]["also"][0]["commit"]
-    if fm_commit != PINNED_FORMAL_MATH_COMMIT or flt_commit != PINNED_FLT_COMMIT:
+    loaded = pins if pins is not None else load_upstream_pins()
+    anthropic_pin = loaded["anthropic"]
+    if fm_commit != anthropic_pin["commit"] or flt_commit != anthropic_pin["flt_commit"]:
         return
     if payload["skipped_directories"] != []:
         raise AtlasError(f"pinned formal-math tree has extra directories: {payload['skipped_directories']}")
@@ -1026,7 +1021,7 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
         1450,
     ):
         raise AtlasError(f"pinned Fermat counts are {flt}")
-    if by_id["zeta23"]["tag"]["commit"] != PINNED_ZETA_TAG_COMMIT:
+    if by_id["zeta23"]["tag"]["commit"] != anthropic_pin["zeta_tag_commit"]:
         raise AtlasError("pinned v1.0 tag peel drifted")
     if by_id["zeta23"]["lean_toolchain"] != "leanprover/lean4:v4.33.0-rc2":
         raise AtlasError("pinned zeta23 toolchain drifted")
@@ -1044,9 +1039,9 @@ def assert_anthropic(payload: dict[str, Any]) -> None:
     ):
         raise AtlasError("pinned zeta wording still says zero-density")
     digest = snapshot_digest(payload)
-    if not PINNED_ANTHROPIC_DIGEST:
+    if not anthropic_pin["digest"]:
         raise AtlasError(f"fill the pinned Anthropic digest: {digest}")
-    if digest != PINNED_ANTHROPIC_DIGEST:
+    if digest != anthropic_pin["digest"]:
         raise AtlasError(f"pinned Anthropic snapshot digest drifted: {digest}")
 
 
@@ -1058,7 +1053,7 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
     fm_commit = git(fm_repo, "rev-parse", "HEAD").strip()
     flt_commit = git(flt_repo, "rev-parse", "HEAD").strip()
     if tag is None:
-        tag = resolve_tag(FORMAL_MATH_URL, PINNED_ZETA_TAG)
+        tag = resolve_tag(FORMAL_MATH_URL, str(load_upstream_pins()["anthropic"]["zeta_tag"]))
     fm_date, fm_subject = _commit_meta(fm_repo)
     flt_date, flt_subject = _commit_meta(flt_repo)
     files = {
@@ -1113,7 +1108,7 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
 
 
 def fetch_anthropic(fm_commit: str, flt_commit: str) -> dict[str, Any]:
-    tag = resolve_tag(FORMAL_MATH_URL, PINNED_ZETA_TAG)
+    tag = resolve_tag(FORMAL_MATH_URL, str(load_upstream_pins()["anthropic"]["zeta_tag"]))
     with tempfile.TemporaryDirectory(prefix="atlas-anthropic-") as tmp:
         root = Path(tmp)
         fm_repo = root / "formal-math"
@@ -1142,8 +1137,9 @@ def verify_recorded_anthropic() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--formal-math-sha", default=PINNED_FORMAL_MATH_COMMIT)
-    parser.add_argument("--flt-sha", default=PINNED_FLT_COMMIT)
+    pins = load_upstream_pins()
+    parser.add_argument("--formal-math-sha", default=pins["anthropic"]["commit"])
+    parser.add_argument("--flt-sha", default=pins["anthropic"]["flt_commit"])
     args = parser.parse_args()
     payload = fetch_anthropic(args.formal_math_sha, args.flt_sha)
     write_json(ANTHROPIC_JSON, payload)

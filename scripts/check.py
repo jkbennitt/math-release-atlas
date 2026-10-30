@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import ast
+import contextlib
 import copy
 import inspect
+import io
 import json
 import os
 import re
@@ -68,6 +70,7 @@ from atlaslib import (
     load_community_schema,
     check_math_lens_sources,
     load_curated,
+    load_upstream_pins,
     load_status_approvals,
     parse_catalogue_lens,
     _href_is_pinned,
@@ -84,11 +87,67 @@ from atlaslib import (
     require_upstream_ancestor,
     run_git,
     scan_overclaims,
+    snapshot_digest,
     strip_upstream_quotes,
     validate_curated_file,
     verify_recorded_upstream,
 )
 from sync import resolve_remote_sha
+
+
+def report_check_counts(
+    upstream: dict,
+    alphaproof_payload: dict,
+    anthropic_payload: dict,
+    families: dict,
+    curated: dict,
+) -> list[str]:
+    """Print one count per source. A skipped source or an empty walk fails."""
+    failures: list[str] = []
+    family_n = len(upstream.get("families") or [])
+    record_n = len(alphaproof_payload.get("records") or [])
+    release_n = len(anthropic_payload.get("releases") or [])
+    cross = families.get("cross") or {}
+    openai_n = len(cross.get("openai_numbers") or [])
+    apn_n = len(cross.get("alphaproof_numbers") or [])
+    identifiers = cross.get("anthropic_identifiers")
+    if not isinstance(identifiers, dict):
+        identifiers = {}
+        failures.append("cross-source check skipped anthropic")
+    an_n = sum(len(identifiers.get(key) or []) for key in ("erdos", "oeis", "stacks"))
+    examined = sum(1 for item in curated.values() if isinstance(item, dict) and item.get("community"))
+    try:
+        approvals = load_status_approvals(atlaslib.STATUS_APPROVALS_FILE)
+    except AtlasError as exc:
+        approvals = []
+        failures.append(str(exc))
+    print(f"checked openai-math: {family_n}")
+    print(f"checked alphaproof-nexus: {record_n}")
+    print(f"checked anthropic: {release_n}")
+    print(
+        f"checked cross-source: {openai_n} openai numbers, {apn_n} alphaproof numbers, {an_n} anthropic ids"
+    )
+    print(f"checked status-allowlist: {examined} rows, {len(approvals)} approvals")
+    if family_n <= 0:
+        failures.append("openai-math check saw no families")
+    if record_n <= 0:
+        failures.append("alphaproof-nexus check saw no records")
+    if release_n <= 0:
+        failures.append("anthropic check saw no releases")
+    if openai_n <= 0 or apn_n <= 0:
+        failures.append("cross-source check saw no rows")
+    if examined <= 0:
+        failures.append("status allowlist check saw no rows")
+    needing = [
+        family_id
+        for family_id, item in curated.items()
+        if isinstance(item, dict)
+        and isinstance(item.get("community"), dict)
+        and item["community"].get("status") in atlaslib.STATUSES_NEEDING_EVIDENCE
+    ]
+    if not approvals and needing:
+        failures.append("empty status allowlist was used while a row needs approval")
+    return failures
 
 
 def check_source() -> list[str]:
@@ -103,21 +162,33 @@ def check_source() -> list[str]:
         alphaproof_payload = read_json(ALPHAPROOF_JSON)
         anthropic_payload = read_json(ANTHROPIC_JSON)
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
-        assert_counts(upstream)
-        assert_upstream_digest(upstream)
-        assert_counts(families)
-        assert_alphaproof(alphaproof_payload)
-        assert_anthropic(anthropic_payload)
+        pins = load_upstream_pins()
+        assert_counts(upstream, pins)
+        assert_upstream_digest(upstream, pins)
+        assert_counts(families, pins)
+        assert_alphaproof(alphaproof_payload, pins)
+        if alphaproof_payload["source"]["commit"] != pins["alphaproof-nexus"]["commit"]:
+            raise AtlasError("alphaproof-nexus checks did not run for the pin in upstream.json")
+        assert_anthropic(anthropic_payload, pins)
+        anthropic_pin = pins["anthropic"]
+        anthropic_source = anthropic_payload["source"]
+        flt_commit = str((anthropic_source.get("also") or [{}])[0].get("commit", ""))
+        if anthropic_source.get("commit") != anthropic_pin["commit"] or flt_commit != anthropic_pin["flt_commit"]:
+            raise AtlasError("anthropic checks did not run for the pins in upstream.json")
         assert_cross_source(
             upstream["upstream"]["commit"],
             alphaproof_payload["source"]["commit"],
             upstream["families"],
             alphaproof_payload["records"],
             families["cross"],
+            pins,
         )
         if read_json(SOURCES_JSON) != extras["sources"]:
             raise AtlasError("sources.json does not match the source registry")
         assert_merged_catalogue(upstream, families, curated, cautions, extras)
+        failures.extend(
+            report_check_counts(upstream, alphaproof_payload, anthropic_payload, families, curated)
+        )
     except AtlasError as exc:
         failures.append(str(exc))
         failures.extend(check_authored())
@@ -1091,7 +1162,7 @@ def anthropic_self_test() -> list[str]:
             extra_message = _atlas_error(lambda skipped_payload=extra: assert_anthropic(skipped_payload))
             if extra_message is None or "extra directories" not in extra_message:
                 failures.append(f"eth payload with skipped {skipped} was accepted: {extra_message}")
-    commit = "16a5ce41304fcdaea4e0be7c132e1c361dc26da5"
+    commit = load_upstream_pins()["anthropic"]["commit"]
     lean_href = f"https://github.com/anthropics/formal-math/blob/{commit}/eth/MainResults.lean"
     tree_href = f"https://github.com/anthropics/formal-math/tree/{commit}/eth"
     chip_row = (
@@ -2085,6 +2156,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     lens_pin_error = lens_pin_self_test()
     if lens_pin_error:
         failures.append(lens_pin_error)
+    pin_error = pin_derivation_self_test()
+    if pin_error:
+        failures.append(pin_error)
     if not CURATED_DIR.is_dir():
         failures.append("curated directory is missing")
     failures.extend(preview_self_test())
@@ -2757,6 +2831,55 @@ def lens_pin_self_test() -> str | None:
     expected_line = f"https://github.com/openai/math/blob/{new}/overview.tex#L40"
     if shifted_lens != expected_line or shifted_related != expected_line:
         return f"merge did not recompute the overview line: {shifted_lens}"
+    two = {
+        "generated_at": "2026-01-01T00:00:00+00:00",
+        "upstream": {},
+        "counts": {},
+        "areas": [],
+        "families": [
+            {"id": "001", "upstream_sha": new, "overview_line": 40, "citations": []},
+            {"id": "002", "upstream_sha": new, "overview_line": 88, "citations": []},
+        ],
+    }
+    pointed = {
+        "001": {
+            "id": "001",
+            "lenses": [{"tag": "analysis", "why": "The section names it.", "source": source}],
+            "related": [{"to": "002", "kind": "shared-topic", "why": "Same file.", "source": source}],
+            "community": None,
+            "caution": None,
+        }
+    }
+    pointed_merge = merge_data(two, pointed, {})
+    pointed_lens = pointed_merge["families"][0]["lenses"][0]["source"]
+    pointed_related = pointed_merge["families"][0]["related"][0]["source"]
+    if not pointed_lens.endswith("#L40"):
+        return f"a lens did not keep its own overview line: {pointed_lens}"
+    if not pointed_related.endswith("#L88"):
+        return f"a related item did not use the target overview line: {pointed_related}"
+    range_source = f"https://github.com/openai/math/blob/{old}/overview.tex#L10-L12"
+    ranged = {
+        "001": {
+            "id": "001",
+            "lenses": [{"tag": "analysis", "why": "The section names it.", "source": range_source}],
+            "related": [],
+            "community": None,
+            "caution": None,
+        }
+    }
+    ranged_merge = merge_data(two, ranged, {})
+    ranged_lens = ranged_merge["families"][0]["lenses"][0]["source"]
+    if not ranged_lens.endswith("#L40-L42"):
+        return f"a line range did not shift both ends: {ranged_lens}"
+    missing_target = copy.deepcopy(pointed)
+    missing_target["001"]["related"][0]["to"] = "009"
+    try:
+        merge_data(two, missing_target, {})
+    except AtlasError as exc:
+        if "009" not in str(exc):
+            return f"a missing related target reported {exc}"
+    else:
+        return "a related item with no target family was accepted"
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         same = root / "same"
@@ -2792,7 +2915,6 @@ def lens_pin_self_test() -> str | None:
         note = {
             "164": {
                 "lenses": [{"tag": "combinatorics", "source": drifted}],
-                "related": [{"to": "001", "kind": "shared-topic", "why": "Same file.", "source": drifted}],
             }
         }
         try:
@@ -2800,9 +2922,92 @@ def lens_pin_self_test() -> str | None:
         except AtlasError as exc:
             return f"a drifted resultentry line was rejected: {exc}"
         lens_source = shifted["164"]["lenses"][0]["source"]
-        related_source = shifted["164"]["related"][0]["source"]
-        if not lens_source.endswith("#L2") or not related_source.endswith("#L2"):
+        if not lens_source.endswith("#L2"):
             return f"a drifted resultentry line was not recomputed: {lens_source}"
+        wrong_family = {
+            "164": {
+                "related": [{"to": "001", "kind": "shared-topic", "why": "Same file.", "source": drifted}],
+            }
+        }
+        try:
+            assert_curated_lens_paths(edited, _git(edited, "rev-parse", "HEAD"), wrong_family)
+        except AtlasError as exc:
+            if "001" not in str(exc):
+                return f"a related item used the wrong resultentry: {exc}"
+        else:
+            return "a related item was anchored to its own family"
+        both = root / "both"
+        _init_repo(both)
+        both_cited = _commit_file(both, "overview.tex", "\\resultentry{164}{title}\n")
+        (both / "overview.tex").write_text(
+            "% added\n\\resultentry{164}{title}\n\n\\resultentry{001}{title}\n",
+            encoding="utf-8",
+        )
+        _git(both, "add", "overview.tex")
+        _git(both, "-c", "commit.gpgsign=false", "commit", "-m", "edit")
+        both_drifted = f"https://github.com/openai/math/blob/{both_cited}/overview.tex#L1"
+        both_note = {
+            "164": {
+                "lenses": [{"tag": "combinatorics", "source": both_drifted}],
+                "related": [{"to": "001", "kind": "shared-topic", "why": "Same file.", "source": both_drifted}],
+            }
+        }
+        try:
+            both_shifted = assert_curated_lens_paths(both, _git(both, "rev-parse", "HEAD"), both_note)
+        except AtlasError as exc:
+            return f"a related target resultentry was rejected: {exc}"
+        if not both_shifted["164"]["lenses"][0]["source"].endswith("#L2"):
+            return "a lens did not stay on its own resultentry"
+        if not both_shifted["164"]["related"][0]["source"].endswith("#L4"):
+            return "a related item did not move to the target resultentry"
+        ranged = root / "ranged"
+        _init_repo(ranged)
+        range_cited = _commit_file(ranged, "overview.tex", "\\resultentry{164}{title}\nnext\n")
+        (ranged / "overview.tex").write_text(
+            "% added\n\\resultentry{164}{title}\nnext\n",
+            encoding="utf-8",
+        )
+        _git(ranged, "add", "overview.tex")
+        _git(ranged, "-c", "commit.gpgsign=false", "commit", "-m", "edit")
+        range_url = f"https://github.com/openai/math/blob/{range_cited}/overview.tex#L1-L2"
+        range_note = {
+            "164": {
+                "lenses": [{"tag": "combinatorics", "source": range_url}],
+            }
+        }
+        try:
+            range_shifted = assert_curated_lens_paths(ranged, _git(ranged, "rev-parse", "HEAD"), range_note)
+        except AtlasError as exc:
+            return f"a line range was rejected: {exc}"
+        if not range_shifted["164"]["lenses"][0]["source"].endswith("#L2-L3"):
+            return f"a line range did not shift both ends: {range_shifted['164']['lenses'][0]['source']}"
+        reversed_url = f"https://github.com/openai/math/blob/{range_cited}/overview.tex#L2-L1"
+        try:
+            assert_curated_lens_paths(
+                ranged,
+                _git(ranged, "rev-parse", "HEAD"),
+                {"164": {"lenses": [{"tag": "combinatorics", "source": reversed_url}]}},
+            )
+        except AtlasError as exc:
+            if "not a usable range" not in str(exc):
+                return f"a reversed line range reported {exc}"
+        else:
+            return "a reversed line range was accepted"
+        wide_url = f"https://github.com/openai/math/blob/{range_cited}/overview.tex#L1-L2"
+        wide_repo = root / "wide"
+        _init_repo(wide_repo)
+        wide_cited = _commit_file(wide_repo, "overview.tex", "\\resultentry{164}{title}\n")
+        try:
+            assert_curated_lens_paths(
+                wide_repo,
+                wide_cited,
+                {"164": {"lenses": [{"tag": "combinatorics", "source": wide_url.replace(range_cited, wide_cited)}]}},
+            )
+        except AtlasError as exc:
+            if "past the end" not in str(exc):
+                return f"a range past the end reported {exc}"
+        else:
+            return "a range past the end was accepted"
         head = _git(edited, "rev-parse", "HEAD")
         stale = {
             "families": [
@@ -2892,6 +3097,103 @@ def lens_pin_self_test() -> str | None:
                 return f"a renamed lens path reported {exc}"
         else:
             return "a renamed lens path was accepted"
+    return None
+
+
+def pin_derivation_self_test() -> str | None:
+    """A pin edited in a temp copy of upstream.json is the value the checks read."""
+    recorded = read_json(UPSTREAM_JSON)
+    original = load_upstream_pins()
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "upstream.json"
+        edited = copy.deepcopy(recorded)
+        edited_commit = "c" * 40
+        edited["pins"]["alphaproof-nexus"]["commit"] = edited_commit
+        edited["pins"]["anthropic"]["digest"] = "d" * 64
+        path.write_text(json.dumps(edited), encoding="utf-8")
+        derived = load_upstream_pins(path)
+        if derived["alphaproof-nexus"]["commit"] != edited_commit:
+            return "derived AlphaProof pin did not follow upstream.json"
+        if derived["anthropic"]["digest"] != "d" * 64:
+            return "derived Anthropic digest did not follow upstream.json"
+        if derived["openai-math"]["commit"] != original["openai-math"]["commit"]:
+            return "an unedited OpenAI pin changed"
+        moved = copy.deepcopy(recorded)
+        moved["upstream"]["commit"] = edited_commit
+        moved["pins"]["openai-math"]["commit"] = edited_commit
+        moved_path = Path(tmp) / "moved.json"
+        moved_path.write_text(json.dumps(moved), encoding="utf-8")
+        if load_upstream_pins(moved_path)["openai-math"]["commit"] != edited_commit:
+            return "derived OpenAI pin did not follow upstream.json"
+        changed = copy.deepcopy(recorded)
+        changed["families"][0]["title"] = str(changed["families"][0]["title"]) + " "
+        computed = snapshot_digest(changed)
+        if computed == snapshot_digest(recorded):
+            return "computed digest ignored an edit to upstream.json"
+        if computed == recorded["pins"]["openai-math"]["digest"]:
+            return "computed digest stayed on the pin after the catalogue changed"
+        try:
+            assert_upstream_digest(changed, load_upstream_pins())
+        except AtlasError as exc:
+            if "digest drifted" not in str(exc):
+                return f"an edited catalogue reported {exc}"
+        else:
+            return "an edited catalogue still matched the pin digest"
+        try:
+            assert_cross_source(
+                recorded["upstream"]["commit"],
+                recorded["pins"]["alphaproof-nexus"]["commit"],
+                recorded["families"],
+                [],
+                {"shared": [], "openai_numbers": [{"number": 970, "families": ["021"]}]},
+                derived,
+            )
+        except AtlasError as exc:
+            if "did not run" not in str(exc):
+                return f"an edited pin did not steer the cross-source check: {exc}"
+        else:
+            return "an edited pin was ignored by the cross-source check"
+        dropped = copy.deepcopy(recorded)
+        del dropped["pins"]["alphaproof-nexus"]
+        dropped_path = Path(tmp) / "dropped.json"
+        dropped_path.write_text(json.dumps(dropped), encoding="utf-8")
+        try:
+            load_upstream_pins(dropped_path)
+        except AtlasError as exc:
+            if "alphaproof-nexus is missing from upstream.json" not in str(exc):
+                return f"a missing pin source reported {exc}"
+        else:
+            return "a source missing from upstream.json was accepted"
+    with contextlib.redirect_stdout(io.StringIO()):
+        empty_counts = report_check_counts(
+            {"families": []},
+            {"records": []},
+            {"releases": []},
+            {"cross": {"openai_numbers": [], "alphaproof_numbers": [], "anthropic_identifiers": {}}},
+            {},
+        )
+    if "openai-math check saw no families" not in empty_counts:
+        return "an empty OpenAI walk was accepted"
+    if "cross-source check saw no rows" not in empty_counts:
+        return "an empty cross-source walk was accepted"
+    if "status allowlist check saw no rows" not in empty_counts:
+        return "an empty status walk was accepted"
+    with contextlib.redirect_stdout(io.StringIO()):
+        needing = report_check_counts(
+            {"families": [{"id": "001"}]},
+            {"records": [{"id": "1"}]},
+            {"releases": [{"id": "zeta23"}]},
+            {
+                "cross": {
+                    "openai_numbers": [{"number": 970}],
+                    "alphaproof_numbers": [{"number": 12}],
+                    "anthropic_identifiers": {"erdos": [], "oeis": [], "stacks": []},
+                }
+            },
+            {"001": {"community": {"status": "disputed"}}},
+        )
+    if "empty status allowlist was used while a row needs approval" not in needing:
+        return "an empty status allowlist was accepted while a row needs approval"
     return None
 
 

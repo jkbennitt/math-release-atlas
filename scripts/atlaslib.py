@@ -255,8 +255,7 @@ SPARSE_PATHS = [
     "/preprints/**/*.bib",
 ]
 
-# Counts checked against openai/math @ adc7f1241b42 (Initial commit).
-PINNED_COMMIT = "adc7f1241b42e322a6451854ab7e4b4c146bf78a"
+# Counts checked when the catalogue commit is the openai-math-baseline pin in upstream.json.
 PINNED_COUNTS = {
     "families": 372,
     "manuscripts": 722,
@@ -408,8 +407,6 @@ CLAIM_VERB_RE = re.compile(
 )
 OAI_CITE_RE = re.compile(r"OAI:([A-Za-z0-9][A-Za-z0-9_.+\-]*)")
 EVIDENCE_URL_RE = re.compile(r"https?://[^\s\"<>`]+", re.IGNORECASE)
-# SHA-256 of data/upstream.json for PINNED_COMMIT, ignoring generated_at.
-PINNED_UPSTREAM_DIGEST = "9f34421e815eb47d11bcb4463801f35649b02656abc141e277a5ae581ed648ac"
 # SHA-256 of lowercase denylist stems. The stems are not stored in this repository.
 DENYLIST_DIGESTS = frozenset(
     {
@@ -1701,24 +1698,75 @@ def parse_openai_math_blob(url: str) -> tuple[str, str, str] | None:
     return match.group(1), match.group(2), match.group(3) or ""
 
 
+_LINE_FRAGMENT_RE = re.compile(r"#L(?P<start>\d+)(?:-L(?P<end>\d+))?$")
+
+
+def _fragment_span(fragment: str) -> tuple[int, int] | None:
+    """Inclusive line span for ``#L10`` or ``#L10-L12``.
+
+    None means the fragment is not a line anchor. A reversed range, a zero
+    line, or another ``#L`` shape raises AtlasError instead of being left in place.
+    """
+    if not fragment or not fragment.startswith("#L"):
+        return None
+    match = _LINE_FRAGMENT_RE.fullmatch(fragment)
+    if match is None:
+        raise AtlasError(f"line anchor {fragment} is not a single line or a range")
+    start = int(match.group("start"))
+    end_text = match.group("end")
+    end = start if end_text is None else int(end_text)
+    if start < 1 or end < start:
+        raise AtlasError(f"line anchor {fragment} is not a usable range")
+    return start, end
+
+
+def _format_line_fragment(start: int, end: int, ranged: bool) -> str:
+    if not ranged:
+        return f"#L{start}"
+    return f"#L{start}-L{end}"
+
+
+def _shift_line_span(
+    start: int,
+    end: int,
+    new_start: int,
+    line_count: int,
+    label: str,
+    path: str,
+) -> tuple[int, int]:
+    """Move both ends by the same delta. A result past the file raises."""
+    new_end = end + (new_start - start)
+    if new_start < 1 or new_end < new_start:
+        raise AtlasError(f"{label} shifted range is not usable in {path}")
+    if new_end > line_count:
+        raise AtlasError(f"{label} shifted range ends at {new_end}, past the end of {path}")
+    return new_start, new_end
+
+
 def pin_openai_math_url(url: str, commit: str, overview_line: int | None = None) -> str:
     """Build an openai/math blob URL from the catalogue commit.
 
-    An overview.tex line anchor uses that family's resultentry line. Other URLs
-    stay as written. Manuscript and citation links are already built from this commit.
+    An overview.tex line anchor uses that family's resultentry line. A line
+    range shifts both ends by the same amount. Other URLs stay as written.
+    Manuscript and citation links are already built from this commit.
     """
     parsed = parse_openai_math_blob(url)
     if parsed is None or not re.fullmatch(r"[0-9a-f]{40}", commit):
         return url
     _cited, path, fragment = parsed
+    span = _fragment_span(fragment)
     if (
         path == "overview.tex"
+        and span is not None
         and isinstance(overview_line, int)
         and not isinstance(overview_line, bool)
         and overview_line > 0
-        and re.fullmatch(r"#L\d+", fragment)
     ):
-        fragment = f"#L{overview_line}"
+        start, end = span
+        new_end = end + (overview_line - start)
+        if new_end < overview_line:
+            raise AtlasError(f"overview line range {fragment} cannot be shifted")
+        fragment = _format_line_fragment(overview_line, new_end, "-" in fragment)
     return f"{UPSTREAM_WEB}/blob/{commit}/{path}{fragment}"
 
 
@@ -1810,13 +1858,6 @@ def _git_file_text(repo: Path, commit: str, path: str) -> str | None:
     return result.stdout
 
 
-def _fragment_line(fragment: str) -> int | None:
-    match = re.fullmatch(r"#L(\d+)", fragment)
-    if not match:
-        return None
-    return int(match.group(1))
-
-
 def _resultentry_lines(text: str, family_id: str) -> list[int]:
     """Lines whose text starts with \\resultentry{family_id}."""
     pattern = re.compile(rf"\\resultentry\{{{re.escape(family_id)}\}}")
@@ -1845,12 +1886,50 @@ def _recompute_anchor_line(text: str, family_id: str, path: str, old_line: int, 
     raise AtlasError(f"{label} source resultentry {family_id} is missing in {path}")
 
 
-def _replace_anchor_line(url: str, line: int) -> str:
+def _replace_anchor_fragment(url: str, fragment: str) -> str:
     parsed = parse_openai_math_blob(url)
     if parsed is None:
         return url
     cited, path, _fragment = parsed
-    return f"{UPSTREAM_WEB}/blob/{cited}/{path}#L{line}"
+    return f"{UPSTREAM_WEB}/blob/{cited}/{path}{fragment}"
+
+
+def _anchor_family_id(family_id: str, item: dict[str, Any], label: str) -> str:
+    """Line anchors for a related item use the family it points at."""
+    if "to" not in item:
+        return family_id
+    target = item.get("to")
+    if not isinstance(target, str) or not re.fullmatch(r"\d{3}", target):
+        raise AtlasError(f"{label} target is not a family id")
+    return target
+
+
+def _retarget_line_anchor(url: str, text: str, family_id: str, path: str, label: str) -> str | None:
+    """Shift a line or a line range onto ``\\resultentry{family_id}``.
+
+    None means the URL has no line anchor and should stay as written.
+    """
+    parsed = parse_openai_math_blob(url)
+    if parsed is None:
+        return None
+    fragment = parsed[2]
+    span = _fragment_span(fragment)
+    if span is None:
+        return None
+    start, end = span
+    new_start = _recompute_anchor_line(text, family_id, path, start, label)
+    shifted_start, shifted_end = _shift_line_span(
+        start,
+        end,
+        new_start,
+        len(text.splitlines()),
+        label,
+        path,
+    )
+    return _replace_anchor_fragment(
+        url,
+        _format_line_fragment(shifted_start, shifted_end, "-" in fragment),
+    )
 
 
 def _openai_source_items(note: dict[str, Any], family_id: str) -> list[tuple[str, dict[str, Any]]]:
@@ -1909,13 +1988,14 @@ def assert_curated_lens_paths(
         parsed = parse_openai_math_blob(str(item.get("source") or ""))
         if parsed is None:
             continue
-        old_line = _fragment_line(parsed[2])
-        if old_line is None:
+        if _fragment_span(parsed[2]) is None:
             continue
         if path not in texts:
             texts[path] = _git_file_text(repo, new_commit, path) or ""
-        line = _recompute_anchor_line(texts[path], family_id, path, old_line, label)
-        item["source"] = _replace_anchor_line(str(item["source"]), line)
+        anchor_id = _anchor_family_id(family_id, item, label)
+        retargeted = _retarget_line_anchor(str(item["source"]), texts[path], anchor_id, path, label)
+        if retargeted is not None:
+            item["source"] = retargeted
     return updated
 
 
@@ -1935,8 +2015,8 @@ def assert_families_openai_anchors(repo: Path, commit: str, catalog: dict[str, A
             cited, path, fragment = parsed
             if cited != commit:
                 raise AtlasError(f"{label} source is not pinned to {commit}")
-            old_line = _fragment_line(fragment)
-            if old_line is None:
+            span = _fragment_span(fragment)
+            if span is None:
                 if _git_blob(repo, commit, path) is None:
                     raise AtlasError(f"{label} source path {path} is gone at {commit}")
                 continue
@@ -1945,11 +2025,38 @@ def assert_families_openai_anchors(repo: Path, commit: str, catalog: dict[str, A
                 if shown is None:
                     raise AtlasError(f"{label} source path {path} is gone at {commit}")
                 texts[path] = shown
-            line = _recompute_anchor_line(texts[path], family_id, path, old_line, label)
-            if old_line != line:
+            anchor_id = _anchor_family_id(family_id, item, label)
+            retargeted = _retarget_line_anchor(str(item.get("source") or ""), texts[path], anchor_id, path, label)
+            if retargeted != str(item.get("source") or ""):
+                line = _recompute_anchor_line(texts[path], anchor_id, path, span[0], label)
+                if "-" not in fragment:
+                    raise AtlasError(
+                        f"{label} source line {span[0]} is not the resultentry line {line} in {path}"
+                    )
                 raise AtlasError(
-                    f"{label} source line {old_line} is not the resultentry line {line} in {path}"
+                    f"{label} source range {fragment} is not {retargeted.rsplit('#', 1)[-1]} in {path}"
                 )
+
+
+def _stored_overview_line(family: dict[str, Any]) -> int | None:
+    raw_line = family.get("overview_line")
+    if isinstance(raw_line, int) and not isinstance(raw_line, bool):
+        return raw_line
+    return None
+
+
+def _related_overview_line(item: dict[str, Any], overview_by_id: dict[str, int | None]) -> int | None:
+    """overview.tex anchors on a related item use the family named by ``to``."""
+    source = item.get("source")
+    parsed = parse_openai_math_blob(source) if isinstance(source, str) else None
+    if parsed is None or parsed[1] != "overview.tex":
+        return None
+    target = item.get("to")
+    if not isinstance(target, str) or not target:
+        raise AtlasError("related item has no target family")
+    if target not in overview_by_id:
+        raise AtlasError(f"related item target {target} is not a family")
+    return overview_by_id[target]
 
 
 def merge_data(
@@ -1962,6 +2069,7 @@ def merge_data(
     unknown = sorted(set(curated) - known)
     if unknown:
         raise AtlasError(f"curated files have no upstream family: {unknown}")
+    overview_by_id = {family["id"]: _stored_overview_line(family) for family in upstream["families"]}
     merged_families = []
     for family in upstream["families"]:
         note = curated.get(family["id"])
@@ -1970,8 +2078,7 @@ def merge_data(
             extra = note["caution"]["text"]
             caution = extra if caution is None else f"{caution} {extra}"
         sha = str(family.get("upstream_sha") or "")
-        raw_line = family.get("overview_line")
-        overview_line = raw_line if isinstance(raw_line, int) and not isinstance(raw_line, bool) else None
+        overview_line = overview_by_id[family["id"]]
         merged = dict(family)
         merged["source"] = OPENAI_SOURCE_ID
         merged["caution"] = caution
@@ -1979,7 +2086,16 @@ def merge_data(
             [_with_pinned_source(lens, sha, overview_line) for lens in note["lenses"]] if note else []
         )
         merged["related"] = (
-            [_with_pinned_source(item, sha, overview_line) for item in note["related"]] if note else []
+            [
+                _with_pinned_source(
+                    item,
+                    sha,
+                    _related_overview_line(item, overview_by_id),
+                )
+                for item in note["related"]
+            ]
+            if note
+            else []
         )
         merged["community"] = note["community"] if note else None
         merged_families.append(merged)
@@ -2035,7 +2151,67 @@ def apply_citation_graph(families: list[dict[str, Any]]) -> None:
         )
 
 
-def assert_counts(payload: dict[str, Any]) -> None:
+_PIN_FIELDS = {
+    "openai-math": {"commit", "digest"},
+    "openai-math-baseline": {"commit", "digest"},
+    "alphaproof-nexus": {"commit", "digest"},
+    "anthropic": {"commit", "digest", "flt_commit", "zeta_tag", "zeta_tag_commit"},
+}
+
+
+def _require_sha(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise AtlasError(f"{label} is not a commit sha")
+    return value
+
+
+def _require_digest(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+        raise AtlasError(f"{label} is not a digest")
+    return value
+
+
+def load_upstream_pins(path: Path | None = None) -> dict[str, Any]:
+    """Pins recorded in upstream.json. Every live commit and digest is read from there.
+
+    The OpenAI catalogue commit and ``pins['openai-math'].commit`` are the same
+    value. A source that is absent, or a digest that is empty, fails here.
+    """
+    pin_path = path or UPSTREAM_JSON
+    if not pin_path.is_file():
+        raise AtlasError("upstream.json is missing")
+    payload = read_json(pin_path)
+    pins = payload.get("pins")
+    if not isinstance(pins, dict):
+        raise AtlasError("upstream.json is missing pins")
+    unknown = sorted(set(pins) - set(_PIN_FIELDS))
+    if unknown:
+        raise AtlasError(f"upstream.json pins have unknown sources: {unknown}")
+    for source_id, fields in _PIN_FIELDS.items():
+        entry = pins.get(source_id)
+        if not isinstance(entry, dict):
+            raise AtlasError(f"{source_id} is missing from upstream.json")
+        extra = sorted(set(entry) - fields)
+        if extra:
+            raise AtlasError(f"{source_id} pin has unknown fields: {extra}")
+        missing = sorted(fields - set(entry))
+        if missing:
+            raise AtlasError(f"{source_id} pin is missing {missing}")
+        _require_sha(entry.get("commit"), f"{source_id} pin commit")
+        _require_digest(entry.get("digest"), f"{source_id} pin digest")
+    anthropic = pins["anthropic"]
+    _require_sha(anthropic.get("flt_commit"), "anthropic flt pin")
+    _require_sha(anthropic.get("zeta_tag_commit"), "anthropic zeta tag pin")
+    tag = anthropic.get("zeta_tag")
+    if not isinstance(tag, str) or not tag.strip():
+        raise AtlasError("anthropic zeta tag pin is empty")
+    catalogue_commit = str(payload.get("upstream", {}).get("commit", ""))
+    if catalogue_commit != pins["openai-math"]["commit"]:
+        raise AtlasError("openai-math pin does not match upstream.json")
+    return pins
+
+
+def assert_counts(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
     families = payload["families"]
     counts = payload["counts"]
     derived = count_families(families)
@@ -2055,7 +2231,9 @@ def assert_counts(payload: dict[str, Any]) -> None:
     if derived["families"] != upstream["contents_families"] or derived["manuscripts"] != upstream["contents_manuscripts"]:
         raise AtlasError("derived counts do not match the CONTENTS.md headline")
     commit = upstream["commit"]
-    if commit == PINNED_COMMIT:
+    loaded = pins if pins is not None else load_upstream_pins()
+    baseline_commit = loaded["openai-math-baseline"]["commit"]
+    if commit == baseline_commit:
         for key, expected in PINNED_COUNTS.items():
             if counts.get(key) != expected:
                 raise AtlasError(f"pinned count {key} is {counts.get(key)}, expected {expected}")
@@ -2068,10 +2246,12 @@ def assert_counts(payload: dict[str, Any]) -> None:
             raise AtlasError("pinned subject counts drifted")
         if upstream["review_status"] != "unchecked":
             raise AtlasError("pinned formalization review status is not unchecked")
+    elif commit != loaded["openai-math"]["commit"]:
+        raise AtlasError("upstream commit is not the pin in upstream.json")
 
 
 def snapshot_for_compare(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in payload.items() if key != "generated_at"}
+    return {key: value for key, value in payload.items() if key not in {"generated_at", "pins"}}
 
 
 def snapshot_digest(payload: dict[str, Any]) -> str:
@@ -2103,18 +2283,28 @@ def describe_snapshot_diff(recorded: dict[str, Any], rebuilt: dict[str, Any]) ->
     return "; ".join(notes) or "content"
 
 
-def assert_upstream_digest(payload: dict[str, Any]) -> None:
-    """The stored digest applies to the pinned commit.
+def assert_upstream_digest(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
+    """The digest in upstream.json applies to the commit it names.
 
-    A different commit is not accepted just because the digest check returns.
-    verify_recorded_upstream and sync.py require it to be openai/math HEAD
-    or an ancestor of that HEAD.
+    The baseline digest still applies only at the baseline commit. Any other
+    commit must be the live openai-math pin, and its digest is the one stored
+    beside that pin. A commit that matches neither fails instead of returning.
+    verify_recorded_upstream and sync.py require the live commit to be
+    openai/math HEAD or an ancestor of that HEAD.
     """
+    loaded = pins if pins is not None else load_upstream_pins()
     commit = payload.get("upstream", {}).get("commit")
-    if commit != PINNED_COMMIT:
+    digest = snapshot_digest(payload)
+    baseline = loaded["openai-math-baseline"]
+    if commit == baseline["commit"]:
+        if digest != baseline["digest"]:
+            raise AtlasError("pinned upstream snapshot digest drifted")
         return
-    if snapshot_digest(payload) != PINNED_UPSTREAM_DIGEST:
-        raise AtlasError("pinned upstream snapshot digest drifted")
+    live = loaded["openai-math"]
+    if commit != live["commit"]:
+        raise AtlasError("upstream commit is not the pin in upstream.json")
+    if digest != live["digest"]:
+        raise AtlasError("upstream snapshot digest drifted")
 
 
 def assert_merged_catalogue(
