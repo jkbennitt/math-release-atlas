@@ -15,7 +15,9 @@ from atlaslib import (
     AtlasError,
     load_cautions,
     load_curated,
+    load_upstream_pins,
     merge_data,
+    pinned_overview_line_count,
     read_json,
     write_json,
 )
@@ -29,11 +31,13 @@ def main() -> int:
     anthropic = read_json(ANTHROPIC_JSON)
     extras = catalogue_extras(upstream, alphaproof, anthropic)
     registry = extras["sources"]
+    pins = load_upstream_pins()
     merged = merge_data(
         upstream,
         load_curated(CURATED_DIR),
         load_cautions(CAUTIONS_JSON),
         extras,
+        overview_line_count=pinned_overview_line_count(pins),
     )
     write_json(FAMILIES_JSON, merged)
     write_json(SOURCES_JSON, registry)
