@@ -69,7 +69,7 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
       Citation edges come from OpenAI Math manuscripts only. Each citation is an <code>OAI:</code> key
       in an upstream manuscript source. AlphaProof Nexus and Anthropic records have no citation data
       in this atlas. The list names every directed edge and links the file that contains the key. The
-      map below draws the same edges. Nothing on this page needs JavaScript.
+      map below draws the same edges. The list and this map work with no JavaScript.
     </p>
     <p>
       Shared problem identifiers are compared on the <a href={`${base}source/cross/`}>cross-source page</a>.
@@ -84,7 +84,18 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
         <p>No families are linked yet, so there is no map.</p>
       ) : (
         <p class="map-hint">Scroll or pinch to zoom.</p>
+        <p>
+          Where the browser draws HTML inside a canvas, the labels on this map are those same family
+          links, and a 3D view of the same edges is available. Other browsers keep this map. The 3D
+          view adds no edges.
+        </p>
+        <div class="graph-actions">
+          <button type="button" id="graph-3d" hidden>3D view</button>
+          <button type="button" id="graph-spin" hidden>Pause rotation</button>
+          <p id="graph-mode-note" class="graph-mode-note" aria-live="polite"></p>
+        </div>
         <div class="graph-scroll">
+        <div class="graph-stage">
         <svg
           class="graph-map"
           viewBox={`0 0 ${size} ${size}`}
@@ -124,6 +135,8 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             return (
               <line
                 class="topic"
+                data-from={edge.from}
+                data-to={edge.to}
                 x1={from.x}
                 y1={from.y}
                 x2={to.x}
@@ -141,6 +154,8 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             return (
               <line
                 class="cite"
+                data-from={edge.from}
+                data-to={edge.to}
                 x1={from.x}
                 y1={from.y}
                 x2={to.x}
@@ -157,6 +172,15 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             </a>
           ))}
         </svg>
+        <canvas class="graph-canvas" width={size} height={size} content="drawable" aria-label="Map of the citation edges listed below." hidden>
+          {nodes.map((node) => (
+            <a class="graph-label" href={`${base}f/${node.id}/`} data-id={node.id} drawable>
+              {node.id}
+            </a>
+          ))}
+        </canvas>
+        <canvas class="graph-webgl" width={size} height={size} content="drawable" aria-label="Map of the citation edges listed below." hidden></canvas>
+        </div>
         </div>
       )
     }
@@ -203,4 +227,9 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
     }
 
   </article>
+  <script>
+    import { mountGraph } from "../../scripts/graph-canvas";
+
+    mountGraph();
+  </script>
 </Base>

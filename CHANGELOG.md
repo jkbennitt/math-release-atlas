@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.9
+
+- Where the browser can draw HTML inside a canvas, the citation map labels are those HTML links. They stay in the page HTML, and each label still opens its family page. The earlier map is removed from the tab order there.
+- A 3D view draws the same edges with those labels in the scene. A pause control stops the turn, and the view starts paused when the browser asks for reduced motion. The page can still scroll past that view. The list underneath is the same list as before.
+- Browsers that cannot draw HTML inside a canvas keep the previous map. The 3D control stays hidden there.
+- Three.js is bundled with the site. The graph page does not load a script, stylesheet, or font from another origin. The build checks that each map label is present in the HTML and that those asset URLs stay on this site.
+
 ## 0.4.8
 
 - Anthropic's eth release is in the catalogue: a Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm for 3-SAT, from eth/README.md and eth/MainResults.lean at formal-math 16a5ce41304f. The upstream README says this refutes the Exponential Time Hypothesis. MainResults.lean states that claim for Mathlib multi-stack Turing machines and says a random-access simulation and formula rewriting are not part of the Lean statements. The release is tagged computation-hardness from that file. At this commit the formal-math skip list is empty. Each Anthropic row's Source link goes to its Lean file at the pinned commit.

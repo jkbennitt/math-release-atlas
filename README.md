@@ -68,7 +68,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.4.8.
+Package version 0.4.9.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -167,6 +167,17 @@ URL as its receipt. Counts on the graph page come from that merged data.
 
 When a shared-topic link is rendered, the label is “our grouping, not a
 citation.”
+
+On a browser that can draw HTML inside a canvas, the map labels are those
+same family links, present in the page HTML. The earlier map leaves the tab
+order. A 3D view draws the same edges and keeps the labels as HTML in the
+scene. A pause control stops the turn, and the view starts paused when the
+browser asks for reduced motion. The page can still scroll past that view.
+It adds no edges. Browsers without that canvas keep the earlier map, and the
+3D control stays hidden. Three.js is packaged with the site. The graph page
+does not load a script, stylesheet, or font from another origin. The build
+checks the label links, rejects an asset URL on another origin, and checks
+that the map exposes one link per family.
 
 ## Checks
 

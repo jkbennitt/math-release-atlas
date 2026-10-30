@@ -16,7 +16,7 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import yaml
 
@@ -2587,6 +2587,254 @@ def citation_pairs(payload: dict[str, Any]) -> set[tuple[str, str]]:
     return pairs
 
 
+_GRAPH_ASSET_RELS = {
+    "stylesheet",
+    "icon",
+    "preload",
+    "modulepreload",
+    "font",
+    "prefetch",
+    "preconnect",
+    "dns-prefetch",
+}
+_GRAPH_ASSET_TAG_RE = re.compile(r"<(script|link|img|source|video|audio)\b([^>]*)>", re.I)
+_GRAPH_ATTR_URL_RE = re.compile(r"""\b(?:src|href)\s*=\s*["']([^"']+)["']""", re.I)
+_GRAPH_REL_RE = re.compile(r"""\brel\s*=\s*["']([^"']+)["']""", re.I)
+_GRAPH_CSS_URL_RE = re.compile(r"""url\(\s*['"]?([^)'"]+)['"]?\s*\)""")
+_GRAPH_IMPORT_RE = re.compile(r"""(?:\bimport\s*\(\s*|from\s*)["']([^"']+)["']""")
+_GRAPH_CDN_RE = re.compile(
+    r"""https?://(?:cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|esm\.sh|esm\.run|cdn\.skypack\.dev|ga\.jspm\.io)[^\s"'()]*""",
+    re.I,
+)
+_GRAPH_ANCHOR_RE = re.compile(r"<a\b([^>]*)>(.*?)</a>", re.I | re.S)
+_GRAPH_BUTTON_RE = re.compile(r"<button\b([^>]*)>(.*?)</button>", re.I | re.S)
+_GRAPH_TEXT_SUFFIXES = {".html", ".css", ".js", ".mjs", ".svg"}
+_GRAPH_SITE_HOST = "jkbennitt.github.io"
+_GRAPH_PAGES_BASE = "/math-release-atlas"
+
+
+def graph_node_ids(catalog: dict[str, Any]) -> list[str]:
+    ids: set[str] = set()
+    for family in catalog.get("families") or []:
+        family_id = str(family.get("id") or "")
+        for edge in family.get("cites") or []:
+            target = str(edge.get("to") or "")
+            if family_id and target:
+                ids.add(family_id)
+                ids.add(target)
+        for item in family.get("related") or []:
+            if item.get("kind") != "shared-topic":
+                continue
+            target = str(item.get("to") or "")
+            if family_id and target:
+                ids.add(family_id)
+                ids.add(target)
+    return sorted(ids)
+
+
+def drawable_label_hrefs(html_text: str) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for match in _GRAPH_ANCHOR_RE.finditer(html_text):
+        attrs = match.group(1)
+        if re.search(r"\bdrawable\b", attrs) is None:
+            continue
+        href_match = re.search(r"""\bhref\s*=\s*["']([^"']+)["']""", attrs, re.I)
+        if href_match is None:
+            continue
+        body = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", match.group(2)))).strip()
+        if body:
+            found[body] = href_match.group(1)
+    return found
+
+
+def missing_drawable_labels(html_text: str, node_ids: list[str]) -> list[str]:
+    if not node_ids:
+        return []
+    failures: list[str] = []
+    if 'content="drawable"' not in html_text and "content='drawable'" not in html_text:
+        failures.append("citation graph canvas is not marked content=drawable")
+    found = drawable_label_hrefs(html_text)
+    for node_id in node_ids:
+        href = found.get(node_id)
+        if href is None:
+            failures.append(f"citation graph is missing a drawable label for {node_id}")
+        elif f"f/{node_id}/" not in href:
+            failures.append(f"citation graph label {node_id} does not link to its family page")
+    return failures
+
+
+def graph_mode_button_hidden(html_text: str) -> bool:
+    for match in _GRAPH_BUTTON_RE.finditer(html_text):
+        label = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", match.group(2))).strip()
+        if label != "3D view":
+            continue
+        return re.search(r"\bhidden\b", match.group(1)) is not None
+    return False
+
+
+def _is_external_asset(url: str) -> bool:
+    raw = url.strip()
+    if raw.startswith("//"):
+        raw = "https:" + raw
+    if not raw.startswith(("http://", "https://")):
+        return False
+    host = (urlparse(raw).hostname or "").lower()
+    return host != _GRAPH_SITE_HOST
+
+
+def external_asset_urls(text: str) -> list[str]:
+    """Asset URLs that leave this site. Ordinary links in prose are left alone."""
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def add(url: str) -> None:
+        if not url or url in seen or not _is_external_asset(url):
+            return
+        seen.add(url)
+        found.append(url)
+
+    for match in _GRAPH_ASSET_TAG_RE.finditer(text):
+        tag = match.group(1).lower()
+        attrs = match.group(2)
+        if tag == "link":
+            rel_match = _GRAPH_REL_RE.search(attrs)
+            rels = set((rel_match.group(1) if rel_match else "").lower().split())
+            if not rels & _GRAPH_ASSET_RELS:
+                continue
+        for url in _GRAPH_ATTR_URL_RE.findall(attrs):
+            add(url)
+    for url in _GRAPH_CSS_URL_RE.findall(text):
+        add(url)
+    for url in _GRAPH_IMPORT_RE.findall(text):
+        add(url)
+    for url in _GRAPH_CDN_RE.findall(text):
+        add(url)
+    return found
+
+
+def _graph_local_urls(text: str) -> list[str]:
+    urls: list[str] = []
+    for match in _GRAPH_ASSET_TAG_RE.finditer(text):
+        tag = match.group(1).lower()
+        attrs = match.group(2)
+        if tag == "link":
+            rel_match = _GRAPH_REL_RE.search(attrs)
+            rels = set((rel_match.group(1) if rel_match else "").lower().split())
+            if not rels & _GRAPH_ASSET_RELS:
+                continue
+        urls.extend(_GRAPH_ATTR_URL_RE.findall(attrs))
+    urls.extend(_GRAPH_CSS_URL_RE.findall(text))
+    urls.extend(_GRAPH_IMPORT_RE.findall(text))
+    return urls
+
+
+def _graph_dist_file(dist: Path, source: Path, url: str) -> Path | None:
+    raw = url.strip().split("#", 1)[0].split("?", 1)[0]
+    if not raw or raw.startswith("data:"):
+        return None
+    if raw.startswith("//"):
+        return None
+    if raw.startswith(("http://", "https://")):
+        parsed = urlparse(raw)
+        if (parsed.hostname or "").lower() != _GRAPH_SITE_HOST:
+            return None
+        raw = parsed.path
+    if raw.startswith(f"{_GRAPH_PAGES_BASE}/"):
+        relative = raw[len(_GRAPH_PAGES_BASE) + 1 :]
+        candidate = dist / relative
+    elif raw.startswith("/"):
+        candidate = dist / raw.lstrip("/")
+    else:
+        candidate = source.parent / raw
+    try:
+        resolved = candidate.resolve()
+        resolved.relative_to(dist.resolve())
+    except ValueError:
+        return None
+    return resolved
+
+
+def graph_external_asset_failures(dist: Path) -> list[str]:
+    page = dist / "graph" / "index.html"
+    if not page.is_file():
+        return ["missing citation graph"]
+    failures: list[str] = []
+    pending = [page]
+    seen: set[Path] = set()
+    while pending:
+        current = pending.pop()
+        if current in seen or not current.is_file():
+            continue
+        if current.suffix.lower() not in _GRAPH_TEXT_SUFFIXES and current != page:
+            continue
+        seen.add(current)
+        text = current.read_text(encoding="utf-8", errors="replace")
+        for url in external_asset_urls(text):
+            failures.append(f"citation graph asset leaves this site: {url}")
+        for url in _graph_local_urls(text):
+            raw = url.strip()
+            if not raw or raw.startswith(("#", "data:")):
+                continue
+            if not raw.startswith(("//", "http://", "https://", "/", "./", "../")):
+                continue
+            if _is_external_asset(raw):
+                continue
+            path = _graph_dist_file(dist, current, url)
+            if path is None or not path.is_file():
+                failures.append(f"citation graph asset is missing: {url}")
+                continue
+            if path.suffix.lower() in _GRAPH_TEXT_SUFFIXES:
+                pending.append(path)
+    return failures
+
+
+def graph_canvas_self_test() -> list[str]:
+    failures: list[str] = []
+    good = '<canvas content="drawable"><a drawable href="/math-release-atlas/f/001/">001</a></canvas>'
+    if missing_drawable_labels(good, ["001"]):
+        failures.append("a drawable family label was rejected")
+    plain = '<canvas content="drawable"><a href="/math-release-atlas/f/001/">001</a></canvas>'
+    if not any("missing a drawable label" in item for item in missing_drawable_labels(plain, ["001"])):
+        failures.append("a label without drawable was accepted")
+    wrong = '<canvas content="drawable"><a drawable href="/math-release-atlas/about/">001</a></canvas>'
+    if not any("does not link" in item for item in missing_drawable_labels(wrong, ["001"])):
+        failures.append("a drawable label with the wrong href was accepted")
+    if graph_mode_button_hidden('<button type="button">3D view</button>'):
+        failures.append("a visible 3D control was treated as hidden")
+    if not graph_mode_button_hidden('<button type="button" id="graph-3d" hidden>3D view</button>'):
+        failures.append("a hidden 3D control was rejected")
+    content = '<a href="https://github.com/openai/math">https://github.com/openai/math</a>'
+    if external_asset_urls(content):
+        failures.append("an upstream content link was treated as an asset")
+    cdn = '<script src="https://cdn.jsdelivr.net/npm/three"></script>'
+    if not external_asset_urls(cdn):
+        failures.append("a CDN script was accepted")
+    font = "src: url(https://fonts.gstatic.com/s/x.woff2)"
+    if not external_asset_urls(font):
+        failures.append("an external font url was accepted")
+    if external_asset_urls('import("./three.chunk.js")'):
+        failures.append("a local import was treated as external")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        graph = root / "graph"
+        bundled = root / "_astro"
+        graph.mkdir()
+        bundled.mkdir()
+        (graph / "index.html").write_text(
+            '<script type="module" src="/math-release-atlas/_astro/graph.js"></script>'
+            '<a href="https://github.com/openai/math">https://github.com/openai/math</a>',
+            encoding="utf-8",
+        )
+        (bundled / "graph.js").write_text('import("./space.js");\n', encoding="utf-8")
+        (bundled / "space.js").write_text("const local = true;\n", encoding="utf-8")
+        if graph_external_asset_failures(root):
+            failures.append("local graph scripts were treated as external")
+        (bundled / "space.js").write_text('import("https://cdn.jsdelivr.net/npm/three");\n', encoding="utf-8")
+        if not any("cdn.jsdelivr.net" in item for item in graph_external_asset_failures(root)):
+            failures.append("a CDN import from the graph bundle was accepted")
+    return failures
+
+
 def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
     page = dist / "graph" / "index.html"
     if not page.is_file():
@@ -2622,6 +2870,12 @@ def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
         for item in family.get("related") or []:
             if item.get("kind") == "shared-topic" and f"f/{item['to']}/" not in text:
                 failures.append(f"citation graph is missing shared-topic {family['id']} → {item['to']}")
+    nodes = graph_node_ids(catalog)
+    if nodes:
+        failures.extend(missing_drawable_labels(text, nodes))
+        if not graph_mode_button_hidden(text):
+            failures.append("citation graph shows the 3D control before feature detection")
+    failures.extend(graph_external_asset_failures(dist))
     return failures
 
 
@@ -3930,6 +4184,32 @@ def check_home_layout(dist: Path) -> list[str]:
     return []
 
 
+def check_graph_a11y(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """Map links: one exposed family link per catalogue node, and the drawable tab order when that canvas exists."""
+    script = ROOT / "scripts" / "graph_a11y_check.mjs"
+    if not script.is_file():
+        return ["graph accessibility check is missing"]
+    expected = len(graph_node_ids(catalog))
+    completed = subprocess.run(
+        ["node", str(script), str(dist), str(expected)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    reported = False
+    for line in (completed.stdout or "").splitlines():
+        if line.startswith("graph a11y:"):
+            print(line, flush=True)
+            reported = True
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        return [detail or "graph accessibility check failed"]
+    if not reported:
+        return ["graph accessibility check did not report its mode"]
+    return []
+
+
 _SHARE_SECTION_RE = re.compile(r'<section class="share"[^>]*>.*?</section>', re.DOTALL)
 _SHARE_ROWS_RE = re.compile(r'<ol class="share-rows">(.*?)</ol>', re.DOTALL)
 _SHARE_LEGEND_RE = re.compile(r'<ul class="share-legend">(.*?)</ul>', re.DOTALL)
@@ -4090,6 +4370,7 @@ def check_dist(dist: Path) -> list[str]:
             failures.append(f"{page.relative_to(dist)} heading uses the upstream name")
     failures.extend(check_inline_spacing(dist, catalog))
     failures.extend(check_home_layout(dist))
+    failures.extend(check_graph_a11y(dist, catalog))
     return failures
 
 
