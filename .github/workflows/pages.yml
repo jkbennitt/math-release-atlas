@@ -50,6 +50,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: pip install -r requirements.txt
+      - run: python3 scripts/check.py --self-test --source --verify-upstream
       - run: npm ci
       - run: npm run build
       - run: test -s dist/og.png
