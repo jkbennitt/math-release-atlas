@@ -40,21 +40,10 @@ ALPHAPROOF_WEB = "https://github.com/google-deepmind/alphaproof-nexus-results"
 ALPHAPROOF_SOURCE_ID = "alphaproof-nexus"
 OPENAI_SOURCE_ID = "openai-math"
 
-PINNED_CATEGORY_COUNTS = {
-    "ErdosProblems": 9,
-    "OEIS": 38,
-    "StacksProject": 11,
-    "AICollaborator": 13,
-}
-PINNED_SUBCOUNTS = {
-    "AdditiveCombinatorics": 1,
-    "AlgebraicGeometry": 7,
-    "Graphs": 2,
-    "Optimization": 1,
-    "QuantumOptics": 2,
-}
-PINNED_ATTEMPTED_NEWLINES = 352
-PINNED_ATTEMPTED_ENTRIES = 353
+# Tripwire. PAPER_OEIS_PROVED minus this total is the unexplained shortfall.
+# Other category totals are counted from the snapshot rows.
+PINNED_OEIS_FILE_COUNT = 38
+PINNED_TOOLCHAIN = "leanprover/lean4:v4.27.0"
 PAPER_ERDOS_ATTEMPTED = 353
 PAPER_OEIS_PROVED = 44
 PAPER_OEIS_ATTEMPTED = 492
@@ -731,12 +720,32 @@ def build_alphaproof(repo: Path, commit: str | None = None) -> dict[str, Any]:
         "records": records,
     }
     payload["snapshot_digest"] = snapshot_digest(payload)
-    assert_alphaproof(payload)
+    assert_alphaproof(payload, enforce_pin=False)
     return payload
 
 
-def assert_alphaproof(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
-    records = payload["records"]
+def _subcounts(records: list[dict[str, Any]]) -> dict[str, int]:
+    found: dict[str, int] = {}
+    for record in records:
+        subcategory = record.get("subcategory")
+        if subcategory:
+            key = str(subcategory)
+            found[key] = found.get(key, 0) + 1
+    return found
+
+
+def assert_alphaproof(
+    payload: dict[str, Any],
+    pins: dict[str, Any] | None = None,
+    *,
+    enforce_pin: bool = True,
+) -> None:
+    source = payload.get("source")
+    if not isinstance(source, dict) or not isinstance(source.get("commit"), str) or not source["commit"]:
+        raise AtlasError("alphaproof-nexus source is missing")
+    records = payload.get("records")
+    if not isinstance(records, list) or not records:
+        raise AtlasError("alphaproof-nexus check saw no records")
     counts = payload["counts"]
     derived = {
         "lean_files": len(records),
@@ -752,6 +761,8 @@ def assert_alphaproof(payload: dict[str, Any], pins: dict[str, Any] | None = Non
             raise AtlasError(f"AlphaProof count {key} is {counts.get(key)} in the file and {value} in the rows")
     if counts["lean_files"] != counts["erdos"] + counts["oeis_files"] + counts["stacks"] + counts["ai_collaborator"]:
         raise AtlasError("AlphaProof category counts do not add up to the Lean file count")
+    if payload.get("subcounts") != _subcounts(records):
+        raise AtlasError(f"AI collaborator subcounts are {payload.get('subcounts')}")
     ids = [record["id"] for record in records]
     if len(ids) != len(set(ids)):
         raise AtlasError("AlphaProof records repeat a path")
@@ -792,41 +803,34 @@ def assert_alphaproof(payload: dict[str, Any], pins: dict[str, Any] | None = Non
         raise AtlasError("per-row provenance is not MISSING")
     if payload["paper"]["abstract_claim"] not in payload["quotations"]:
         raise AtlasError("AlphaProof abstract quotation is not in the exemption list")
-    commit = payload["source"]["commit"]
+    commit = source["commit"]
     loaded = pins if pins is not None else load_upstream_pins()
-    if commit == loaded["alphaproof-nexus"]["commit"]:
-        for category, expected in PINNED_CATEGORY_COUNTS.items():
-            key = {
-                "ErdosProblems": "erdos",
-                "OEIS": "oeis_files",
-                "StacksProject": "stacks",
-                "AICollaborator": "ai_collaborator",
-            }[category]
-            if counts[key] != expected:
-                raise AtlasError(f"pinned AlphaProof {key} is {counts[key]}, expected {expected}")
-        if counts["attempted_newlines"] != PINNED_ATTEMPTED_NEWLINES:
-            raise AtlasError("pinned attempted-list newline count drifted")
-        if counts["attempted_entries"] != PINNED_ATTEMPTED_ENTRIES:
-            raise AtlasError("pinned attempted-list entry count drifted")
-        if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
-            raise AtlasError("pinned attempted list does not match the paper")
-        if payload["subcounts"] != PINNED_SUBCOUNTS:
-            raise AtlasError(f"pinned AI collaborator subcounts are {payload['subcounts']}")
-        if oeis_gap["absent"] != PAPER_OEIS_PROVED - PINNED_CATEGORY_COUNTS["OEIS"]:
-            raise AtlasError("pinned OEIS gap is not 6")
-        if payload["lean_toolchain"] != "leanprover/lean4:v4.27.0":
-            raise AtlasError("pinned lean-toolchain drifted")
-        digest = snapshot_digest(payload)
-        expected_digest = loaded["alphaproof-nexus"]["digest"]
-        if not expected_digest:
-            raise AtlasError(f"fill the pinned AlphaProof digest: {digest}")
-        if digest != expected_digest:
-            raise AtlasError(f"pinned AlphaProof snapshot digest drifted: {digest}")
-        numbers = {record["erdos_number"] for record in records if record["erdos_number"] is not None}
-        if numbers != PINNED_APN_ERDOS:
-            raise AtlasError(f"pinned Erdős numbers are {sorted(numbers)}")
-        if payload["unlinked_natural_language_proofs"]:
-            raise AtlasError(f"pinned checkout left PDFs unlinked: {payload['unlinked_natural_language_proofs']}")
+    if commit != loaded["alphaproof-nexus"]["commit"]:
+        if enforce_pin:
+            raise AtlasError("alphaproof-nexus checks did not run for the pin in upstream.json")
+        return
+    oeis_shortfall = PAPER_OEIS_PROVED - PINNED_OEIS_FILE_COUNT
+    if counts["oeis_files"] != PINNED_OEIS_FILE_COUNT:
+        raise AtlasError(
+            f"pinned OEIS file count is {counts['oeis_files']}, expected {PINNED_OEIS_FILE_COUNT}"
+        )
+    if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
+        raise AtlasError("pinned attempted list does not match the paper")
+    if oeis_gap["absent"] != oeis_shortfall:
+        raise AtlasError(f"pinned OEIS gap is not {oeis_shortfall}")
+    if payload["lean_toolchain"] != PINNED_TOOLCHAIN:
+        raise AtlasError("pinned lean-toolchain drifted")
+    digest = snapshot_digest(payload)
+    expected_digest = loaded["alphaproof-nexus"]["digest"]
+    if not expected_digest:
+        raise AtlasError(f"fill the pinned AlphaProof digest: {digest}")
+    if digest != expected_digest:
+        raise AtlasError(f"pinned AlphaProof snapshot digest drifted: {digest}")
+    numbers = {record["erdos_number"] for record in records if record["erdos_number"] is not None}
+    if numbers != PINNED_APN_ERDOS:
+        raise AtlasError(f"pinned Erdős numbers are {sorted(numbers)}")
+    if payload.get("unlinked_natural_language_proofs"):
+        raise AtlasError(f"pinned checkout left PDFs unlinked: {payload['unlinked_natural_language_proofs']}")
 
 
 def assert_cross_source(
@@ -858,6 +862,68 @@ def assert_cross_source(
     alphaproof = {item["number"] for item in joined["alphaproof_numbers"]}
     if alphaproof != PINNED_APN_ERDOS:
         raise AtlasError(f"pinned AlphaProof Erdős numbers are {sorted(alphaproof)}")
+
+
+def count_golden_disagreements(
+    payload: dict[str, Any],
+    families: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    """Tripwires this snapshot moves. Empty when Guard's count goldens still match.
+
+    Category totals other than the OEIS shortfall are counted from the rows, so
+    they are not listed here.
+    """
+    notes: list[str] = []
+    counts = payload["counts"]
+    records = payload["records"]
+    if counts["oeis_files"] != PINNED_OEIS_FILE_COUNT:
+        shortfall = PAPER_OEIS_PROVED - PINNED_OEIS_FILE_COUNT
+        notes.append(
+            "PINNED_OEIS_FILE_COUNT in scripts/alphaproof.py is "
+            f"{PINNED_OEIS_FILE_COUNT} (paper {PAPER_OEIS_PROVED}, shortfall {shortfall}). "
+            f"This snapshot has {counts['oeis_files']} OEIS files. "
+            "Update the constant. It is the unexplained OEIS shortfall, not a row total."
+        )
+    attempted = next(gap for gap in payload["gaps"] if gap["id"] == "erdos-attempted")
+    if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
+        notes.append(
+            "PAPER_ERDOS_ATTEMPTED in scripts/alphaproof.py is "
+            f"{PAPER_ERDOS_ATTEMPTED}, and the pinned attempted list must still match it. "
+            f"This snapshot lists {counts['attempted_entries']} entries ({attempted['status']}). "
+            "Update the paper constant and the MATCH tripwire together."
+        )
+    numbers = {
+        record["erdos_number"]
+        for record in records
+        if isinstance(record.get("erdos_number"), int)
+    }
+    if numbers != PINNED_APN_ERDOS:
+        notes.append(
+            "PINNED_APN_ERDOS in scripts/alphaproof.py is "
+            f"{sorted(PINNED_APN_ERDOS)}. This snapshot has {sorted(numbers)}. "
+            "Update the set. It names the AlphaProof problems in the cross-source join, "
+            "and a new file for a number already in the set does not move it."
+        )
+    if families is not None and openai_erdos_index(families) != PINNED_OPENAI_ERDOS:
+        found = openai_erdos_index(families)
+        notes.append(
+            "PINNED_OPENAI_ERDOS in scripts/alphaproof.py is "
+            f"{PINNED_OPENAI_ERDOS}. This snapshot has {found}. "
+            "Update the map. It names the OpenAI families in the cross-source join."
+        )
+    if payload.get("lean_toolchain") != PINNED_TOOLCHAIN:
+        notes.append(
+            "PINNED_TOOLCHAIN in scripts/alphaproof.py is "
+            f"{PINNED_TOOLCHAIN}. This snapshot has {payload.get('lean_toolchain')}. "
+            "Update that string."
+        )
+    unlinked = payload.get("unlinked_natural_language_proofs") or []
+    if unlinked:
+        notes.append(
+            "The pinned AlphaProof checkout is expected to link every natural-language PDF. "
+            f"This snapshot left {unlinked} unlinked."
+        )
+    return notes
 
 
 def verify_recorded_alphaproof() -> None:

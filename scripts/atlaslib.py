@@ -1743,11 +1743,17 @@ def _shift_line_span(
     return new_start, new_end
 
 
-def pin_openai_math_url(url: str, commit: str, overview_line: int | None = None) -> str:
+def pin_openai_math_url(
+    url: str,
+    commit: str,
+    overview_line: int | None = None,
+    line_count: int | None = None,
+) -> str:
     """Build an openai/math blob URL from the catalogue commit.
 
     An overview.tex line anchor uses that family's resultentry line. A line
-    range shifts both ends by the same amount. Other URLs stay as written.
+    range shifts both ends by the same amount and uses the same past-EOF and
+    reversed-range errors as ``_shift_line_span``. Other URLs stay as written.
     Manuscript and citation links are already built from this commit.
     """
     parsed = parse_openai_math_blob(url)
@@ -1763,10 +1769,25 @@ def pin_openai_math_url(url: str, commit: str, overview_line: int | None = None)
         and overview_line > 0
     ):
         start, end = span
-        new_end = end + (overview_line - start)
-        if new_end < overview_line:
-            raise AtlasError(f"overview line range {fragment} cannot be shifted")
-        fragment = _format_line_fragment(overview_line, new_end, "-" in fragment)
+        ranged = "-" in fragment
+        if line_count is None:
+            new_end = end + (overview_line - start)
+            if new_end < overview_line:
+                raise AtlasError("overview.tex shifted range is not usable in overview.tex")
+            if ranged:
+                raise AtlasError(
+                    f"overview.tex shifted range ends at {new_end}, past the end of overview.tex"
+                )
+        else:
+            overview_line, new_end = _shift_line_span(
+                start,
+                end,
+                overview_line,
+                line_count,
+                "overview.tex",
+                "overview.tex",
+            )
+        fragment = _format_line_fragment(overview_line, new_end, ranged)
     return f"{UPSTREAM_WEB}/blob/{commit}/{path}{fragment}"
 
 
@@ -1774,11 +1795,12 @@ def _with_pinned_source(
     item: dict[str, Any],
     commit: str,
     overview_line: int | None = None,
+    line_count: int | None = None,
 ) -> dict[str, Any]:
     source = item.get("source")
     if not isinstance(source, str):
         return item
-    pinned = pin_openai_math_url(source, commit, overview_line)
+    pinned = pin_openai_math_url(source, commit, overview_line, line_count)
     if pinned == source:
         return item
     copied = dict(item)
@@ -2064,6 +2086,7 @@ def merge_data(
     curated: dict[str, dict[str, Any]],
     cautions: dict[str, dict[str, str]],
     extras: dict[str, Any] | None = None,
+    overview_line_count: int | None = None,
 ) -> dict[str, Any]:
     known = {family["id"] for family in upstream["families"]}
     unknown = sorted(set(curated) - known)
@@ -2083,7 +2106,9 @@ def merge_data(
         merged["source"] = OPENAI_SOURCE_ID
         merged["caution"] = caution
         merged["lenses"] = (
-            [_with_pinned_source(lens, sha, overview_line) for lens in note["lenses"]] if note else []
+            [_with_pinned_source(lens, sha, overview_line, overview_line_count) for lens in note["lenses"]]
+            if note
+            else []
         )
         merged["related"] = (
             [
@@ -2091,6 +2116,7 @@ def merge_data(
                     item,
                     sha,
                     _related_overview_line(item, overview_by_id),
+                    overview_line_count,
                 )
                 for item in note["related"]
             ]
