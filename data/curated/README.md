@@ -1,6 +1,11 @@
 # Curated notes
 
 The generator writes `data/upstream.json` only. It never edits this directory.
+An OpenAI Math lens source names a file in that repository. The catalogue
+link uses the single pinned commit. An overview.tex line is that family's
+resultentry line at the commit. The daily sync stops when that entry is
+missing or duplicated, when the path was renamed or is missing, or when a
+line number is past the end of the file and cannot be recomputed.
 
 Add one `NNN.yaml` file per family that needs a hand-written note. AlphaProof
 and Anthropic lens tags live in `alphaproof.yaml` and `anthropic.yaml`, keyed

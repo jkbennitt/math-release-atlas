@@ -809,7 +809,7 @@ def parse_overview_lines(tex: str) -> dict[str, int]:
     """Line number of each family's \\resultentry in overview.tex."""
     found: dict[str, int] = {}
     for index, line in enumerate(tex.splitlines(), start=1):
-        entry = re.search(r"\\resultentry\{(\d{3})\}", line)
+        entry = re.match(r"\\resultentry\{(\d{3})\}", line.lstrip())
         if not entry:
             continue
         family_id = entry.group(1)
@@ -1688,6 +1688,270 @@ def check_direct_links(index_html: str, catalog: dict[str, Any]) -> list[str]:
     return failures
 
 
+_OPENAI_BLOB_RE = re.compile(
+    r"^https://github\.com/openai/math/blob/([0-9a-f]{40})/([^#\s]+)(#.*)?$"
+)
+
+
+def parse_openai_math_blob(url: str) -> tuple[str, str, str] | None:
+    """Return (commit, path, fragment) for an openai/math blob URL."""
+    match = _OPENAI_BLOB_RE.match(url)
+    if not match:
+        return None
+    return match.group(1), match.group(2), match.group(3) or ""
+
+
+def pin_openai_math_url(url: str, commit: str, overview_line: int | None = None) -> str:
+    """Build an openai/math blob URL from the catalogue commit.
+
+    An overview.tex line anchor uses that family's resultentry line. Other URLs
+    stay as written. Manuscript and citation links are already built from this commit.
+    """
+    parsed = parse_openai_math_blob(url)
+    if parsed is None or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return url
+    _cited, path, fragment = parsed
+    if (
+        path == "overview.tex"
+        and isinstance(overview_line, int)
+        and not isinstance(overview_line, bool)
+        and overview_line > 0
+        and re.fullmatch(r"#L\d+", fragment)
+    ):
+        fragment = f"#L{overview_line}"
+    return f"{UPSTREAM_WEB}/blob/{commit}/{path}{fragment}"
+
+
+def _with_pinned_source(
+    item: dict[str, Any],
+    commit: str,
+    overview_line: int | None = None,
+) -> dict[str, Any]:
+    source = item.get("source")
+    if not isinstance(source, str):
+        return item
+    pinned = pin_openai_math_url(source, commit, overview_line)
+    if pinned == source:
+        return item
+    copied = dict(item)
+    copied["source"] = pinned
+    return copied
+
+
+def _git_blob(repo: Path, commit: str, path: str) -> str | None:
+    """Blob sha at commit:path, or None when that path is not a file."""
+    result = subprocess.run(
+        ["git", "ls-tree", "--format=%(objecttype) %(objectname)", commit, "--", path],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if len(lines) != 1:
+        return None
+    kind, _sep, sha = lines[0].partition(" ")
+    if kind != "blob" or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return None
+    return sha
+
+
+def _ensure_commit(repo: Path, commit: str) -> None:
+    probe = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode == 0:
+        return
+    run_git(
+        ["git", "fetch", "--filter=blob:none", "--depth", "1", "origin", commit],
+        repo,
+        f"could not fetch commit {commit}",
+    )
+
+
+def _rename_map(repo: Path, old: str, new: str) -> dict[str, str]:
+    result = subprocess.run(
+        ["git", "diff", "--find-renames", "--name-status", old, new],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    found: dict[str, str] = {}
+    if result.returncode != 0:
+        return found
+    for line in result.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3 and parts[0].startswith("R"):
+            found[parts[1]] = parts[2]
+    return found
+
+
+def _git_file_text(repo: Path, commit: str, path: str) -> str | None:
+    """File text at commit:path, or None when that path is not a file."""
+    if _git_blob(repo, commit, path) is None:
+        return None
+    result = subprocess.run(
+        ["git", "--no-pager", "show", f"{commit}:{path}"],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+        errors="replace",
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout
+
+
+def _fragment_line(fragment: str) -> int | None:
+    match = re.fullmatch(r"#L(\d+)", fragment)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _resultentry_lines(text: str, family_id: str) -> list[int]:
+    """Lines whose text starts with \\resultentry{family_id}."""
+    pattern = re.compile(rf"\\resultentry\{{{re.escape(family_id)}\}}")
+    return [
+        index
+        for index, line in enumerate(text.splitlines(), start=1)
+        if pattern.match(line.lstrip())
+    ]
+
+
+def _recompute_anchor_line(text: str, family_id: str, path: str, old_line: int, label: str) -> int:
+    """Line of \\resultentry{family_id}. A drifted line is rewritten to that entry.
+
+    Missing and duplicated entries stop the sync. So does an old line past the
+    end of the file when no entry can replace it.
+    """
+    found = _resultentry_lines(text, family_id)
+    if len(found) > 1:
+        raise AtlasError(f"{label} source resultentry {family_id} is duplicated in {path}")
+    if len(found) == 1:
+        return found[0]
+    if old_line > len(text.splitlines()):
+        raise AtlasError(
+            f"{label} source line {old_line} is past the end of {path} and cannot be recomputed"
+        )
+    raise AtlasError(f"{label} source resultentry {family_id} is missing in {path}")
+
+
+def _replace_anchor_line(url: str, line: int) -> str:
+    parsed = parse_openai_math_blob(url)
+    if parsed is None:
+        return url
+    cited, path, _fragment = parsed
+    return f"{UPSTREAM_WEB}/blob/{cited}/{path}#L{line}"
+
+
+def _openai_source_items(note: dict[str, Any], family_id: str) -> list[tuple[str, dict[str, Any]]]:
+    items: list[tuple[str, dict[str, Any]]] = []
+    for lens in note.get("lenses") or []:
+        if isinstance(lens, dict):
+            items.append((f"family {family_id} lens {lens.get('tag')}", lens))
+    for index, related in enumerate(note.get("related") or [], start=1):
+        if isinstance(related, dict):
+            items.append((f"family {family_id} related {index}", related))
+    return items
+
+
+def assert_curated_lens_paths(
+    repo: Path,
+    new_commit: str,
+    curated: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Recompute openai/math line anchors and stop when a cited path cannot move.
+
+    overview.tex #L is the line that starts with \\resultentry{family_id} at
+    new_commit. A renamed or removed path stops the sync. This does not edit
+    curated files on disk.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", new_commit):
+        raise AtlasError(f"{new_commit} is not a commit sha")
+    updated = copy.deepcopy(curated)
+    anchors: list[tuple[str, str, str, str, dict[str, Any]]] = []
+    for family_id, note in sorted(updated.items()):
+        if not isinstance(note, dict):
+            continue
+        for label, item in _openai_source_items(note, family_id):
+            parsed = parse_openai_math_blob(str(item.get("source") or ""))
+            if parsed is None:
+                continue
+            cited, path, _fragment = parsed
+            anchors.append((label, family_id, cited, path, item))
+    if not anchors:
+        return updated
+    new_blobs = {
+        path: _git_blob(repo, new_commit, path)
+        for path in {path for _label, _family, _cited, path, _item in anchors}
+    }
+    renames: dict[str, dict[str, str]] = {}
+    texts: dict[str, str] = {}
+    for label, family_id, cited, path, item in anchors:
+        if new_blobs[path] is None:
+            if cited not in renames:
+                if cited != new_commit:
+                    _ensure_commit(repo, cited)
+                renames[cited] = _rename_map(repo, cited, new_commit)
+            moved = renames[cited].get(path)
+            if moved:
+                raise AtlasError(f"{label} source path {path} changed to {moved} at {new_commit}")
+            raise AtlasError(f"{label} source path {path} is gone at {new_commit}")
+        parsed = parse_openai_math_blob(str(item.get("source") or ""))
+        if parsed is None:
+            continue
+        old_line = _fragment_line(parsed[2])
+        if old_line is None:
+            continue
+        if path not in texts:
+            texts[path] = _git_file_text(repo, new_commit, path) or ""
+        line = _recompute_anchor_line(texts[path], family_id, path, old_line, label)
+        item["source"] = _replace_anchor_line(str(item["source"]), line)
+    return updated
+
+
+def assert_families_openai_anchors(repo: Path, commit: str, catalog: dict[str, Any]) -> None:
+    """Committed openai/math #L anchors must name \\resultentry at this commit."""
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise AtlasError(f"{commit} is not a commit sha")
+    texts: dict[str, str] = {}
+    for family in catalog.get("families") or []:
+        if not isinstance(family, dict):
+            continue
+        family_id = str(family.get("id") or "")
+        for label, item in _openai_source_items(family, family_id):
+            parsed = parse_openai_math_blob(str(item.get("source") or ""))
+            if parsed is None:
+                continue
+            cited, path, fragment = parsed
+            if cited != commit:
+                raise AtlasError(f"{label} source is not pinned to {commit}")
+            old_line = _fragment_line(fragment)
+            if old_line is None:
+                if _git_blob(repo, commit, path) is None:
+                    raise AtlasError(f"{label} source path {path} is gone at {commit}")
+                continue
+            if path not in texts:
+                shown = _git_file_text(repo, commit, path)
+                if shown is None:
+                    raise AtlasError(f"{label} source path {path} is gone at {commit}")
+                texts[path] = shown
+            line = _recompute_anchor_line(texts[path], family_id, path, old_line, label)
+            if old_line != line:
+                raise AtlasError(
+                    f"{label} source line {old_line} is not the resultentry line {line} in {path}"
+                )
+
+
 def merge_data(
     upstream: dict[str, Any],
     curated: dict[str, dict[str, Any]],
@@ -1705,11 +1969,18 @@ def merge_data(
         if note and note["caution"]:
             extra = note["caution"]["text"]
             caution = extra if caution is None else f"{caution} {extra}"
+        sha = str(family.get("upstream_sha") or "")
+        raw_line = family.get("overview_line")
+        overview_line = raw_line if isinstance(raw_line, int) and not isinstance(raw_line, bool) else None
         merged = dict(family)
         merged["source"] = OPENAI_SOURCE_ID
         merged["caution"] = caution
-        merged["lenses"] = note["lenses"] if note else []
-        merged["related"] = note["related"] if note else []
+        merged["lenses"] = (
+            [_with_pinned_source(lens, sha, overview_line) for lens in note["lenses"]] if note else []
+        )
+        merged["related"] = (
+            [_with_pinned_source(item, sha, overview_line) for item in note["related"]] if note else []
+        )
         merged["community"] = note["community"] if note else None
         merged_families.append(merged)
     apply_citation_graph(merged_families)
@@ -1874,6 +2145,8 @@ def verify_recorded_upstream() -> None:
             checkout = Path(tmp)
             materialize_upstream(UPSTREAM_URL, commit, checkout)
             rebuilt, _ = build_upstream(checkout)
+            if FAMILIES_JSON.is_file():
+                assert_families_openai_anchors(checkout, commit, read_json(FAMILIES_JSON))
     except subprocess.CalledProcessError as exc:
         raise git_failure(exc.stderr or exc.stdout or "", "could not fetch upstream") from None
     if snapshot_for_compare(recorded) != snapshot_for_compare(rebuilt):
