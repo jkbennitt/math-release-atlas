@@ -91,6 +91,7 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
         </p>
         <div class="graph-actions">
           <button type="button" id="graph-3d" hidden>3D view</button>
+          <button type="button" id="graph-spin" hidden>Pause rotation</button>
           <p id="graph-mode-note" class="graph-mode-note" aria-live="polite"></p>
         </div>
         <div class="graph-scroll">
@@ -171,14 +172,14 @@ const citedFamilies = new Set(citations.flatMap((edge) => [edge.from, edge.to]))
             </a>
           ))}
         </svg>
-        <canvas class="graph-canvas" width={size} height={size} content="drawable" hidden>
+        <canvas class="graph-canvas" width={size} height={size} content="drawable" aria-label="Map of the citation edges listed below." hidden>
           {nodes.map((node) => (
             <a class="graph-label" href={`${base}f/${node.id}/`} data-id={node.id} drawable>
               {node.id}
             </a>
           ))}
         </canvas>
-        <canvas class="graph-webgl" width={size} height={size} content="drawable" hidden></canvas>
+        <canvas class="graph-webgl" width={size} height={size} content="drawable" aria-label="Map of the citation edges listed below." hidden></canvas>
         </div>
         </div>
       )

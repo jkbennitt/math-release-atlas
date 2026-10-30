@@ -4184,6 +4184,24 @@ def check_home_layout(dist: Path) -> list[str]:
     return []
 
 
+def check_graph_a11y(dist: Path) -> list[str]:
+    """Map links: one exposed family link per node, and the drawable tab order when that canvas exists."""
+    script = ROOT / "scripts" / "graph_a11y_check.mjs"
+    if not script.is_file():
+        return ["graph accessibility check is missing"]
+    completed = subprocess.run(
+        ["node", str(script), str(dist)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        return [detail or "graph accessibility check failed"]
+    return []
+
+
 _SHARE_SECTION_RE = re.compile(r'<section class="share"[^>]*>.*?</section>', re.DOTALL)
 _SHARE_ROWS_RE = re.compile(r'<ol class="share-rows">(.*?)</ol>', re.DOTALL)
 _SHARE_LEGEND_RE = re.compile(r'<ul class="share-legend">(.*?)</ul>', re.DOTALL)
@@ -4344,6 +4362,7 @@ def check_dist(dist: Path) -> list[str]:
             failures.append(f"{page.relative_to(dist)} heading uses the upstream name")
     failures.extend(check_inline_spacing(dist, catalog))
     failures.extend(check_home_layout(dist))
+    failures.extend(check_graph_a11y(dist))
     return failures
 
 

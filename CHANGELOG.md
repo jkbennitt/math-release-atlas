@@ -2,8 +2,8 @@
 
 ## 0.4.9
 
-- Where the browser can draw HTML inside a canvas, the citation map labels are those HTML links. They stay in the page HTML, so find-in-page, selection, and screen readers can reach them, and each label still opens its family page.
-- A 3D view draws the same edges with those labels in the scene. It turns slowly, and it stays still when the browser asks for reduced motion. The list underneath is the same list as before.
+- Where the browser can draw HTML inside a canvas, the citation map labels are those HTML links. They stay in the page HTML, and each label still opens its family page. The earlier map is removed from the tab order there.
+- A 3D view draws the same edges with those labels in the scene. A pause control stops the turn, and the view starts paused when the browser asks for reduced motion. The page can still scroll past that view. The list underneath is the same list as before.
 - Browsers that cannot draw HTML inside a canvas keep the previous map. The 3D control stays hidden there.
 - Three.js is bundled with the site. The graph page does not load a script, stylesheet, or font from another origin. The build checks that each map label is present in the HTML and that those asset URLs stay on this site.
 

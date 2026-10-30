@@ -96,12 +96,12 @@ function reducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function noteFor(view: GraphView, reduced: boolean): string {
+function noteFor(view: GraphView, paused: boolean): string {
   switch (view) {
     case "flat":
       return "";
     case "space":
-      return reduced
+      return paused
         ? "The 3D view stays still. These are the same edges as the list."
         : "The 3D view turns on its own. These are the same edges as the list.";
     default: {
@@ -128,10 +128,11 @@ export function mountGraph(): void {
   const svg = document.querySelector<SVGSVGElement>("svg.graph-map");
   const stage = document.querySelector<HTMLElement>(".graph-stage");
   const flat = document.querySelector<DrawableCanvas>("canvas.graph-canvas");
-  const space = document.querySelector<DrawableCanvas>("canvas.graph-webgl");
+  let space = document.querySelector<DrawableCanvas>("canvas.graph-webgl");
   const button = document.querySelector<HTMLButtonElement>("#graph-3d");
+  const spin = document.querySelector<HTMLButtonElement>("#graph-spin");
   const note = document.querySelector<HTMLElement>("#graph-mode-note");
-  if (!svg || !stage || !flat || !space || !button || !note) return;
+  if (!svg || !stage || !flat || !space || !button || !spin || !note) return;
   if (!supportsHtmlInCanvas()) return;
   const context = flat.getContext("2d");
   if (!context || !("drawElementImage" in context)) return;
@@ -159,35 +160,98 @@ export function mountGraph(): void {
     flat.requestPaint?.();
   });
 
-  flat.addEventListener("paint", () => {
-    if (flat.hidden || flat.width < 1 || flat.height < 1) return;
-    paintFlat(flat, draw, svg, labels);
-  });
-
   let view: GraphView = "flat";
   let session: Graph3dHandle | null = null;
   let opening = false;
+  let paintBroken = false;
+
+  // SVGElement has no `hidden` IDL property, so assigning it leaves the old map painted and focusable.
+  function hideMap(): void {
+    svg.setAttribute("hidden", "");
+  }
+
+  function showMap(): void {
+    svg.removeAttribute("hidden");
+  }
 
   function showNote(): void {
-    note.textContent = noteFor(view, reducedMotion());
+    const paused = view === "space" ? (session?.isPaused() ?? reducedMotion()) : false;
+    note.textContent = noteFor(view, paused);
   }
+
+  function showSpin(visible: boolean): void {
+    spin.hidden = !visible;
+    if (!visible) return;
+    const paused = session?.isPaused() ?? true;
+    spin.textContent = paused ? "Resume rotation" : "Pause rotation";
+    spin.setAttribute("aria-pressed", paused ? "true" : "false");
+  }
+
+  function useSvg(): void {
+    paintBroken = true;
+    session?.stop();
+    view = "flat";
+    for (const label of labels) {
+      if (label.parentElement !== flat) flat.appendChild(label);
+    }
+    flat.hidden = true;
+    space.hidden = true;
+    showMap();
+    stage.classList.remove("is-live", "is-space");
+    showSpin(false);
+    button.hidden = false;
+    button.disabled = false;
+    button.setAttribute("aria-pressed", "false");
+    button.textContent = buttonLabel("flat");
+    note.textContent = "The flat map is showing.";
+  }
+
+  flat.addEventListener("paint", () => {
+    if (paintBroken || flat.hidden || flat.width < 1 || flat.height < 1) return;
+    try {
+      paintFlat(flat, draw, svg, labels);
+    } catch {
+      useSvg();
+    }
+  });
 
   function showFlat(): void {
     view = "flat";
     session?.stop();
+    showSpin(false);
     for (const label of labels) {
       if (label.parentElement !== flat) flat.appendChild(label);
     }
     space.hidden = true;
-    stage.classList.add("is-live");
-    svg.hidden = true;
-    flat.hidden = false;
+    stage.classList.remove("is-space");
     button.hidden = false;
     button.setAttribute("aria-pressed", "false");
     button.textContent = buttonLabel("flat");
+    if (paintBroken) {
+      flat.hidden = true;
+      showMap();
+      stage.classList.remove("is-live");
+      note.textContent = "The flat map is showing.";
+      return;
+    }
+    stage.classList.add("is-live");
+    hideMap();
+    flat.hidden = false;
     showNote();
     observer.observe(flat, supportsBox ? { box: "device-pixel-content-box" } : undefined);
     flat.requestPaint?.();
+  }
+
+  function replaceWebglCanvas(current: DrawableCanvas): DrawableCanvas {
+    const next = document.createElement("canvas");
+    for (const name of current.getAttributeNames()) {
+      if (name === "hidden") continue;
+      const value = current.getAttribute(name);
+      if (value !== null) next.setAttribute(name, value);
+    }
+    next.hidden = true;
+    current.replaceWith(next);
+    return next as DrawableCanvas;
   }
 
   async function showSpace(): Promise<void> {
@@ -203,8 +267,8 @@ export function mountGraph(): void {
       }
       flat.hidden = true;
       space.hidden = false;
-      stage.classList.add("is-live");
-      svg.hidden = true;
+      stage.classList.add("is-live", "is-space");
+      hideMap();
       if (!session) {
         session = await mod.mountGraph3d({
           canvas: space,
@@ -219,18 +283,33 @@ export function mountGraph(): void {
       view = "space";
       button.setAttribute("aria-pressed", "true");
       button.textContent = buttonLabel("space");
+      showSpin(true);
       showNote();
     } catch {
       for (const label of labels) {
         if (label.parentElement !== flat) flat.appendChild(label);
       }
+      // The failed canvas may already have a WebGL context. Replacing it lets a retry call getContext once.
+      space = replaceWebglCanvas(space);
+      session = null;
       space.hidden = true;
-      flat.hidden = false;
+      stage.classList.remove("is-space");
       view = "flat";
       button.textContent = buttonLabel("flat");
       button.setAttribute("aria-pressed", "false");
-      note.textContent = "The 3D view did not open in this browser. The flat map is showing.";
-      flat.requestPaint?.();
+      showSpin(false);
+      if (paintBroken) {
+        flat.hidden = true;
+        showMap();
+        stage.classList.remove("is-live");
+        note.textContent = "The flat map is showing.";
+      } else {
+        flat.hidden = false;
+        stage.classList.add("is-live");
+        hideMap();
+        note.textContent = "The 3D view did not open in this browser. The flat map is showing.";
+        flat.requestPaint?.();
+      }
     } finally {
       button.disabled = false;
       opening = false;
@@ -245,10 +324,20 @@ export function mountGraph(): void {
     showFlat();
   });
 
+  spin.addEventListener("click", () => {
+    if (!session || view !== "space") return;
+    session.setPaused(!session.isPaused());
+    showSpin(true);
+    showNote();
+  });
+
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   motion.addEventListener("change", () => {
     session?.setReducedMotion(motion.matches);
-    if (view === "space") showNote();
+    if (view === "space") {
+      showSpin(true);
+      showNote();
+    }
   });
 
   showFlat();

@@ -32,6 +32,8 @@ export interface Graph3dHandle {
   start(): void;
   stop(): void;
   setReducedMotion(value: boolean): void;
+  setPaused(value: boolean): void;
+  isPaused(): boolean;
 }
 
 export interface Graph3dOptions {
@@ -228,8 +230,11 @@ export async function mountGraph3d(options: Graph3dOptions): Promise<Graph3dHand
   camera.position.set(0, 0.8, 29);
   const controls = new OrbitControls(camera, canvas);
   controls.enablePan = false;
+  controls.enableZoom = false;
   controls.minDistance = 14;
   controls.maxDistance = 40;
+  // OrbitControls writes touch-action: none, which traps page scrolling.
+  canvas.style.touchAction = "pan-y";
   controls.target.set(0, 0, 0);
   controls.enableDamping = !options.reducedMotion;
   controls.dampingFactor = 0.08;
@@ -283,11 +288,21 @@ export async function mountGraph3d(options: Graph3dOptions): Promise<Graph3dHand
   };
 
   let reduced = options.reducedMotion;
+  let paused = options.reducedMotion;
+  let pausedByPreference = options.reducedMotion;
   let running = false;
   let onScreen = true;
   let dragging = false;
   let frame = 0;
   let last = 0;
+
+  function settlePause(): void {
+    controls.enableDamping = !paused && !reduced;
+    if (paused && frame !== 0) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    }
+  }
 
   function resize(): void {
     const width = canvas.clientWidth;
@@ -303,8 +318,8 @@ export async function mountGraph3d(options: Graph3dOptions): Promise<Graph3dHand
   function render(now: number): void {
     const delta = last === 0 ? 0 : Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!reduced && !dragging) group.rotation.y += SPIN * delta;
-    if (!reduced) controls.update();
+    if (!paused && !dragging) group.rotation.y += SPIN * delta;
+    if (!paused) controls.update();
     billboard(group, camera, labels);
     group.updateMatrixWorld(true);
     syncGeometry(canvas, camera, labels);
@@ -315,7 +330,8 @@ export async function mountGraph3d(options: Graph3dOptions): Promise<Graph3dHand
     frame = 0;
     if (!running) return;
     render(now);
-    if (running && !reduced && onScreen && !document.hidden) {
+    const turning = running && onScreen && !document.hidden && (!paused || dragging);
+    if (turning) {
       frame = requestAnimationFrame(loop);
     }
   }
@@ -369,8 +385,24 @@ export async function mountGraph3d(options: Graph3dOptions): Promise<Graph3dHand
     },
     setReducedMotion(value: boolean) {
       reduced = value;
-      controls.enableDamping = !value;
+      if (value) {
+        paused = true;
+        pausedByPreference = true;
+      } else if (pausedByPreference) {
+        paused = false;
+        pausedByPreference = false;
+      }
+      settlePause();
       if (running) kick();
+    },
+    setPaused(value: boolean) {
+      paused = value;
+      pausedByPreference = false;
+      settlePause();
+      if (running) kick();
+    },
+    isPaused() {
+      return paused;
     },
   };
   handle.start();
