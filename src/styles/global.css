@@ -533,11 +533,33 @@ a.tag:hover { text-decoration: underline; }
   color: var(--muted);
   font-size: 0.86rem;
 }
+.graph-actions:not(:has(button:not([hidden]), .graph-mode-note:not(:empty))) {
+  display: none;
+}
+.graph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin: 0 0 0.45rem;
+}
+.graph-mode-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.graph-mode-note:empty { display: none; }
 .graph-scroll {
   overflow-x: auto;
   max-width: 100%;
   min-width: 0;
 }
+.graph-stage {
+  position: relative;
+  width: 100%;
+  min-width: 900px;
+}
+.graph-stage.is-live { aspect-ratio: 1; }
 .graph-map {
   --map-paper: var(--paper);
   --map-cite: var(--accent);
@@ -559,6 +581,43 @@ a.tag:hover { text-decoration: underline; }
   font-size: 12px;
   fill: var(--map-label);
   font-family: var(--mono);
+}
+.graph-canvas,
+.graph-webgl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.graph-webgl { touch-action: none; }
+.graph-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-block;
+  box-sizing: border-box;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.graph-label:hover,
+.graph-label:focus-visible { text-decoration: underline; }
+.graph-webgl .graph-label {
+  font-size: 20px;
+  line-height: 1.2;
+  padding: 3px 7px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 2px;
 }
 
 .status-line {
