@@ -809,16 +809,17 @@ def assert_alphaproof(
         if enforce_pin:
             raise AtlasError("alphaproof-nexus checks did not run for the pin in upstream.json")
         return
+    tripwires = alphaproof_tripwires(payload)
     oeis_shortfall = PAPER_OEIS_PROVED - PINNED_OEIS_FILE_COUNT
-    if counts["oeis_files"] != PINNED_OEIS_FILE_COUNT:
+    if tripwires["oeis_moved"]:
         raise AtlasError(
-            f"pinned OEIS file count is {counts['oeis_files']}, expected {PINNED_OEIS_FILE_COUNT}"
+            f"pinned OEIS file count is {tripwires['oeis_files']}, expected {PINNED_OEIS_FILE_COUNT}"
         )
-    if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
+    if tripwires["attempted_moved"]:
         raise AtlasError("pinned attempted list does not match the paper")
     if oeis_gap["absent"] != oeis_shortfall:
         raise AtlasError(f"pinned OEIS gap is not {oeis_shortfall}")
-    if payload["lean_toolchain"] != PINNED_TOOLCHAIN:
+    if tripwires["toolchain_moved"]:
         raise AtlasError("pinned lean-toolchain drifted")
     digest = snapshot_digest(payload)
     expected_digest = loaded["alphaproof-nexus"]["digest"]
@@ -826,11 +827,10 @@ def assert_alphaproof(
         raise AtlasError(f"fill the pinned AlphaProof digest: {digest}")
     if digest != expected_digest:
         raise AtlasError(f"pinned AlphaProof snapshot digest drifted: {digest}")
-    numbers = {record["erdos_number"] for record in records if record["erdos_number"] is not None}
-    if numbers != PINNED_APN_ERDOS:
-        raise AtlasError(f"pinned Erdős numbers are {sorted(numbers)}")
-    if payload.get("unlinked_natural_language_proofs"):
-        raise AtlasError(f"pinned checkout left PDFs unlinked: {payload['unlinked_natural_language_proofs']}")
+    if tripwires["erdos_moved"]:
+        raise AtlasError(f"pinned Erdős numbers are {_sorted_erdos_numbers(tripwires['erdos_numbers'])}")
+    if tripwires["unlinked"]:
+        raise AtlasError(f"pinned checkout left PDFs unlinked: {tripwires['unlinked']}")
 
 
 def assert_cross_source(
@@ -864,6 +864,65 @@ def assert_cross_source(
         raise AtlasError(f"pinned AlphaProof Erdős numbers are {sorted(alphaproof)}")
 
 
+def recorded_apn_erdos_numbers(records: list[dict[str, Any]]) -> set[Any]:
+    """Erdős numbers the pin tripwire compares with ``PINNED_APN_ERDOS``.
+
+    None means the row is not an Erdős file and stays out of the set. Every
+    other value is kept. ``isinstance(..., int)`` drops a string or a float
+    before the comparison, so the sync note can report that the pinned set
+    still matches while that value is on the row. ``is not None`` is the
+    guard's rule: a malformed value cannot hide. Both copies call this.
+    """
+    numbers: set[Any] = set()
+    for record in records:
+        if "erdos_number" not in record:
+            raise AtlasError("AlphaProof record is missing an Erdős number")
+        number = record["erdos_number"]
+        if number is not None:
+            numbers.add(number)
+    return numbers
+
+
+def _sorted_erdos_numbers(numbers: set[Any]) -> list[Any]:
+    try:
+        return sorted(numbers)
+    except TypeError:
+        return sorted(numbers, key=repr)
+
+
+def alphaproof_tripwires(
+    payload: dict[str, Any],
+    families: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Facts shared by ``assert_alphaproof`` and ``count_golden_disagreements``.
+
+    The OEIS absent-count and the snapshot digest stay in the guard. They are
+    not sync notes. Every other AlphaProof tripwire is decided here.
+    """
+    counts = payload["counts"]
+    attempted = next(gap for gap in payload["gaps"] if gap["id"] == "erdos-attempted")
+    numbers = recorded_apn_erdos_numbers(payload["records"])
+    openai = openai_erdos_index(families) if families is not None else None
+    toolchain = payload.get("lean_toolchain")
+    unlinked = list(payload.get("unlinked_natural_language_proofs") or [])
+    return {
+        "oeis_files": counts["oeis_files"],
+        "oeis_moved": counts["oeis_files"] != PINNED_OEIS_FILE_COUNT,
+        "attempted_entries": counts["attempted_entries"],
+        "attempted_status": attempted["status"],
+        "attempted_moved": (
+            counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH"
+        ),
+        "erdos_numbers": numbers,
+        "erdos_moved": numbers != PINNED_APN_ERDOS,
+        "openai_erdos": openai,
+        "openai_moved": openai is not None and openai != PINNED_OPENAI_ERDOS,
+        "toolchain": toolchain,
+        "toolchain_moved": toolchain != PINNED_TOOLCHAIN,
+        "unlinked": unlinked,
+    }
+
+
 def count_golden_disagreements(
     payload: dict[str, Any],
     families: list[dict[str, Any]] | None = None,
@@ -874,54 +933,45 @@ def count_golden_disagreements(
     they are not listed here.
     """
     notes: list[str] = []
-    counts = payload["counts"]
-    records = payload["records"]
-    if counts["oeis_files"] != PINNED_OEIS_FILE_COUNT:
+    tripwires = alphaproof_tripwires(payload, families)
+    if tripwires["oeis_moved"]:
         shortfall = PAPER_OEIS_PROVED - PINNED_OEIS_FILE_COUNT
         notes.append(
             "PINNED_OEIS_FILE_COUNT in scripts/alphaproof.py is "
             f"{PINNED_OEIS_FILE_COUNT} (paper {PAPER_OEIS_PROVED}, shortfall {shortfall}). "
-            f"This snapshot has {counts['oeis_files']} OEIS files. "
+            f"This snapshot has {tripwires['oeis_files']} OEIS files. "
             "Update the constant. It is the unexplained OEIS shortfall, not a row total."
         )
-    attempted = next(gap for gap in payload["gaps"] if gap["id"] == "erdos-attempted")
-    if counts["attempted_entries"] != PAPER_ERDOS_ATTEMPTED or attempted["status"] != "MATCH":
+    if tripwires["attempted_moved"]:
         notes.append(
             "PAPER_ERDOS_ATTEMPTED in scripts/alphaproof.py is "
             f"{PAPER_ERDOS_ATTEMPTED}, and the pinned attempted list must still match it. "
-            f"This snapshot lists {counts['attempted_entries']} entries ({attempted['status']}). "
+            f"This snapshot lists {tripwires['attempted_entries']} entries ({tripwires['attempted_status']}). "
             "Update the paper constant and the MATCH tripwire together."
         )
-    numbers = {
-        record["erdos_number"]
-        for record in records
-        if isinstance(record.get("erdos_number"), int)
-    }
-    if numbers != PINNED_APN_ERDOS:
+    if tripwires["erdos_moved"]:
         notes.append(
             "PINNED_APN_ERDOS in scripts/alphaproof.py is "
-            f"{sorted(PINNED_APN_ERDOS)}. This snapshot has {sorted(numbers)}. "
+            f"{sorted(PINNED_APN_ERDOS)}. This snapshot has {_sorted_erdos_numbers(tripwires['erdos_numbers'])}. "
             "Update the set. It names the AlphaProof problems in the cross-source join, "
             "and a new file for a number already in the set does not move it."
         )
-    if families is not None and openai_erdos_index(families) != PINNED_OPENAI_ERDOS:
-        found = openai_erdos_index(families)
+    if tripwires["openai_moved"]:
         notes.append(
             "PINNED_OPENAI_ERDOS in scripts/alphaproof.py is "
-            f"{PINNED_OPENAI_ERDOS}. This snapshot has {found}. "
+            f"{PINNED_OPENAI_ERDOS}. This snapshot has {tripwires['openai_erdos']}. "
             "Update the map. It names the OpenAI families in the cross-source join."
         )
-    if payload.get("lean_toolchain") != PINNED_TOOLCHAIN:
+    if tripwires["toolchain_moved"]:
         notes.append(
             "PINNED_TOOLCHAIN in scripts/alphaproof.py is "
-            f"{PINNED_TOOLCHAIN}. This snapshot has {payload.get('lean_toolchain')}. "
+            f"{PINNED_TOOLCHAIN}. This snapshot has {tripwires['toolchain']}. "
             "Update that string."
         )
-    unlinked = payload.get("unlinked_natural_language_proofs") or []
-    if unlinked:
+    if tripwires["unlinked"]:
         notes.append(
             "The pinned AlphaProof checkout is expected to link every natural-language PDF. "
-            f"This snapshot left {unlinked} unlinked."
+            f"This snapshot left {tripwires['unlinked']} unlinked."
         )
     return notes
 

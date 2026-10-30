@@ -25,7 +25,9 @@ import yaml
 import alphaproof
 import anthropic
 import atlaslib
+import merge
 import og_card
+import sync
 from alphaproof import (
     ALPHAPROOF_JSON,
     SOURCES_JSON,
@@ -61,6 +63,7 @@ from atlaslib import (
     bare_result_claims,
     exempt_upstream_text,
     assert_merged_catalogue,
+    assert_pinned_overview_line_count,
     assert_sha_is_ancestor,
     assert_upstream_digest,
     ensure_ancestor_of_origin_head,
@@ -78,6 +81,7 @@ from atlaslib import (
     merge_data,
     parse_contents,
     pin_openai_math_url,
+    pinned_overview_line_count,
     parse_slug_date,
     plainify,
     png_dimensions,
@@ -961,6 +965,37 @@ def alphaproof_self_test() -> list[str]:
     wrong_message = _atlas_error(lambda: assert_alphaproof(wrong_commit))
     if wrong_message is None or "did not run" not in wrong_message:
         failures.append(f"AlphaProof at another commit skipped the pin checks: {wrong_message}")
+    if not _calls_named(assert_alphaproof, "alphaproof_tripwires"):
+        failures.append("assert_alphaproof does not use the shared tripwire helper")
+    if not _calls_named(alphaproof.count_golden_disagreements, "alphaproof_tripwires"):
+        failures.append("count_golden_disagreements does not use the shared tripwire helper")
+    if not _calls_named(alphaproof.alphaproof_tripwires, "recorded_apn_erdos_numbers"):
+        failures.append("the tripwire helper does not use the shared Erdős filter")
+    drifted = copy.deepcopy(recorded)
+    stray = next(record for record in drifted["records"] if record["erdos_number"] is None)
+    stray["erdos_number"] = "999"
+    isinstance_copy = {
+        record.get("erdos_number")
+        for record in drifted["records"]
+        if isinstance(record.get("erdos_number"), int)
+    }
+    if isinstance_copy != alphaproof.PINNED_APN_ERDOS:
+        failures.append("drift fixture changed the integer Erdős set")
+    kept = alphaproof.recorded_apn_erdos_numbers(drifted["records"])
+    if "999" not in kept:
+        failures.append("the shared Erdős tripwire dropped a non-integer")
+    if kept == isinstance_copy:
+        failures.append("the shared Erdős tripwire matched the isinstance filter")
+    bool_rows = [{"erdos_number": number} for number in alphaproof.PINNED_APN_ERDOS]
+    bool_rows.append({"erdos_number": True})
+    if True not in alphaproof.recorded_apn_erdos_numbers(bool_rows):
+        failures.append("the shared Erdős tripwire dropped a boolean")
+    drift_notes = alphaproof.count_golden_disagreements(drifted, families)
+    if not any("PINNED_APN_ERDOS" in note for note in drift_notes):
+        failures.append(f"a non-integer Erdős number did not move the tripwire: {drift_notes}")
+    drift_guard = _atlas_error(lambda: assert_alphaproof(drifted))
+    if drift_guard is None or "Erdős" not in drift_guard:
+        failures.append(f"assert_alphaproof accepted a non-integer Erdős number: {drift_guard}")
     return failures
 
 
@@ -1212,6 +1247,10 @@ def anthropic_self_test() -> list[str]:
                 f"recorded Anthropic snapshot was reported as moving a tripwire: "
                 f"{anthropic.count_golden_disagreements(recorded)}"
             )
+        if not _calls_named(assert_anthropic, "anthropic_tripwires"):
+            failures.append("assert_anthropic does not use the shared tripwire helper")
+        if not _calls_named(anthropic.count_golden_disagreements, "anthropic_tripwires"):
+            failures.append("Anthropic count_golden_disagreements does not use the shared tripwire helper")
         grown = copy.deepcopy(recorded)
         grown_zeta = next(item for item in grown["releases"] if item["id"] == "zeta23")
         grown_zeta["counts"]["lean_files"] += 1
@@ -2896,6 +2935,25 @@ def _commit_file(repo: Path, name: str, text: str) -> str:
 
 def lens_pin_self_test() -> str | None:
     """Lens links follow the catalogue commit, and a missing path stops the move."""
+    if not _calls_named(merge.main, "pinned_overview_line_count"):
+        return "merge.py does not pass the recorded overview line count"
+    if not _calls_named(verify_recorded_upstream, "assert_pinned_overview_line_count"):
+        return "verify-upstream does not check the recorded overview line count"
+    if not _calls_named(sync.stamp_catalogue_pins, "require_overview_line_count"):
+        return "sync.py does not record the overview line count on the pin"
+    if not _calls_named(sync.main, "overview_line_count_in_repo"):
+        return "sync.py does not read overview.tex when it re-pins"
+    try:
+        assert_pinned_overview_line_count(2, "a\nb\n")
+    except AtlasError as exc:
+        return f"a matching overview line count was rejected: {exc}"
+    try:
+        assert_pinned_overview_line_count(1, "a\nb\n")
+    except AtlasError as exc:
+        if "overview line count" not in str(exc) or "2" not in str(exc):
+            return f"a short overview line count reported {exc}"
+    else:
+        return "a short overview line count was accepted"
     old = "a" * 40
     new = "b" * 40
     source = f"https://github.com/openai/math/blob/{old}/overview.tex#L12"
@@ -2975,6 +3033,22 @@ def lens_pin_self_test() -> str | None:
     ranged_lens = ranged_merge["families"][0]["lenses"][0]["source"]
     if not ranged_lens.endswith("#L40-L42"):
         return f"a line range did not shift both ends: {ranged_lens}"
+    recorded_count = pinned_overview_line_count({"openai-math": {"overview_line_count": 50}})
+    from_pin = merge_data(two, ranged, {}, overview_line_count=recorded_count)
+    if not from_pin["families"][0]["lenses"][0]["source"].endswith("#L40-L42"):
+        return "a curated range did not resolve from the recorded line count"
+    try:
+        merge_data(
+            two,
+            ranged,
+            {},
+            overview_line_count=pinned_overview_line_count({"openai-math": {"overview_line_count": 41}}),
+        )
+    except AtlasError as exc:
+        if "past the end" not in str(exc):
+            return f"a curated range past the recorded line count reported {exc}"
+    else:
+        return "a curated range past the recorded line count was accepted"
     past_eof = f"https://github.com/openai/math/blob/{old}/overview.tex#L10-L12"
     try:
         pin_openai_math_url(past_eof, new, 40, 41)
@@ -3291,6 +3365,28 @@ def pin_derivation_self_test() -> str | None:
                 return f"a missing pin source reported {exc}"
         else:
             return "a source missing from upstream.json was accepted"
+        uncounted = copy.deepcopy(recorded)
+        del uncounted["pins"]["openai-math"]["overview_line_count"]
+        uncounted_path = Path(tmp) / "uncounted.json"
+        uncounted_path.write_text(json.dumps(uncounted), encoding="utf-8")
+        try:
+            load_upstream_pins(uncounted_path)
+        except AtlasError as exc:
+            if "overview_line_count" not in str(exc):
+                return f"a pin without an overview line count reported {exc}"
+        else:
+            return "a pin without an overview line count was accepted"
+        bogus = copy.deepcopy(recorded)
+        bogus["pins"]["openai-math"]["overview_line_count"] = True
+        bogus_path = Path(tmp) / "bogus.json"
+        bogus_path.write_text(json.dumps(bogus), encoding="utf-8")
+        try:
+            load_upstream_pins(bogus_path)
+        except AtlasError as exc:
+            if "positive integer" not in str(exc):
+                return f"a boolean overview line count reported {exc}"
+        else:
+            return "a boolean overview line count was accepted"
     with contextlib.redirect_stdout(io.StringIO()):
         empty_counts = report_check_counts(
             {"families": []},

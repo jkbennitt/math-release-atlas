@@ -4,7 +4,8 @@
 The OpenAI catalogue, the AlphaProof Nexus tree, and the Anthropic releases
 are checked on every run. OpenAI lens and related links are stamped from
 the single pinned commit. An overview.tex line is recomputed from the
-family's resultentry. A missing or duplicated entry, a line past the end
+family's resultentry. The openai-math pin records that file's line count.
+A missing or duplicated entry, a line past the end
 of the file that cannot be recomputed, or a renamed or missing path stops
 the run. Exit 0 when every recorded commit is unchanged.
 Exit 2 when data was rewritten and the OpenAI README counts match. Exit 3
@@ -59,7 +60,9 @@ from atlaslib import (
     load_curated,
     materialize_upstream,
     merge_data,
+    overview_line_count_in_repo,
     read_json,
+    require_overview_line_count,
     require_upstream_ancestor,
     run_git,
     snapshot_digest,
@@ -173,8 +176,14 @@ def stamp_catalogue_pins(
     alphaproof_payload: dict[str, Any],
     anthropic_payload: dict[str, Any],
     previous: dict[str, Any] | None = None,
+    overview_line_count: int | None = None,
 ) -> dict[str, Any]:
-    """Write every live pin from the snapshots. The baseline pin stays as recorded."""
+    """Write every live pin from the snapshots. The baseline pin stays as recorded.
+
+    ``overview_line_count`` is the line count of overview.tex at the OpenAI
+    commit. A re-pin passes the count it just read. A run that does not
+    check out OpenAI passes the count already recorded on the pin.
+    """
     existing = upstream.get("pins")
     if not isinstance(existing, dict) or "openai-math-baseline" not in existing:
         existing = previous.get("pins") if isinstance(previous, dict) else None
@@ -192,6 +201,7 @@ def stamp_catalogue_pins(
         "openai-math": {
             "commit": upstream["upstream"]["commit"],
             "digest": snapshot_digest(upstream),
+            "overview_line_count": require_overview_line_count(overview_line_count),
         },
         "openai-math-baseline": {
             "commit": baseline["commit"],
@@ -371,20 +381,28 @@ def main() -> int:
         curated = load_curated(CURATED_DIR)
         if openai_repo is not None and (openai_changed or args.force):
             curated = assert_curated_lens_paths(openai_repo, full, curated)
+            overview_line_count = overview_line_count_in_repo(openai_repo)
+        else:
+            previous_pins = old_payload.get("pins") if isinstance(old_payload, dict) else None
+            previous_openai = previous_pins.get("openai-math") if isinstance(previous_pins, dict) else None
+            overview_line_count = (
+                previous_openai.get("overview_line_count") if isinstance(previous_openai, dict) else None
+            )
         cautions = load_cautions(CAUTIONS_JSON)
-        upstream = stamp_catalogue_pins(upstream, alphaproof_payload, anthropic_payload, old_payload)
+        upstream = stamp_catalogue_pins(
+            upstream,
+            alphaproof_payload,
+            anthropic_payload,
+            old_payload,
+            overview_line_count,
+        )
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
-        overview_line_count = None
-        if openai_repo is not None:
-            overview_tex = openai_repo / "overview.tex"
-            if overview_tex.is_file():
-                overview_line_count = len(overview_tex.read_text(encoding="utf-8").splitlines())
         merged = merge_data(
             upstream,
             curated,
             cautions,
             extras,
-            overview_line_count=overview_line_count,
+            overview_line_count=upstream["pins"]["openai-math"]["overview_line_count"],
         )
         pins_changed = old_payload is None or old_payload.get("pins") != upstream["pins"]
         if openai_changed or args.force or old_payload is None or pins_changed:

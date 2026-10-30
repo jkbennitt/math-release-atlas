@@ -1054,42 +1054,89 @@ def assert_anthropic(
         if enforce_pin:
             raise AtlasError("anthropic checks did not run for the pins in upstream.json")
         return
-    if payload["skipped_directories"] != []:
-        raise AtlasError(f"pinned formal-math tree has extra directories: {payload['skipped_directories']}")
-    if any(identifiers[key] for key in ("erdos", "oeis", "stacks")):
-        raise AtlasError(f"pinned Anthropic identifiers are not empty: {identifiers}")
-    if by_id["eth"]["headline_theorems"] != list(ETH_HEADLINE):
-        raise AtlasError(f"pinned eth theorems are {by_id['eth']['headline_theorems']}")
-    if by_id["eth"]["axioms"] != list(ETH_AXIOMS):
-        raise AtlasError(f"pinned eth axioms are {by_id['eth'].get('axioms')}")
+    tripwires = anthropic_tripwires(payload, loaded)
+    if tripwires["skipped_moved"]:
+        raise AtlasError(f"pinned formal-math tree has extra directories: {tripwires['skipped']}")
+    if tripwires["identifiers_moved"]:
+        raise AtlasError(f"pinned Anthropic identifiers are not empty: {tripwires['identifiers']}")
+    if tripwires["headline_moved"]:
+        raise AtlasError(f"pinned eth theorems are {tripwires['headlines']}")
+    if tripwires["axioms_moved"]:
+        raise AtlasError(f"pinned eth axioms are {tripwires['axioms']}")
     eth_statement_paths = [item["path"] for item in by_id["eth"]["statement_files"]]
     if "eth/MainResults.lean" not in eth_statement_paths or "eth/README.md" not in eth_statement_paths:
         raise AtlasError(f"pinned eth statement files are {eth_statement_paths}")
-    zeta_tag = by_id["zeta23"].get("tag")
-    zeta_name = zeta_tag.get("name") if isinstance(zeta_tag, dict) else None
-    if zeta_name != anthropic_pin["zeta_tag"]:
+    if tripwires["zeta_name_moved"]:
         raise AtlasError(
-            f"zeta tag {zeta_name!r} does not match pins.anthropic.zeta_tag {anthropic_pin['zeta_tag']!r}"
+            f"zeta tag {tripwires['zeta_name']!r} does not match pins.anthropic.zeta_tag {tripwires['pinned_zeta_tag']!r}"
         )
-    if not isinstance(zeta_tag, dict) or zeta_tag.get("commit") != anthropic_pin["zeta_tag_commit"]:
+    if tripwires["zeta_commit_moved"]:
         raise AtlasError("pinned v1.0 tag peel drifted")
-    for release_id, expected_toolchain in PINNED_TOOLCHAINS.items():
-        if by_id[release_id]["lean_toolchain"] != expected_toolchain:
-            raise AtlasError(f"pinned {release_id} toolchain drifted")
-    module_label = by_id["fermat-last-theorem"]["gaps"][0]["label"]
-    if "(3 more)" in module_label or "Paths outside" in module_label:
-        raise AtlasError(f"pinned Fermat module label still mixes the extra files: {module_label}")
-    if "not package modules" not in module_label or "FinalCheck.lean" not in module_label:
-        raise AtlasError(f"pinned Fermat module label drifted: {module_label}")
-    if "zero-density" in by_id["zeta23"]["statement"] or "zero-density" in " ".join(
-        by_id["zeta23"]["scope_notes"]
-    ):
+    if tripwires["toolchain_moved"]:
+        raise AtlasError(f"pinned {tripwires['toolchain_moved'][0][0]} toolchain drifted")
+    if tripwires["label_mixes"]:
+        raise AtlasError(
+            f"pinned Fermat module label still mixes the extra files: {tripwires['module_label']}"
+        )
+    if tripwires["label_drifted"]:
+        raise AtlasError(f"pinned Fermat module label drifted: {tripwires['module_label']}")
+    if tripwires["zero_density"]:
         raise AtlasError("pinned zeta wording still says zero-density")
     digest = snapshot_digest(payload)
     if not anthropic_pin["digest"]:
         raise AtlasError(f"fill the pinned Anthropic digest: {digest}")
     if digest != anthropic_pin["digest"]:
         raise AtlasError(f"pinned Anthropic snapshot digest drifted: {digest}")
+
+
+def anthropic_tripwires(
+    payload: dict[str, Any],
+    pins: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Facts shared by ``assert_anthropic`` and ``count_golden_disagreements``.
+
+    Statement-file paths and the snapshot digest stay in the guard. They are
+    not sync notes. A missing pin name is a mismatch, not a skipped check.
+    """
+    by_id = {release["id"]: release for release in payload["releases"]}
+    skipped = payload["skipped_directories"]
+    identifiers = payload["identifiers"]
+    headlines = by_id["eth"]["headline_theorems"]
+    axioms = by_id["eth"]["axioms"]
+    toolchain_moved = [
+        (release_id, by_id[release_id]["lean_toolchain"], expected)
+        for release_id, expected in PINNED_TOOLCHAINS.items()
+        if by_id[release_id]["lean_toolchain"] != expected
+    ]
+    module_label = by_id["fermat-last-theorem"]["gaps"][0]["label"]
+    zeta = by_id["zeta23"]
+    zeta_tag = zeta.get("tag")
+    zeta_name = zeta_tag.get("name") if isinstance(zeta_tag, dict) else None
+    zeta_commit = zeta_tag.get("commit") if isinstance(zeta_tag, dict) else None
+    loaded = pins if pins is not None else load_upstream_pins()
+    pinned_name = loaded["anthropic"]["zeta_tag"]
+    pinned_commit = loaded["anthropic"]["zeta_tag_commit"]
+    scope_notes = zeta["scope_notes"]
+    zeta_text = f"{zeta['statement']} {' '.join(scope_notes)}"
+    return {
+        "skipped": skipped,
+        "skipped_moved": skipped != [],
+        "identifiers": identifiers,
+        "identifiers_moved": any(identifiers[key] for key in ("erdos", "oeis", "stacks")),
+        "headlines": headlines,
+        "headline_moved": headlines != list(ETH_HEADLINE),
+        "axioms": axioms,
+        "axioms_moved": axioms != list(ETH_AXIOMS),
+        "toolchain_moved": toolchain_moved,
+        "module_label": module_label,
+        "label_mixes": "(3 more)" in module_label or "Paths outside" in module_label,
+        "label_drifted": "not package modules" not in module_label or "FinalCheck.lean" not in module_label,
+        "zero_density": "zero-density" in zeta_text,
+        "zeta_name": zeta_name,
+        "pinned_zeta_tag": pinned_name,
+        "zeta_name_moved": zeta_name != pinned_name,
+        "zeta_commit_moved": not isinstance(zeta_tag, dict) or zeta_commit != pinned_commit,
+    }
 
 
 def count_golden_disagreements(
@@ -1102,69 +1149,51 @@ def count_golden_disagreements(
     not listed here.
     """
     notes: list[str] = []
-    by_id = {release["id"]: release for release in payload["releases"]}
-    skipped = payload.get("skipped_directories") or []
-    if skipped:
+    tripwires = anthropic_tripwires(payload, pins)
+    if tripwires["skipped_moved"]:
         notes.append(
             "assert_anthropic rejects a non-empty skipped-directory list at the pinned commits. "
-            f"This snapshot skipped {skipped}. "
+            f"This snapshot skipped {tripwires['skipped']}. "
             "A new formal-math directory needs a release entry, or Guard keeps failing."
         )
-    identifiers = payload.get("identifiers") or {}
-    if any(identifiers.get(key) for key in ("erdos", "oeis", "stacks")):
-        found = {key: identifiers.get(key) for key in ("erdos", "oeis", "stacks")}
+    if tripwires["identifiers_moved"]:
+        found = {key: tripwires["identifiers"].get(key) for key in ("erdos", "oeis", "stacks")}
         notes.append(
             "The pinned Anthropic identifier lists are empty. "
             f"This snapshot found {found}. "
             "Update the identifier tripwire if a shared id is real."
         )
-    eth = by_id.get("eth") or {}
-    if eth.get("headline_theorems") != list(ETH_HEADLINE):
+    if tripwires["headline_moved"]:
         notes.append(
             "ETH_HEADLINE in scripts/anthropic.py is "
-            f"{list(ETH_HEADLINE)}. This snapshot names {eth.get('headline_theorems')}. "
+            f"{list(ETH_HEADLINE)}. This snapshot names {tripwires['headlines']}. "
             "Update the list. It is the eth theorem-name tripwire, not a file total."
         )
-    if eth.get("axioms") != list(ETH_AXIOMS):
+    if tripwires["axioms_moved"]:
         notes.append(
             "ETH_AXIOMS in scripts/anthropic.py is "
-            f"{list(ETH_AXIOMS)}. This snapshot names {eth.get('axioms')}. Update the list."
+            f"{list(ETH_AXIOMS)}. This snapshot names {tripwires['axioms']}. Update the list."
         )
-    for release_id, expected in PINNED_TOOLCHAINS.items():
-        found = (by_id.get(release_id) or {}).get("lean_toolchain")
-        if found != expected:
-            notes.append(
-                f"PINNED_TOOLCHAINS[{release_id!r}] in scripts/anthropic.py is {expected}. "
-                f"This snapshot has {found}. Update that string."
-            )
-    flt = by_id.get("fermat-last-theorem") or {}
-    gaps = flt.get("gaps") or []
-    module_label = gaps[0].get("label") if gaps and isinstance(gaps[0], dict) else ""
-    if (
-        "(3 more)" in module_label
-        or "Paths outside" in module_label
-        or "not package modules" not in module_label
-        or "FinalCheck.lean" not in module_label
-    ):
+    for release_id, found, expected in tripwires["toolchain_moved"]:
+        notes.append(
+            f"PINNED_TOOLCHAINS[{release_id!r}] in scripts/anthropic.py is {expected}. "
+            f"This snapshot has {found}. Update that string."
+        )
+    if tripwires["label_mixes"] or tripwires["label_drifted"]:
         notes.append(
             "The Fermat module-count label is a wording tripwire in scripts/anthropic.py. "
-            f"This snapshot's label is {module_label}. "
+            f"This snapshot's label is {tripwires['module_label']}. "
             "Update the wording checks if the README explanation changed."
         )
-    zeta = by_id.get("zeta23") or {}
-    zeta_text = f"{zeta.get('statement', '')} {' '.join(zeta.get('scope_notes') or [])}"
-    if "zero-density" in zeta_text:
+    if tripwires["zero_density"]:
         notes.append(
             "The zeta wording tripwire rejects the phrase zero-density. "
             "This snapshot still uses it. Update the wording or the tripwire."
         )
-    zeta_tag = zeta.get("tag") if isinstance(zeta.get("tag"), dict) else {}
-    loaded = pins if pins is not None else load_upstream_pins()
-    pinned_name = loaded.get("anthropic", {}).get("zeta_tag") if isinstance(loaded.get("anthropic"), dict) else None
-    if pinned_name is not None and zeta_tag.get("name") != pinned_name:
+    if tripwires["zeta_name_moved"]:
         notes.append(
             "pins.anthropic.zeta_tag is "
-            f"{pinned_name!r}. data/anthropic.json records {zeta_tag.get('name')!r}. "
+            f"{tripwires['pinned_zeta_tag']!r}. data/anthropic.json records {tripwires['zeta_name']!r}. "
             "Guard compares those names and fails on a mismatch."
         )
     return notes

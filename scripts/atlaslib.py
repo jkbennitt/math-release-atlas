@@ -2178,7 +2178,7 @@ def apply_citation_graph(families: list[dict[str, Any]]) -> None:
 
 
 _PIN_FIELDS = {
-    "openai-math": {"commit", "digest"},
+    "openai-math": {"commit", "digest", "overview_line_count"},
     "openai-math-baseline": {"commit", "digest"},
     "alphaproof-nexus": {"commit", "digest"},
     "anthropic": {"commit", "digest", "flt_commit", "zeta_tag", "zeta_tag_commit"},
@@ -2195,6 +2195,42 @@ def _require_digest(value: Any, label: str) -> str:
     if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
         raise AtlasError(f"{label} is not a digest")
     return value
+
+
+def overview_tex_line_count(text: str) -> int:
+    """Line count of overview.tex. The pin, the sync, and the guard all use this."""
+    return len(text.splitlines())
+
+
+def require_overview_line_count(value: Any) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise AtlasError("openai-math overview line count is not a positive integer")
+    return value
+
+
+def overview_line_count_in_repo(repo: Path) -> int:
+    """Line count of overview.tex in a checkout of the commit being pinned."""
+    path = repo / "overview.tex"
+    if not path.is_file():
+        raise AtlasError("overview.tex is missing from the pinned checkout")
+    return require_overview_line_count(overview_tex_line_count(path.read_text(encoding="utf-8")))
+
+
+def pinned_overview_line_count(pins: dict[str, Any]) -> int:
+    """The overview.tex line count recorded beside the openai-math pin."""
+    entry = pins.get("openai-math") if isinstance(pins, dict) else None
+    value = entry.get("overview_line_count") if isinstance(entry, dict) else None
+    return require_overview_line_count(value)
+
+
+def assert_pinned_overview_line_count(recorded: Any, text: str) -> None:
+    """Fail when the pin's overview.tex line count is not the file's line count."""
+    actual = overview_tex_line_count(text)
+    recorded_count = require_overview_line_count(recorded)
+    if recorded_count != actual:
+        raise AtlasError(
+            f"openai-math overview line count is {recorded_count} in upstream.json and {actual} in the pinned file"
+        )
 
 
 def load_upstream_pins(path: Path | None = None) -> dict[str, Any]:
@@ -2225,6 +2261,8 @@ def load_upstream_pins(path: Path | None = None) -> dict[str, Any]:
             raise AtlasError(f"{source_id} pin is missing {missing}")
         _require_sha(entry.get("commit"), f"{source_id} pin commit")
         _require_digest(entry.get("digest"), f"{source_id} pin digest")
+        if source_id == "openai-math":
+            require_overview_line_count(entry.get("overview_line_count"))
     anthropic = pins["anthropic"]
     _require_sha(anthropic.get("flt_commit"), "anthropic flt pin")
     _require_sha(anthropic.get("zeta_tag_commit"), "anthropic zeta tag pin")
@@ -2340,7 +2378,15 @@ def assert_merged_catalogue(
     cautions: dict[str, dict[str, str]],
     extras: dict[str, Any] | None = None,
 ) -> None:
-    merged = merge_data(upstream, curated, cautions, extras)
+    line_count = None
+    pins = upstream.get("pins")
+    if (
+        isinstance(pins, dict)
+        and isinstance(pins.get("openai-math"), dict)
+        and "overview_line_count" in pins["openai-math"]
+    ):
+        line_count = pinned_overview_line_count(pins)
+    merged = merge_data(upstream, curated, cautions, extras, overview_line_count=line_count)
     if merged != families:
         raise AtlasError("families.json is not the merge of upstream.json and the curated notes")
 
@@ -2360,6 +2406,10 @@ def verify_recorded_upstream() -> None:
         with tempfile.TemporaryDirectory(prefix="atlas-upstream-") as tmp:
             checkout = Path(tmp)
             materialize_upstream(UPSTREAM_URL, commit, checkout)
+            overview_path = checkout / "overview.tex"
+            if not overview_path.is_file():
+                raise AtlasError("overview.tex is missing from the pinned checkout")
+            overview_text = overview_path.read_text(encoding="utf-8")
             rebuilt, _ = build_upstream(checkout)
             if FAMILIES_JSON.is_file():
                 assert_families_openai_anchors(checkout, commit, read_json(FAMILIES_JSON))
@@ -2368,6 +2418,9 @@ def verify_recorded_upstream() -> None:
     if snapshot_for_compare(recorded) != snapshot_for_compare(rebuilt):
         detail = describe_snapshot_diff(snapshot_for_compare(recorded), snapshot_for_compare(rebuilt))
         raise AtlasError(f"upstream.json differs from commit {commit}: {detail}")
+    pin_entry = recorded.get("pins") if isinstance(recorded.get("pins"), dict) else {}
+    openai_pin = pin_entry.get("openai-math") if isinstance(pin_entry.get("openai-math"), dict) else {}
+    assert_pinned_overview_line_count(openai_pin.get("overview_line_count"), overview_text)
 
 
 def sentence_key(text: str) -> str:
