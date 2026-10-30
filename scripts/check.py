@@ -2700,21 +2700,6 @@ def approval_self_test() -> str | None:
     return None
 
 
-def _git(repo: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=repo,
-        env=atlaslib.git_env(),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
-        raise AtlasError(detail or "git failed")
-    return result.stdout.strip()
-
-
 def _init_repo(repo: Path) -> None:
     repo.mkdir(parents=True, exist_ok=True)
     _git(repo, "init", "-b", "main")
