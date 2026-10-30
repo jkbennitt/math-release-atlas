@@ -2,7 +2,10 @@
 """Refresh the catalogue from each upstream and merge curated notes.
 
 The OpenAI catalogue, the AlphaProof Nexus tree, and the Anthropic releases
-are checked on every run. Exit 0 when every recorded commit is unchanged.
+are checked on every run. OpenAI lens links are stamped from the single
+pinned commit when the cited file is unchanged or still at that path. A
+renamed or missing path stops the run. Exit 0 when every recorded commit
+is unchanged.
 Exit 2 when data was rewritten and the OpenAI README counts match. Exit 3
 when data was rewritten but those counts do not match. Exit 1 on a parse or
 fetch error. One run writes one catalogue change; it does not open more than
@@ -42,6 +45,7 @@ from atlaslib import (
     UPSTREAM_JSON,
     UPSTREAM_URL,
     AtlasError,
+    assert_curated_lens_paths,
     build_upstream,
     diff_summary,
     load_cautions,
@@ -192,9 +196,11 @@ def main() -> int:
     old_apn = current_alphaproof_commit() or ""
     old_fm, old_flt = current_anthropic_commits()
     owned: list[tempfile.TemporaryDirectory[str]] = []
+    openai_repo: Path | None = None
     try:
         if args.checkout:
             repo = args.checkout
+            openai_repo = repo
             full = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
             if args.sha and not full.startswith(args.sha):
                 raise AtlasError(f"{repo} is at {full}, not {args.sha}")
@@ -234,6 +240,7 @@ def main() -> int:
             scratch = tempfile.TemporaryDirectory(prefix="math-atlas-upstream-")
             owned.append(scratch)
             repo = Path(scratch.name) / "math"
+            openai_repo = repo
             materialize_upstream(args.repo_url, full, repo)
             upstream, counts_ok = build_upstream(repo)
         else:
@@ -270,6 +277,8 @@ def main() -> int:
             raise AtlasError("built Fermat commit does not match the requested sha")
         old_payload = read_json(UPSTREAM_JSON) if UPSTREAM_JSON.is_file() else None
         curated = load_curated(CURATED_DIR)
+        if openai_repo is not None and (openai_changed or args.force):
+            assert_curated_lens_paths(openai_repo, full, curated)
         cautions = load_cautions(CAUTIONS_JSON)
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
         merged = merge_data(upstream, curated, cautions, extras)

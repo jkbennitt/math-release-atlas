@@ -48,6 +48,7 @@ from atlaslib import (
     UPSTREAM_JSON,
     AtlasError,
     assert_counts,
+    assert_curated_lens_paths,
     attach_citations,
     check_authored,
     check_dist,
@@ -72,6 +73,7 @@ from atlaslib import (
     materialize_upstream,
     merge_data,
     parse_contents,
+    pin_openai_math_url,
     parse_slug_date,
     plainify,
     png_dimensions,
@@ -2078,6 +2080,9 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     merge_error = merge_status_self_test()
     if merge_error:
         failures.append(merge_error)
+    lens_pin_error = lens_pin_self_test()
+    if lens_pin_error:
+        failures.append(lens_pin_error)
     if not CURATED_DIR.is_dir():
         failures.append("curated directory is missing")
     failures.extend(preview_self_test())
@@ -2692,6 +2697,159 @@ def approval_self_test() -> str | None:
     }
     if not approval_mismatches(edited_date, approvals):
         return "an edited date still matched the allowlist"
+    return None
+
+
+def _git(repo: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        env=atlaslib.git_env(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        raise AtlasError(detail or "git failed")
+    return result.stdout.strip()
+
+
+def _init_repo(repo: Path) -> None:
+    repo.mkdir(parents=True, exist_ok=True)
+    _git(repo, "init", "-b", "main")
+    _git(repo, "config", "user.email", "atlas@example.com")
+    _git(repo, "config", "user.name", "Atlas")
+
+
+def _commit_file(repo: Path, name: str, text: str) -> str:
+    (repo / name).write_text(text, encoding="utf-8")
+    _git(repo, "add", name)
+    _git(repo, "-c", "commit.gpgsign=false", "commit", "-m", name)
+    return _git(repo, "rev-parse", "HEAD")
+
+
+def lens_pin_self_test() -> str | None:
+    """Lens links follow the catalogue commit, and a missing path stops the move."""
+    old = "a" * 40
+    new = "b" * 40
+    source = f"https://github.com/openai/math/blob/{old}/overview.tex#L12"
+    foreign = "https://example.com/note"
+    if pin_openai_math_url(source, new) != f"https://github.com/openai/math/blob/{new}/overview.tex#L12":
+        return "openai lens link did not take the catalogue commit"
+    if pin_openai_math_url(foreign, new) != foreign:
+        return "a non-openai link was rewritten"
+    if pin_openai_math_url(source, "abc") != source:
+        return "a short commit replaced a lens link"
+    upstream = {
+        "generated_at": "2026-01-01T00:00:00+00:00",
+        "upstream": {},
+        "counts": {},
+        "areas": [],
+        "families": [{"id": "001", "upstream_sha": new, "citations": []}],
+    }
+    curated = {
+        "001": {
+            "id": "001",
+            "lenses": [{"tag": "analysis", "why": "The section names it.", "source": source}],
+            "related": [{"to": "001", "kind": "shared-topic", "why": "Same file.", "source": source}],
+            "community": None,
+            "caution": None,
+        }
+    }
+    merged = merge_data(upstream, curated, {})
+    lens_source = merged["families"][0]["lenses"][0]["source"]
+    related_source = merged["families"][0]["related"][0]["source"]
+    expected = f"https://github.com/openai/math/blob/{new}/overview.tex#L12"
+    if lens_source != expected or related_source != expected:
+        return f"merge left a hard-coded commit in {lens_source}"
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        same = root / "same"
+        _init_repo(same)
+        cited = _commit_file(same, "overview.tex", "same\n")
+        _commit_file(same, "other.tex", "note\n")
+        note = {
+            "001": {
+                "lenses": [
+                    {
+                        "tag": "analysis",
+                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L1",
+                    }
+                ]
+            }
+        }
+        try:
+            assert_curated_lens_paths(same, _git(same, "rev-parse", "HEAD"), note)
+        except AtlasError as exc:
+            return f"an unchanged lens file was rejected: {exc}"
+        edited = root / "edited"
+        _init_repo(edited)
+        cited = _commit_file(edited, "overview.tex", "before\n")
+        (edited / "overview.tex").write_text("after\n", encoding="utf-8")
+        _git(edited, "add", "overview.tex")
+        _git(edited, "-c", "commit.gpgsign=false", "commit", "-m", "edit")
+        note = {
+            "164": {
+                "lenses": [
+                    {
+                        "tag": "combinatorics",
+                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L1",
+                    }
+                ]
+            }
+        }
+        try:
+            assert_curated_lens_paths(edited, _git(edited, "rev-parse", "HEAD"), note)
+        except AtlasError as exc:
+            return f"a lens file still at its path was rejected: {exc}"
+        removed = root / "removed"
+        _init_repo(removed)
+        cited = _commit_file(removed, "overview.tex", "gone\n")
+        _git(removed, "rm", "overview.tex")
+        _git(removed, "-c", "commit.gpgsign=false", "commit", "-m", "remove")
+        head = _git(removed, "rev-parse", "HEAD")
+        note = {
+            "322": {
+                "lenses": [
+                    {
+                        "tag": "analysis",
+                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L1",
+                    }
+                ]
+            }
+        }
+        try:
+            assert_curated_lens_paths(removed, head, note)
+        except AtlasError as exc:
+            if "overview.tex" not in str(exc) or "gone" not in str(exc):
+                return f"a removed lens path reported {exc}"
+        else:
+            return "a removed lens path was accepted"
+        renamed = root / "renamed"
+        _init_repo(renamed)
+        _commit_file(renamed, "overview.tex", "moved\n")
+        cited = _git(renamed, "rev-parse", "HEAD")
+        _git(renamed, "mv", "overview.tex", "other.tex")
+        _git(renamed, "-c", "commit.gpgsign=false", "commit", "-m", "rename")
+        head = _git(renamed, "rev-parse", "HEAD")
+        note = {
+            "164": {
+                "lenses": [
+                    {
+                        "tag": "combinatorics",
+                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L1",
+                    }
+                ]
+            }
+        }
+        try:
+            assert_curated_lens_paths(renamed, head, note)
+        except AtlasError as exc:
+            if "changed to other.tex" not in str(exc):
+                return f"a renamed lens path reported {exc}"
+        else:
+            return "a renamed lens path was accepted"
     return None
 
 

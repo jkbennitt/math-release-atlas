@@ -1688,6 +1688,133 @@ def check_direct_links(index_html: str, catalog: dict[str, Any]) -> list[str]:
     return failures
 
 
+_OPENAI_BLOB_RE = re.compile(
+    r"^https://github\.com/openai/math/blob/([0-9a-f]{40})/([^#\s]+)(#.*)?$"
+)
+
+
+def parse_openai_math_blob(url: str) -> tuple[str, str, str] | None:
+    """Return (commit, path, fragment) for an openai/math blob URL."""
+    match = _OPENAI_BLOB_RE.match(url)
+    if not match:
+        return None
+    return match.group(1), match.group(2), match.group(3) or ""
+
+
+def pin_openai_math_url(url: str, commit: str) -> str:
+    """Build an openai/math blob URL from the catalogue commit, keeping path and fragment.
+
+    Other URLs stay as written. Manuscript and citation links are already built
+    from this commit; curated lens links are not.
+    """
+    parsed = parse_openai_math_blob(url)
+    if parsed is None or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return url
+    _cited, path, fragment = parsed
+    return f"{UPSTREAM_WEB}/blob/{commit}/{path}{fragment}"
+
+
+def _with_pinned_source(item: dict[str, Any], commit: str) -> dict[str, Any]:
+    source = item.get("source")
+    if not isinstance(source, str):
+        return item
+    pinned = pin_openai_math_url(source, commit)
+    if pinned == source:
+        return item
+    copied = dict(item)
+    copied["source"] = pinned
+    return copied
+
+
+def _git_blob(repo: Path, commit: str, path: str) -> str | None:
+    """Blob sha at commit:path, or None when that path is not a file."""
+    result = subprocess.run(
+        ["git", "ls-tree", "--format=%(objecttype) %(objectname)", commit, "--", path],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if len(lines) != 1:
+        return None
+    kind, _sep, sha = lines[0].partition(" ")
+    if kind != "blob" or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return None
+    return sha
+
+
+def _ensure_commit(repo: Path, commit: str) -> None:
+    probe = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode == 0:
+        return
+    run_git(
+        ["git", "fetch", "--filter=blob:none", "--depth", "1", "origin", commit],
+        repo,
+        f"could not fetch commit {commit}",
+    )
+
+
+def _rename_map(repo: Path, old: str, new: str) -> dict[str, str]:
+    result = subprocess.run(
+        ["git", "diff", "--find-renames", "--name-status", old, new],
+        cwd=repo,
+        env=git_env(),
+        capture_output=True,
+        text=True,
+    )
+    found: dict[str, str] = {}
+    if result.returncode != 0:
+        return found
+    for line in result.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3 and parts[0].startswith("R"):
+            found[parts[1]] = parts[2]
+    return found
+
+
+def assert_curated_lens_paths(repo: Path, new_commit: str, curated: dict[str, dict[str, Any]]) -> None:
+    """Allow a lens URL to move only when its file is unchanged or still at that path.
+
+    The catalogue link is derived from new_commit. This does not edit curated notes.
+    A path that was renamed or removed at new_commit stops the sync.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", new_commit):
+        raise AtlasError(f"{new_commit} is not a commit sha")
+    grouped: dict[tuple[str, str], list[str]] = {}
+    for family_id, note in sorted(curated.items()):
+        for lens in note.get("lenses") or []:
+            parsed = parse_openai_math_blob(str(lens.get("source") or ""))
+            if parsed is None:
+                continue
+            cited, path, _fragment = parsed
+            grouped.setdefault((cited, path), []).append(f"family {family_id} lens {lens.get('tag')}")
+    if not grouped:
+        return
+    new_blobs = {path: _git_blob(repo, new_commit, path) for _cited, path in grouped}
+    renames: dict[str, dict[str, str]] = {}
+    for (cited, path), labels in sorted(grouped.items()):
+        if new_blobs[path] is not None:
+            continue
+        if cited not in renames:
+            if cited != new_commit:
+                _ensure_commit(repo, cited)
+            renames[cited] = _rename_map(repo, cited, new_commit)
+        where = ", ".join(labels)
+        moved = renames[cited].get(path)
+        if moved:
+            raise AtlasError(f"{where} source path {path} changed to {moved} at {new_commit}")
+        raise AtlasError(f"{where} source path {path} is gone at {new_commit}")
+
+
 def merge_data(
     upstream: dict[str, Any],
     curated: dict[str, dict[str, Any]],
@@ -1705,11 +1832,12 @@ def merge_data(
         if note and note["caution"]:
             extra = note["caution"]["text"]
             caution = extra if caution is None else f"{caution} {extra}"
+        sha = str(family.get("upstream_sha") or "")
         merged = dict(family)
         merged["source"] = OPENAI_SOURCE_ID
         merged["caution"] = caution
-        merged["lenses"] = note["lenses"] if note else []
-        merged["related"] = note["related"] if note else []
+        merged["lenses"] = [_with_pinned_source(lens, sha) for lens in note["lenses"]] if note else []
+        merged["related"] = [_with_pinned_source(item, sha) for item in note["related"]] if note else []
         merged["community"] = note["community"] if note else None
         merged_families.append(merged)
     apply_citation_graph(merged_families)
