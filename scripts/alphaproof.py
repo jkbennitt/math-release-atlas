@@ -25,6 +25,7 @@ from atlaslib import (
     AtlasError,
     git,
     list_tree,
+    load_upstream_pins,
     materialize_upstream,
     oeis_preview_phrase,
     read_json,
@@ -38,11 +39,6 @@ ALPHAPROOF_URL = "https://github.com/google-deepmind/alphaproof-nexus-results.gi
 ALPHAPROOF_WEB = "https://github.com/google-deepmind/alphaproof-nexus-results"
 ALPHAPROOF_SOURCE_ID = "alphaproof-nexus"
 OPENAI_SOURCE_ID = "openai-math"
-
-PINNED_ALPHAPROOF_COMMIT = "0647711a71183c1ea492ad60860776617ce1ea88"
-# SHA-256 of the pinned snapshot, ignoring generated_at and snapshot_digest.
-# Filled after the first build from that commit and checked on every later build.
-PINNED_ALPHAPROOF_DIGEST = "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
 
 PINNED_CATEGORY_COUNTS = {
     "ErdosProblems": 9,
@@ -65,8 +61,7 @@ PAPER_OEIS_ATTEMPTED = 492
 OEIS_GAP_LABEL = "not in repo / unexplained"
 PROVENANCE_GAP_LABEL = "per-row provenance"
 
-# The cross-source expectation is for these two commits only.
-PINNED_OPENAI_COMMIT = "7ef5c0cc5ca4b0e072b7a050fca09ab24bc6fa3a"
+# Erdős numbers expected at the commits named in upstream.json.
 PINNED_OPENAI_ERDOS = {970: ["021"]}
 PINNED_APN_ERDOS = {12, 26, 125, 138, 152, 741, 846}
 
@@ -740,7 +735,7 @@ def build_alphaproof(repo: Path, commit: str | None = None) -> dict[str, Any]:
     return payload
 
 
-def assert_alphaproof(payload: dict[str, Any]) -> None:
+def assert_alphaproof(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
     records = payload["records"]
     counts = payload["counts"]
     derived = {
@@ -798,7 +793,8 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
     if payload["paper"]["abstract_claim"] not in payload["quotations"]:
         raise AtlasError("AlphaProof abstract quotation is not in the exemption list")
     commit = payload["source"]["commit"]
-    if commit == PINNED_ALPHAPROOF_COMMIT:
+    loaded = pins if pins is not None else load_upstream_pins()
+    if commit == loaded["alphaproof-nexus"]["commit"]:
         for category, expected in PINNED_CATEGORY_COUNTS.items():
             key = {
                 "ErdosProblems": "erdos",
@@ -821,7 +817,10 @@ def assert_alphaproof(payload: dict[str, Any]) -> None:
         if payload["lean_toolchain"] != "leanprover/lean4:v4.27.0":
             raise AtlasError("pinned lean-toolchain drifted")
         digest = snapshot_digest(payload)
-        if digest != PINNED_ALPHAPROOF_DIGEST:
+        expected_digest = loaded["alphaproof-nexus"]["digest"]
+        if not expected_digest:
+            raise AtlasError(f"fill the pinned AlphaProof digest: {digest}")
+        if digest != expected_digest:
             raise AtlasError(f"pinned AlphaProof snapshot digest drifted: {digest}")
         numbers = {record["erdos_number"] for record in records if record["erdos_number"] is not None}
         if numbers != PINNED_APN_ERDOS:
@@ -836,12 +835,19 @@ def assert_cross_source(
     families: list[dict[str, Any]],
     records: list[dict[str, Any]],
     joined: dict[str, Any],
+    pins: dict[str, Any] | None = None,
 ) -> None:
     rebuilt = cross_source(families, records)
     if rebuilt["shared"] != joined.get("shared"):
         raise AtlasError("stored cross-source join does not match the records")
-    if openai_commit != PINNED_OPENAI_COMMIT or alphaproof_commit != PINNED_ALPHAPROOF_COMMIT:
-        return
+    loaded = pins if pins is not None else load_upstream_pins()
+    if openai_commit != loaded["openai-math"]["commit"] or alphaproof_commit != loaded["alphaproof-nexus"]["commit"]:
+        raise AtlasError("cross-source checks did not run: a commit is not the pin in upstream.json")
+    if not joined.get("openai_numbers") or not joined.get("alphaproof_numbers"):
+        raise AtlasError("cross-source check saw no rows")
+    identifiers = joined.get("anthropic_identifiers")
+    if not isinstance(identifiers, dict) or any(key not in identifiers for key in ("erdos", "oeis", "stacks")):
+        raise AtlasError("cross-source check skipped anthropic identifiers")
     if joined["shared"]:
         raise AtlasError("pinned catalogues were joined on a problem id")
     if joined.get("empty_text") != "no shared problem ids at these commits":
@@ -880,7 +886,7 @@ def main() -> int:
     if args.checkout:
         payload = build_alphaproof(args.checkout, args.sha)
     else:
-        sha = args.sha or PINNED_ALPHAPROOF_COMMIT
+        sha = args.sha or load_upstream_pins()["alphaproof-nexus"]["commit"]
         with tempfile.TemporaryDirectory(prefix="atlas-alphaproof-") as tmp:
             checkout = Path(tmp) / "alphaproof"
             materialize_upstream(ALPHAPROOF_URL, sha, checkout, ALPHAPROOF_SPARSE_PATHS)

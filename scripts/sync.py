@@ -16,12 +16,14 @@ the workflow's single pull request.
 from __future__ import annotations
 
 import argparse
+import copy
 import os
 import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from alphaproof import (
     ALPHAPROOF_JSON,
@@ -30,6 +32,7 @@ from alphaproof import (
     SOURCES_JSON,
     build_alphaproof,
     catalogue_extras,
+    snapshot_digest as alphaproof_snapshot_digest,
 )
 from anthropic import (
     ANTHROPIC_JSON,
@@ -38,6 +41,7 @@ from anthropic import (
     FORMAL_MATH_SPARSE_PATHS,
     FORMAL_MATH_URL,
     build_anthropic,
+    snapshot_digest as anthropic_snapshot_digest,
 )
 from atlaslib import (
     CAUTIONS_JSON,
@@ -56,6 +60,7 @@ from atlaslib import (
     read_json,
     require_upstream_ancestor,
     run_git,
+    snapshot_digest,
     write_json,
 )
 
@@ -159,6 +164,50 @@ def write_outputs(
     set_output("flt_new", flt_new)
     print(body)
     print(f"status={status}")
+
+
+def stamp_catalogue_pins(
+    upstream: dict[str, Any],
+    alphaproof_payload: dict[str, Any],
+    anthropic_payload: dict[str, Any],
+    previous: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Write every live pin from the snapshots. The baseline pin stays as recorded."""
+    existing = upstream.get("pins")
+    if not isinstance(existing, dict) or "openai-math-baseline" not in existing:
+        existing = previous.get("pins") if isinstance(previous, dict) else None
+    if not isinstance(existing, dict) or "openai-math-baseline" not in existing:
+        raise AtlasError("upstream.json is missing pins")
+    baseline = existing["openai-math-baseline"]
+    zeta_rows = [item for item in anthropic_payload["releases"] if item.get("id") == "zeta23"]
+    if len(zeta_rows) != 1:
+        raise AtlasError("anthropic zeta tag pin cannot be read from the snapshot")
+    tag = zeta_rows[0].get("tag") or {}
+    if not isinstance(tag, dict) or not tag.get("name") or not tag.get("commit"):
+        raise AtlasError("anthropic zeta tag pin cannot be read from the snapshot")
+    stamped = copy.deepcopy(upstream)
+    stamped["pins"] = {
+        "openai-math": {
+            "commit": upstream["upstream"]["commit"],
+            "digest": snapshot_digest(upstream),
+        },
+        "openai-math-baseline": {
+            "commit": baseline["commit"],
+            "digest": baseline["digest"],
+        },
+        "alphaproof-nexus": {
+            "commit": alphaproof_payload["source"]["commit"],
+            "digest": alphaproof_snapshot_digest(alphaproof_payload),
+        },
+        "anthropic": {
+            "commit": anthropic_payload["source"]["commit"],
+            "flt_commit": anthropic_payload["source"]["also"][0]["commit"],
+            "zeta_tag": tag["name"],
+            "zeta_tag_commit": tag["commit"],
+            "digest": anthropic_snapshot_digest(anthropic_payload),
+        },
+    }
+    return stamped
 
 
 def alphaproof_summary(old_commit: str, payload: dict) -> str:
@@ -281,9 +330,11 @@ def main() -> int:
         if openai_repo is not None and (openai_changed or args.force):
             curated = assert_curated_lens_paths(openai_repo, full, curated)
         cautions = load_cautions(CAUTIONS_JSON)
+        upstream = stamp_catalogue_pins(upstream, alphaproof_payload, anthropic_payload, old_payload)
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
         merged = merge_data(upstream, curated, cautions, extras)
-        if openai_changed or args.force or old_payload is None:
+        pins_changed = old_payload is None or old_payload.get("pins") != upstream["pins"]
+        if openai_changed or args.force or old_payload is None or pins_changed:
             write_json(UPSTREAM_JSON, upstream)
         if apn_changed or args.force or not ALPHAPROOF_JSON.is_file():
             write_json(ALPHAPROOF_JSON, alphaproof_payload)

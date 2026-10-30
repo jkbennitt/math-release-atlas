@@ -16556,5 +16556,26 @@
         }
       ]
     }
-  ]
+  ],
+  "pins": {
+    "openai-math": {
+      "commit": "4eaee87548250b2682affda7d05d947c05554bae",
+      "digest": "ed5aa491b95c5961868618ceaddc24dd4b1cc77c1d4b46326da52395986be3d2"
+    },
+    "openai-math-baseline": {
+      "commit": "adc7f1241b42e322a6451854ab7e4b4c146bf78a",
+      "digest": "9f34421e815eb47d11bcb4463801f35649b02656abc141e277a5ae581ed648ac"
+    },
+    "alphaproof-nexus": {
+      "commit": "0647711a71183c1ea492ad60860776617ce1ea88",
+      "digest": "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
+    },
+    "anthropic": {
+      "commit": "16a5ce41304fcdaea4e0be7c132e1c361dc26da5",
+      "flt_commit": "6e837e75355538c7f80bab5b956861e86c4eacc2",
+      "zeta_tag": "v1.0",
+      "zeta_tag_commit": "3635e74826a4c1fcece7d1cd2b6fa75e43a00510",
+      "digest": "720e827f3d36fcae84fa1f8912b10a9c2d279c388b3eb7bfb371f734a56573d1"
+    }
+  }
 }
