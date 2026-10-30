@@ -46,7 +46,12 @@ IGNORED_TOP_LEVEL = {".github"}
 ETH_HEADLINE = ["MainResults.ethIsFalse", "MainResults.mainTheorem"]
 ETH_AXIOMS = ["propext", "Quot.sound", "Classical.choice"]
 ETH_TOOLCHAIN = "leanprover/lean4:v4.33.1"
-ETH_LEAN_FILES = 1052
+PINNED_TOOLCHAINS = {
+    "zeta23": "leanprover/lean4:v4.33.0-rc2",
+    "3sum-apsp": "leanprover/lean4:v4.33.1",
+    "eth": ETH_TOOLCHAIN,
+    "fermat-last-theorem": "leanprover/lean4:v4.33.1",
+}
 ETH_STATEMENT = (
     "Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm "
     "for 3-SAT on n variables. eth/README.md says this refutes the Exponential Time Hypothesis "
@@ -246,7 +251,7 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
         f"eth: {eth['headline_theorems']} headline theorems in the comparator configuration.",
         f"fermat-last-theorem: {flt['lean_files']} Lean files.",
         f"fermat-last-theorem: {flt['theorem_files']} theorem files.",
-        f"fermat-last-theorem: {flt['proof_files']} P2M files.",
+        f"fermat-last-theorem: {flt['proof_files']} pipeline files.",
         f"fermat-last-theorem: {flt['definition_files']} definition files.",
         f"All releases: {totals['lean_files']} Lean files.",
         f"All releases: {totals['new_results']} new results.",
@@ -930,11 +935,66 @@ def assemble(
     }
     payload["count_lines"] = count_lines(payload)
     payload["snapshot_digest"] = snapshot_digest(payload)
-    assert_anthropic(payload)
+    assert_anthropic(payload, enforce_pin=False)
     return payload
 
 
-def assert_anthropic(payload: dict[str, Any], pins: dict[str, Any] | None = None) -> None:
+def _release_counts_follow_rows(release: dict[str, Any]) -> None:
+    """Headline and xi-prime totals are the lengths of the named lists.
+
+    Lean-file totals are not a second copy of a constant. The snapshot digest
+    pins those integers. Fermat's classed files plus the other Lean files have
+    to add up to its Lean total.
+    """
+    counts = release.get("counts")
+    release_id = release.get("id")
+    if not isinstance(counts, dict):
+        raise AtlasError(f"{release_id} counts are missing")
+    lean = counts.get("lean_files")
+    if isinstance(lean, bool) or not isinstance(lean, int) or lean <= 0:
+        raise AtlasError(f"{release_id} Lean file count is {lean}")
+    headlines = release.get("headline_theorems") or []
+    if "headline_theorems" in counts and counts["headline_theorems"] != len(headlines):
+        raise AtlasError(f"{release_id} headline count does not match the named theorems")
+    xi_prime = release.get("xi_prime_theorems") or []
+    if "xi_prime_statements" in counts and counts["xi_prime_statements"] != len(xi_prime):
+        raise AtlasError(f"{release_id} xi-prime count does not match the named statements")
+    if release_id != "fermat-last-theorem":
+        return
+    others = counts.get("other_lean_files")
+    needed = ("theorem_files", "proof_files", "definition_files")
+    if not isinstance(others, list) or any(key not in counts for key in needed):
+        raise AtlasError(f"pinned Fermat counts are {counts}")
+    for key in needed:
+        value = counts[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise AtlasError(f"pinned Fermat counts are {counts}")
+    classed = counts["theorem_files"] + counts["proof_files"] + counts["definition_files"]
+    if classed + len(others) != lean:
+        raise AtlasError(f"pinned Fermat counts are {counts}")
+
+
+def assert_anthropic(
+    payload: dict[str, Any],
+    pins: dict[str, Any] | None = None,
+    *,
+    enforce_pin: bool = True,
+) -> None:
+    source = payload.get("source")
+    also = source.get("also") if isinstance(source, dict) else None
+    flt_source = also[0] if isinstance(also, list) and also and isinstance(also[0], dict) else None
+    if (
+        not isinstance(source, dict)
+        or not isinstance(source.get("commit"), str)
+        or not source["commit"]
+        or not isinstance(flt_source, dict)
+        or not isinstance(flt_source.get("commit"), str)
+        or not flt_source["commit"]
+    ):
+        raise AtlasError("anthropic source is missing")
+    releases = payload.get("releases")
+    if not isinstance(releases, list) or not releases:
+        raise AtlasError("anthropic check saw no releases")
     require_eth_lean(payload)
     releases = payload["releases"]
     ids = [release["id"] for release in releases]
@@ -972,6 +1032,7 @@ def assert_anthropic(payload: dict[str, Any], pins: dict[str, Any] | None = None
         for gap in release["gaps"]:
             if not gap.get("id") or not gap.get("status") or not gap.get("label"):
                 raise AtlasError(f"{release['id']} gap is incomplete")
+        _release_counts_follow_rows(release)
     by_id = {release["id"]: release for release in releases}
     _reject_eth_claim_words(by_id["eth"])
     if by_id["eth"]["kind"] != "new-result":
@@ -985,50 +1046,36 @@ def assert_anthropic(payload: dict[str, Any], pins: dict[str, Any] | None = None
         raise AtlasError("3sum gap wording drifted")
     if by_id["fermat-last-theorem"]["kind"] != "formalization":
         raise AtlasError("Fermat release is not marked as a formalization")
-    fm_commit = payload["source"]["commit"]
-    flt_commit = payload["source"]["also"][0]["commit"]
+    fm_commit = source["commit"]
+    flt_commit = flt_source["commit"]
     loaded = pins if pins is not None else load_upstream_pins()
     anthropic_pin = loaded["anthropic"]
     if fm_commit != anthropic_pin["commit"] or flt_commit != anthropic_pin["flt_commit"]:
+        if enforce_pin:
+            raise AtlasError("anthropic checks did not run for the pins in upstream.json")
         return
     if payload["skipped_directories"] != []:
         raise AtlasError(f"pinned formal-math tree has extra directories: {payload['skipped_directories']}")
     if any(identifiers[key] for key in ("erdos", "oeis", "stacks")):
         raise AtlasError(f"pinned Anthropic identifiers are not empty: {identifiers}")
-    zeta = by_id["zeta23"]["counts"]
-    if (zeta["lean_files"], zeta["headline_theorems"], zeta["xi_prime_statements"]) != (326, 17, 6):
-        raise AtlasError(f"pinned zeta23 counts are {zeta}")
-    three = by_id["3sum-apsp"]["counts"]
-    if (three["lean_files"], three["headline_theorems"]) != (434, 5):
-        raise AtlasError(f"pinned 3sum-apsp counts are {three}")
-    eth = by_id["eth"]["counts"]
-    if (eth["lean_files"], eth["headline_theorems"]) != (ETH_LEAN_FILES, len(ETH_HEADLINE)):
-        raise AtlasError(f"pinned eth counts are {eth}")
     if by_id["eth"]["headline_theorems"] != list(ETH_HEADLINE):
         raise AtlasError(f"pinned eth theorems are {by_id['eth']['headline_theorems']}")
     if by_id["eth"]["axioms"] != list(ETH_AXIOMS):
         raise AtlasError(f"pinned eth axioms are {by_id['eth'].get('axioms')}")
-    if by_id["eth"]["lean_toolchain"] != ETH_TOOLCHAIN:
-        raise AtlasError("pinned eth toolchain drifted")
     eth_statement_paths = [item["path"] for item in by_id["eth"]["statement_files"]]
     if "eth/MainResults.lean" not in eth_statement_paths or "eth/README.md" not in eth_statement_paths:
         raise AtlasError(f"pinned eth statement files are {eth_statement_paths}")
-    flt = by_id["fermat-last-theorem"]["counts"]
-    if (flt["lean_files"], flt["theorem_files"], flt["proof_files"], flt["definition_files"]) != (
-        60478,
-        29511,
-        29513,
-        1450,
-    ):
-        raise AtlasError(f"pinned Fermat counts are {flt}")
-    if by_id["zeta23"]["tag"]["commit"] != anthropic_pin["zeta_tag_commit"]:
+    zeta_tag = by_id["zeta23"].get("tag")
+    zeta_name = zeta_tag.get("name") if isinstance(zeta_tag, dict) else None
+    if zeta_name != anthropic_pin["zeta_tag"]:
+        raise AtlasError(
+            f"zeta tag {zeta_name!r} does not match pins.anthropic.zeta_tag {anthropic_pin['zeta_tag']!r}"
+        )
+    if not isinstance(zeta_tag, dict) or zeta_tag.get("commit") != anthropic_pin["zeta_tag_commit"]:
         raise AtlasError("pinned v1.0 tag peel drifted")
-    if by_id["zeta23"]["lean_toolchain"] != "leanprover/lean4:v4.33.0-rc2":
-        raise AtlasError("pinned zeta23 toolchain drifted")
-    if by_id["3sum-apsp"]["lean_toolchain"] != "leanprover/lean4:v4.33.1":
-        raise AtlasError("pinned 3sum toolchain drifted")
-    if by_id["fermat-last-theorem"]["lean_toolchain"] != "leanprover/lean4:v4.33.1":
-        raise AtlasError("pinned Fermat toolchain drifted")
+    for release_id, expected_toolchain in PINNED_TOOLCHAINS.items():
+        if by_id[release_id]["lean_toolchain"] != expected_toolchain:
+            raise AtlasError(f"pinned {release_id} toolchain drifted")
     module_label = by_id["fermat-last-theorem"]["gaps"][0]["label"]
     if "(3 more)" in module_label or "Paths outside" in module_label:
         raise AtlasError(f"pinned Fermat module label still mixes the extra files: {module_label}")
@@ -1043,6 +1090,84 @@ def assert_anthropic(payload: dict[str, Any], pins: dict[str, Any] | None = None
         raise AtlasError(f"fill the pinned Anthropic digest: {digest}")
     if digest != anthropic_pin["digest"]:
         raise AtlasError(f"pinned Anthropic snapshot digest drifted: {digest}")
+
+
+def count_golden_disagreements(
+    payload: dict[str, Any],
+    pins: dict[str, Any] | None = None,
+) -> list[str]:
+    """Tripwires this snapshot moves. Empty when Guard's count goldens still match.
+
+    Per-release file totals follow the snapshot rows and the digest. They are
+    not listed here.
+    """
+    notes: list[str] = []
+    by_id = {release["id"]: release for release in payload["releases"]}
+    skipped = payload.get("skipped_directories") or []
+    if skipped:
+        notes.append(
+            "assert_anthropic rejects a non-empty skipped-directory list at the pinned commits. "
+            f"This snapshot skipped {skipped}. "
+            "A new formal-math directory needs a release entry, or Guard keeps failing."
+        )
+    identifiers = payload.get("identifiers") or {}
+    if any(identifiers.get(key) for key in ("erdos", "oeis", "stacks")):
+        found = {key: identifiers.get(key) for key in ("erdos", "oeis", "stacks")}
+        notes.append(
+            "The pinned Anthropic identifier lists are empty. "
+            f"This snapshot found {found}. "
+            "Update the identifier tripwire if a shared id is real."
+        )
+    eth = by_id.get("eth") or {}
+    if eth.get("headline_theorems") != list(ETH_HEADLINE):
+        notes.append(
+            "ETH_HEADLINE in scripts/anthropic.py is "
+            f"{list(ETH_HEADLINE)}. This snapshot names {eth.get('headline_theorems')}. "
+            "Update the list. It is the eth theorem-name tripwire, not a file total."
+        )
+    if eth.get("axioms") != list(ETH_AXIOMS):
+        notes.append(
+            "ETH_AXIOMS in scripts/anthropic.py is "
+            f"{list(ETH_AXIOMS)}. This snapshot names {eth.get('axioms')}. Update the list."
+        )
+    for release_id, expected in PINNED_TOOLCHAINS.items():
+        found = (by_id.get(release_id) or {}).get("lean_toolchain")
+        if found != expected:
+            notes.append(
+                f"PINNED_TOOLCHAINS[{release_id!r}] in scripts/anthropic.py is {expected}. "
+                f"This snapshot has {found}. Update that string."
+            )
+    flt = by_id.get("fermat-last-theorem") or {}
+    gaps = flt.get("gaps") or []
+    module_label = gaps[0].get("label") if gaps and isinstance(gaps[0], dict) else ""
+    if (
+        "(3 more)" in module_label
+        or "Paths outside" in module_label
+        or "not package modules" not in module_label
+        or "FinalCheck.lean" not in module_label
+    ):
+        notes.append(
+            "The Fermat module-count label is a wording tripwire in scripts/anthropic.py. "
+            f"This snapshot's label is {module_label}. "
+            "Update the wording checks if the README explanation changed."
+        )
+    zeta = by_id.get("zeta23") or {}
+    zeta_text = f"{zeta.get('statement', '')} {' '.join(zeta.get('scope_notes') or [])}"
+    if "zero-density" in zeta_text:
+        notes.append(
+            "The zeta wording tripwire rejects the phrase zero-density. "
+            "This snapshot still uses it. Update the wording or the tripwire."
+        )
+    zeta_tag = zeta.get("tag") if isinstance(zeta.get("tag"), dict) else {}
+    loaded = pins if pins is not None else load_upstream_pins()
+    pinned_name = loaded.get("anthropic", {}).get("zeta_tag") if isinstance(loaded.get("anthropic"), dict) else None
+    if pinned_name is not None and zeta_tag.get("name") != pinned_name:
+        notes.append(
+            "pins.anthropic.zeta_tag is "
+            f"{pinned_name!r}. data/anthropic.json records {zeta_tag.get('name')!r}. "
+            "Guard compares those names and fails on a mismatch."
+        )
+    return notes
 
 
 def _read(path: Path) -> str:

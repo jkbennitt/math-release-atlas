@@ -902,10 +902,65 @@ def alphaproof_self_test() -> list[str]:
         if atlaslib.check_cross_source_page(empty_page, empty_join):
             failures.append("an empty join with the empty sentence was rejected")
     recorded = read_json(ALPHAPROOF_JSON)
-    if recorded["counts"]["erdos"] != 9 or recorded["counts"]["oeis_files"] != 38:
-        failures.append("recorded AlphaProof counts are not the pinned file counts")
-    if recorded["counts"]["stacks"] != 11 or recorded["counts"]["ai_collaborator"] != 13:
-        failures.append("recorded Stacks or AI collaborator counts drifted")
+    derived_counts = {
+        "erdos": sum(1 for record in recorded["records"] if record["category"] == "ErdosProblems"),
+        "oeis_files": sum(1 for record in recorded["records"] if record["category"] == "OEIS"),
+        "stacks": sum(1 for record in recorded["records"] if record["category"] == "StacksProject"),
+        "ai_collaborator": sum(1 for record in recorded["records"] if record["category"] == "AICollaborator"),
+    }
+    for key, value in derived_counts.items():
+        if recorded["counts"][key] != value:
+            failures.append(f"recorded AlphaProof {key} is not the row total {value}")
+    if recorded["counts"]["oeis_files"] != alphaproof.PINNED_OEIS_FILE_COUNT:
+        failures.append("recorded OEIS count left the shortfall tripwire")
+    families = read_json(UPSTREAM_JSON)["families"]
+    if alphaproof.count_golden_disagreements(recorded, families):
+        failures.append(
+            f"recorded AlphaProof snapshot was reported as moving a tripwire: "
+            f"{alphaproof.count_golden_disagreements(recorded, families)}"
+        )
+    toolchain_moved = copy.deepcopy(recorded)
+    toolchain_moved["lean_toolchain"] = "leanprover/lean4:v4.99.0"
+    toolchain_message = _atlas_error(lambda: assert_alphaproof(toolchain_moved))
+    if toolchain_message is None or "toolchain" not in toolchain_message:
+        failures.append(f"a moved toolchain was accepted: {toolchain_message}")
+    toolchain_notes = alphaproof.count_golden_disagreements(toolchain_moved, families)
+    if not any("PINNED_TOOLCHAIN" in note for note in toolchain_notes):
+        failures.append(f"sync notes omitted the toolchain tripwire: {toolchain_notes}")
+    grown = copy.deepcopy(recorded)
+    extra = copy.deepcopy(grown["records"][-1])
+    extra["id"] = f"{extra['id']}.extra"
+    extra["anchor"] = f"{extra['anchor']}-extra"
+    extra["path"] = f"{extra['path']}.extra"
+    extra["filename"] = f"{extra['filename']}.extra"
+    extra["problem_id"] = f"{extra['problem_id']}_extra"
+    extra["category"] = "StacksProject"
+    extra["subcategory"] = None
+    extra["erdos_number"] = None
+    extra["statement"] = "Lean file deposited upstream for an added Stacks file."
+    grown["records"].append(extra)
+    grown["counts"]["stacks"] += 1
+    grown["counts"]["lean_files"] += 1
+    grown_pins = copy.deepcopy(load_upstream_pins())
+    grown_pins["alphaproof-nexus"]["digest"] = alphaproof.snapshot_digest(grown)
+    grown_message = _atlas_error(lambda: assert_alphaproof(grown, grown_pins))
+    if grown_message is not None:
+        failures.append(f"a derived Stacks total was rejected: {grown_message}")
+    missing_source = copy.deepcopy(recorded)
+    del missing_source["source"]
+    missing_message = _atlas_error(lambda: assert_alphaproof(missing_source))
+    if missing_message is None or "source is missing" not in missing_message:
+        failures.append(f"AlphaProof with no source was accepted: {missing_message}")
+    empty_walk = copy.deepcopy(recorded)
+    empty_walk["records"] = []
+    empty_message = _atlas_error(lambda: assert_alphaproof(empty_walk))
+    if empty_message is None or "saw no records" not in empty_message:
+        failures.append(f"an empty AlphaProof walk was accepted: {empty_message}")
+    wrong_commit = copy.deepcopy(recorded)
+    wrong_commit["source"]["commit"] = "c" * 40
+    wrong_message = _atlas_error(lambda: assert_alphaproof(wrong_commit))
+    if wrong_message is None or "did not run" not in wrong_message:
+        failures.append(f"AlphaProof at another commit skipped the pin checks: {wrong_message}")
     return failures
 
 
@@ -1142,6 +1197,55 @@ def anthropic_self_test() -> list[str]:
         eth_release = next(item for item in recorded["releases"] if item["id"] == "eth")
         if eth_release["counts"]["lean_files"] <= 0:
             failures.append("recorded eth release is missing Lean files")
+        if any("P2M files" in line for line in recorded["count_lines"]):
+            failures.append("Anthropic count line still says P2M files")
+        if not any(line.endswith("pipeline files.") for line in recorded["count_lines"]):
+            failures.append("Anthropic count line dropped the pipeline-files label")
+        for line in recorded["count_lines"]:
+            if atlaslib.claim_word_hits(line):
+                failures.append(f"Anthropic count line uses a claim word: {line}")
+        flt_release = next(item for item in recorded["releases"] if item["id"] == "fermat-last-theorem")
+        if flt_release["kind_label"] != "Formalization":
+            failures.append("Fermat is no longer labeled as a formalization")
+        if anthropic.count_golden_disagreements(recorded):
+            failures.append(
+                f"recorded Anthropic snapshot was reported as moving a tripwire: "
+                f"{anthropic.count_golden_disagreements(recorded)}"
+            )
+        grown = copy.deepcopy(recorded)
+        grown_zeta = next(item for item in grown["releases"] if item["id"] == "zeta23")
+        grown_zeta["counts"]["lean_files"] += 1
+        grown["counts"]["lean_files"] += 1
+        grown["count_lines"] = anthropic.count_lines(grown)
+        grown_pins = copy.deepcopy(load_upstream_pins())
+        grown_pins["anthropic"]["digest"] = anthropic.snapshot_digest(grown)
+        grown_message = _atlas_error(lambda: assert_anthropic(grown, grown_pins))
+        if grown_message is not None:
+            failures.append(f"a derived zeta Lean total was rejected: {grown_message}")
+        renamed_tag = copy.deepcopy(recorded)
+        renamed_zeta = next(item for item in renamed_tag["releases"] if item["id"] == "zeta23")
+        renamed_zeta["tag"]["name"] = "v9.9"
+        renamed_message = _atlas_error(lambda: assert_anthropic(renamed_tag))
+        if renamed_message is None or "zeta_tag" not in renamed_message:
+            failures.append(f"a zeta tag name mismatch was accepted: {renamed_message}")
+        tag_notes = anthropic.count_golden_disagreements(renamed_tag)
+        if not any("zeta_tag" in note for note in tag_notes):
+            failures.append(f"sync notes omitted the zeta tag mismatch: {tag_notes}")
+        missing_source = copy.deepcopy(recorded)
+        del missing_source["source"]
+        missing_message = _atlas_error(lambda: assert_anthropic(missing_source))
+        if missing_message is None or "source is missing" not in missing_message:
+            failures.append(f"Anthropic with no source was accepted: {missing_message}")
+        empty_walk = copy.deepcopy(recorded)
+        empty_walk["releases"] = []
+        empty_message = _atlas_error(lambda: assert_anthropic(empty_walk))
+        if empty_message is None or "saw no releases" not in empty_message:
+            failures.append(f"an empty Anthropic walk was accepted: {empty_message}")
+        wrong_commit = copy.deepcopy(recorded)
+        wrong_commit["source"]["commit"] = "c" * 40
+        wrong_message = _atlas_error(lambda: assert_anthropic(wrong_commit))
+        if wrong_message is None or "did not run" not in wrong_message:
+            failures.append(f"Anthropic at another commit skipped the pin checks: {wrong_message}")
         missing_count = copy.deepcopy(recorded)
         missing_eth = next(item for item in missing_count["releases"] if item["id"] == "eth")
         missing_eth["counts"]["lean_files"] = 0
@@ -2867,10 +2971,33 @@ def lens_pin_self_test() -> str | None:
             "caution": None,
         }
     }
-    ranged_merge = merge_data(two, ranged, {})
+    ranged_merge = merge_data(two, ranged, {}, overview_line_count=50)
     ranged_lens = ranged_merge["families"][0]["lenses"][0]["source"]
     if not ranged_lens.endswith("#L40-L42"):
         return f"a line range did not shift both ends: {ranged_lens}"
+    past_eof = f"https://github.com/openai/math/blob/{old}/overview.tex#L10-L12"
+    try:
+        pin_openai_math_url(past_eof, new, 40, 41)
+    except AtlasError as exc:
+        if "past the end" not in str(exc):
+            return f"a shifted range past EOF reported {exc}"
+    else:
+        return "a shifted range past EOF was accepted"
+    reversed_range = f"https://github.com/openai/math/blob/{old}/overview.tex#L12-L10"
+    try:
+        pin_openai_math_url(reversed_range, new, 4, 20)
+    except AtlasError as exc:
+        if "not a usable range" not in str(exc):
+            return f"a reversed range reported {exc}"
+    else:
+        return "a reversed range was accepted"
+    try:
+        pin_openai_math_url(past_eof, new, 40)
+    except AtlasError as exc:
+        if "past the end" not in str(exc):
+            return f"a range without a file length reported {exc}"
+    else:
+        return "a range without a file length was accepted"
     missing_target = copy.deepcopy(pointed)
     missing_target["001"]["related"][0]["to"] = "009"
     try:

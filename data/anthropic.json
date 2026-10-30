@@ -393,11 +393,11 @@
     "eth: 2 headline theorems in the comparator configuration.",
     "fermat-last-theorem: 60478 Lean files.",
     "fermat-last-theorem: 29511 theorem files.",
-    "fermat-last-theorem: 29513 P2M files.",
+    "fermat-last-theorem: 29513 pipeline files.",
     "fermat-last-theorem: 1450 definition files.",
     "All releases: 62290 Lean files.",
     "All releases: 3 new results.",
     "All releases: 1 formalization."
   ],
-  "snapshot_digest": "720e827f3d36fcae84fa1f8912b10a9c2d279c388b3eb7bfb371f734a56573d1"
+  "snapshot_digest": "2e5a3a7a187e12b25c44ef024ccb5b61eb251c07c6a479c92664257385c46ad8"
 }

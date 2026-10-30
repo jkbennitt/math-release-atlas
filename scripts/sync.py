@@ -32,6 +32,7 @@ from alphaproof import (
     SOURCES_JSON,
     build_alphaproof,
     catalogue_extras,
+    count_golden_disagreements as alphaproof_golden_disagreements,
     snapshot_digest as alphaproof_snapshot_digest,
 )
 from anthropic import (
@@ -41,6 +42,7 @@ from anthropic import (
     FORMAL_MATH_SPARSE_PATHS,
     FORMAL_MATH_URL,
     build_anthropic,
+    count_golden_disagreements as anthropic_golden_disagreements,
     snapshot_digest as anthropic_snapshot_digest,
 )
 from atlaslib import (
@@ -210,6 +212,46 @@ def stamp_catalogue_pins(
     return stamped
 
 
+def count_golden_section(
+    upstream: dict[str, Any],
+    alphaproof_payload: dict[str, Any],
+    anthropic_payload: dict[str, Any],
+) -> str:
+    """Say which count goldens Guard will still reject, and why.
+
+    File totals that are counted from the snapshot are not in this list.
+    """
+    families = upstream.get("families") if isinstance(upstream.get("families"), list) else []
+    moved = alphaproof_golden_disagreements(alphaproof_payload, families)
+    pin_block = upstream.get("pins") if isinstance(upstream.get("pins"), dict) else None
+    moved.extend(anthropic_golden_disagreements(anthropic_payload, pin_block))
+    standing = "\n".join(
+        [
+            "Count goldens",
+            "",
+            "File totals other than the tripwires below are derived from the pinned snapshot: "
+            "AlphaProof category rows other than the OEIS shortfall, subcategory rows, and the "
+            "attempted-list newline count; Anthropic headline and xi-prime name lists; Fermat's "
+            "classed files plus its other Lean files. Those totals move with the snapshot and do "
+            "not need a code edit. The snapshot digest still pins the exact bytes.",
+            "",
+            "Tripwires that stay in code, and why a move needs an edit:",
+            "- PINNED_OEIS_FILE_COUNT: the OEIS tree is still short of the paper count, and the gap stays unexplained.",
+            "- PAPER_ERDOS_ATTEMPTED and the MATCH status: the attempted list still matches the paper.",
+            "- PINNED_APN_ERDOS and PINNED_OPENAI_ERDOS: which Erdős numbers each catalogue names.",
+            "- ETH_HEADLINE, ETH_AXIOMS, toolchain strings, the empty skip list, and the empty identifier lists: names and absences this atlas does not infer from a file total.",
+            "- pins.anthropic.zeta_tag must equal the tag name recorded in data/anthropic.json.",
+        ]
+    )
+    if not moved:
+        status = "This snapshot does not move those tripwires. No count-golden code edit is expected."
+    else:
+        status = "This snapshot moves tripwires. Guard will fail until these are updated:\n" + "\n".join(
+            f"- {note}" for note in moved
+        )
+    return standing + "\n\n" + status
+
+
 def alphaproof_summary(old_commit: str, payload: dict) -> str:
     counts = payload["counts"]
     gaps = {gap["id"]: gap for gap in payload["gaps"]}
@@ -332,7 +374,18 @@ def main() -> int:
         cautions = load_cautions(CAUTIONS_JSON)
         upstream = stamp_catalogue_pins(upstream, alphaproof_payload, anthropic_payload, old_payload)
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
-        merged = merge_data(upstream, curated, cautions, extras)
+        overview_line_count = None
+        if openai_repo is not None:
+            overview_tex = openai_repo / "overview.tex"
+            if overview_tex.is_file():
+                overview_line_count = len(overview_tex.read_text(encoding="utf-8").splitlines())
+        merged = merge_data(
+            upstream,
+            curated,
+            cautions,
+            extras,
+            overview_line_count=overview_line_count,
+        )
         pins_changed = old_payload is None or old_payload.get("pins") != upstream["pins"]
         if openai_changed or args.force or old_payload is None or pins_changed:
             write_json(UPSTREAM_JSON, upstream)
@@ -349,6 +402,8 @@ def main() -> int:
             + alphaproof_summary(old_apn, alphaproof_payload)
             + "\n\n"
             + anthropic_summary(old_fm, old_flt, anthropic_payload)
+            + "\n\n"
+            + count_golden_section(upstream, alphaproof_payload, anthropic_payload)
         )
         status = "changed" if counts_ok else "counts-mismatch"
         write_outputs(
