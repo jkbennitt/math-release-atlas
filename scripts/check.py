@@ -2077,6 +2077,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
     cite_error = citation_self_test()
     if cite_error:
         failures.append(cite_error)
+    failures.extend(atlaslib.graph_canvas_self_test())
     merge_error = merge_status_self_test()
     if merge_error:
         failures.append(merge_error)
