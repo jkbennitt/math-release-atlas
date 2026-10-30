@@ -2,10 +2,11 @@
 """Refresh the catalogue from each upstream and merge curated notes.
 
 The OpenAI catalogue, the AlphaProof Nexus tree, and the Anthropic releases
-are checked on every run. OpenAI lens links are stamped from the single
-pinned commit when the cited file is unchanged or still at that path. A
-renamed or missing path stops the run. Exit 0 when every recorded commit
-is unchanged.
+are checked on every run. OpenAI lens and related links are stamped from
+the single pinned commit. An overview.tex line is recomputed from the
+family's resultentry. A missing or duplicated entry, a line past the end
+of the file that cannot be recomputed, or a renamed or missing path stops
+the run. Exit 0 when every recorded commit is unchanged.
 Exit 2 when data was rewritten and the OpenAI README counts match. Exit 3
 when data was rewritten but those counts do not match. Exit 1 on a parse or
 fetch error. One run writes one catalogue change; it does not open more than
@@ -278,7 +279,7 @@ def main() -> int:
         old_payload = read_json(UPSTREAM_JSON) if UPSTREAM_JSON.is_file() else None
         curated = load_curated(CURATED_DIR)
         if openai_repo is not None and (openai_changed or args.force):
-            assert_curated_lens_paths(openai_repo, full, curated)
+            curated = assert_curated_lens_paths(openai_repo, full, curated)
         cautions = load_cautions(CAUTIONS_JSON)
         extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
         merged = merge_data(upstream, curated, cautions, extras)

@@ -49,6 +49,7 @@ from atlaslib import (
     AtlasError,
     assert_counts,
     assert_curated_lens_paths,
+    assert_families_openai_anchors,
     attach_citations,
     check_authored,
     check_dist,
@@ -2749,11 +2750,18 @@ def lens_pin_self_test() -> str | None:
     expected = f"https://github.com/openai/math/blob/{new}/overview.tex#L12"
     if lens_source != expected or related_source != expected:
         return f"merge left a hard-coded commit in {lens_source}"
+    upstream["families"][0]["overview_line"] = 40
+    shifted_merge = merge_data(upstream, curated, {})
+    shifted_lens = shifted_merge["families"][0]["lenses"][0]["source"]
+    shifted_related = shifted_merge["families"][0]["related"][0]["source"]
+    expected_line = f"https://github.com/openai/math/blob/{new}/overview.tex#L40"
+    if shifted_lens != expected_line or shifted_related != expected_line:
+        return f"merge did not recompute the overview line: {shifted_lens}"
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         same = root / "same"
         _init_repo(same)
-        cited = _commit_file(same, "overview.tex", "same\n")
+        cited = _commit_file(same, "overview.tex", "\\resultentry{001}{title}\n")
         _commit_file(same, "other.tex", "note\n")
         note = {
             "001": {
@@ -2766,29 +2774,77 @@ def lens_pin_self_test() -> str | None:
             }
         }
         try:
-            assert_curated_lens_paths(same, _git(same, "rev-parse", "HEAD"), note)
+            kept = assert_curated_lens_paths(same, _git(same, "rev-parse", "HEAD"), note)
         except AtlasError as exc:
             return f"an unchanged lens file was rejected: {exc}"
+        if not kept["001"]["lenses"][0]["source"].endswith("#L1"):
+            return "an unchanged resultentry line was rewritten"
         edited = root / "edited"
         _init_repo(edited)
-        cited = _commit_file(edited, "overview.tex", "before\n")
-        (edited / "overview.tex").write_text("after\n", encoding="utf-8")
+        cited = _commit_file(edited, "overview.tex", "\\resultentry{164}{title}\n")
+        (edited / "overview.tex").write_text(
+            "% added\n\\resultentry{164}{title}\n",
+            encoding="utf-8",
+        )
         _git(edited, "add", "overview.tex")
         _git(edited, "-c", "commit.gpgsign=false", "commit", "-m", "edit")
+        drifted = f"https://github.com/openai/math/blob/{cited}/overview.tex#L1"
+        note = {
+            "164": {
+                "lenses": [{"tag": "combinatorics", "source": drifted}],
+                "related": [{"to": "001", "kind": "shared-topic", "why": "Same file.", "source": drifted}],
+            }
+        }
+        try:
+            shifted = assert_curated_lens_paths(edited, _git(edited, "rev-parse", "HEAD"), note)
+        except AtlasError as exc:
+            return f"a drifted resultentry line was rejected: {exc}"
+        lens_source = shifted["164"]["lenses"][0]["source"]
+        related_source = shifted["164"]["related"][0]["source"]
+        if not lens_source.endswith("#L2") or not related_source.endswith("#L2"):
+            return f"a drifted resultentry line was not recomputed: {lens_source}"
+        head = _git(edited, "rev-parse", "HEAD")
+        stale = {
+            "families": [
+                {
+                    "id": "164",
+                    "lenses": [
+                        {
+                            "tag": "combinatorics",
+                            "source": f"https://github.com/openai/math/blob/{head}/overview.tex#L1",
+                        }
+                    ],
+                    "related": [],
+                }
+            ]
+        }
+        try:
+            assert_families_openai_anchors(edited, head, stale)
+        except AtlasError as exc:
+            if "resultentry line 2" not in str(exc):
+                return f"a stale committed line reported {exc}"
+        else:
+            return "a stale committed line was accepted"
+        over = root / "over"
+        _init_repo(over)
+        cited = _commit_file(over, "overview.tex", "short\n")
         note = {
             "164": {
                 "lenses": [
                     {
                         "tag": "combinatorics",
-                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L1",
+                        "source": f"https://github.com/openai/math/blob/{cited}/overview.tex#L40",
                     }
                 ]
             }
         }
         try:
-            assert_curated_lens_paths(edited, _git(edited, "rev-parse", "HEAD"), note)
+            assert_curated_lens_paths(over, cited, note)
         except AtlasError as exc:
-            return f"a lens file still at its path was rejected: {exc}"
+            if "past the end" not in str(exc):
+                return f"a line past the end reported {exc}"
+        else:
+            return "a line past the end was accepted"
         removed = root / "removed"
         _init_repo(removed)
         cited = _commit_file(removed, "overview.tex", "gone\n")
