@@ -5,13 +5,13 @@ import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
 const dist = process.argv[2];
-if (!dist) {
-  console.error("usage: node scripts/graph_a11y_check.mjs dist");
+const expected = Number(process.argv[3]);
+if (!dist || !Number.isInteger(expected) || expected < 1) {
+  console.error("usage: node scripts/graph_a11y_check.mjs dist EXPECTED");
   process.exit(2);
 }
 
 const BASE = "/math-release-atlas";
-const FAMILY_LINKS = 125;
 const MAP_LABEL = "Map of the citation edges listed below.";
 const CHROME_157 = process.env.GRAPH_CHROME || "/tmp/chrome157/chrome-linux64/chrome";
 const failures = [];
@@ -69,25 +69,45 @@ function startServer(root) {
   });
 }
 
+function inCi() {
+  return process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+}
+
 async function launchBrowser() {
   const args = ["--no-sandbox", "--disable-dev-shm-usage"];
+  const errors = [];
   if (existsSync(CHROME_157)) {
-    return {
-      browser: await chromium.launch({ executablePath: CHROME_157, headless: true, args }),
-      expectDrawable: true,
-    };
+    try {
+      return {
+        browser: await chromium.launch({ executablePath: CHROME_157, headless: true, args }),
+        expectDrawable: true,
+      };
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
   }
   try {
     return {
       browser: await chromium.launch({ channel: "chrome", headless: true, args }),
       expectDrawable: false,
     };
-  } catch {
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
+  try {
     return {
       browser: await chromium.launch({ headless: true, args }),
       expectDrawable: false,
     };
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
   }
+  if (inCi()) {
+    console.error(`graph a11y: no browser launched\n${errors.join("\n")}`);
+    process.exit(1);
+  }
+  console.log("graph a11y: skipped: no browser");
+  return null;
 }
 
 async function focusState(page) {
@@ -135,11 +155,11 @@ async function assertMapLabel(page) {
 async function assertExposed(page, mode) {
   const roleCount = await page.locator(".graph-stage").getByRole("link").count();
   const exposed = await exposedLinks(page);
-  if (roleCount !== FAMILY_LINKS) {
-    fail(`${mode}: accessibility tree exposes ${roleCount} map links, expected ${FAMILY_LINKS}`);
+  if (roleCount !== expected) {
+    fail(`${mode}: accessibility tree exposes ${roleCount} map links, expected ${expected}`);
   }
-  if (exposed.length !== FAMILY_LINKS) {
-    fail(`${mode}: ${exposed.length} map links are visible, expected ${FAMILY_LINKS}`);
+  if (exposed.length !== expected) {
+    fail(`${mode}: ${exposed.length} map links are visible, expected ${expected}`);
   }
   return exposed;
 }
@@ -177,15 +197,15 @@ async function checkDrawable(page) {
     fail("drawable: an exposed map link is not a canvas family label");
   }
   await page.locator("#graph-3d").focus();
-  const tabs = await walkTabs(page, FAMILY_LINKS, (state) => {
+  const tabs = await walkTabs(page, expected, (state) => {
     if (!state.label || state.svg || !state.canvas.includes("graph-canvas")) {
       return `drawable: tab landed on ${state.text || state.id || "an unnamed control"} instead of a canvas label`;
     }
     return "";
   });
   const names = new Set(tabs.map((state) => state.text));
-  if (names.size !== FAMILY_LINKS) {
-    fail(`drawable: tab order visited ${names.size} family labels, expected ${FAMILY_LINKS}`);
+  if (names.size !== expected) {
+    fail(`drawable: tab order visited ${names.size} family labels, expected ${expected}`);
   }
   await page.keyboard.press("Tab");
   const after = await focusState(page);
@@ -286,7 +306,7 @@ async function checkFallback(page) {
     fail("fallback: an exposed map link is not an SVG family link");
   }
   await page.locator("svg.graph-map a").first().focus();
-  await walkTabs(page, FAMILY_LINKS - 1, (state) => {
+  await walkTabs(page, expected - 1, (state) => {
     if (!state.svg || state.label) {
       return `fallback: tab landed outside the SVG map (${state.text || state.id})`;
     }
@@ -298,7 +318,12 @@ async function checkFallback(page) {
 }
 
 const { server, port } = await startServer(dist);
-const { browser, expectDrawable } = await launchBrowser();
+const launched = await launchBrowser();
+if (!launched) {
+  server.close();
+  process.exit(0);
+}
+const { browser, expectDrawable } = launched;
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1600 } });
   const errors = [];
@@ -306,6 +331,10 @@ try {
   const url = `http://127.0.0.1:${port}${BASE}/graph/`;
   await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
   await page.waitForTimeout(300);
+  const labelCount = await page.locator("canvas.graph-canvas a.graph-label").count();
+  if (labelCount !== expected) {
+    fail(`canvas.graph-canvas a.graph-label is ${labelCount}, catalogue has ${expected}`);
+  }
   const drawable = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     canvas.setAttribute("content", "drawable");
@@ -314,14 +343,14 @@ try {
   if (expectDrawable && !drawable) {
     fail("Chrome 157 was launched and canvas.content is not drawable");
   }
+  const mode = drawable ? "drawable" : "fallback";
+  console.log(`graph a11y: ${mode}`);
   await assertMapLabel(page);
   if (drawable) {
     await checkDrawable(page);
     await checkReduced(browser, url);
-    console.log("graph a11y: drawable");
   } else {
     await checkFallback(page);
-    console.log("graph a11y: fallback");
   }
   if (errors.length) fail(`page error: ${errors.join("; ")}`);
 } finally {

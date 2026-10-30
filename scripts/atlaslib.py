@@ -4184,21 +4184,29 @@ def check_home_layout(dist: Path) -> list[str]:
     return []
 
 
-def check_graph_a11y(dist: Path) -> list[str]:
-    """Map links: one exposed family link per node, and the drawable tab order when that canvas exists."""
+def check_graph_a11y(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """Map links: one exposed family link per catalogue node, and the drawable tab order when that canvas exists."""
     script = ROOT / "scripts" / "graph_a11y_check.mjs"
     if not script.is_file():
         return ["graph accessibility check is missing"]
+    expected = len(graph_node_ids(catalog))
     completed = subprocess.run(
-        ["node", str(script), str(dist)],
+        ["node", str(script), str(dist), str(expected)],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=False,
     )
+    reported = False
+    for line in (completed.stdout or "").splitlines():
+        if line.startswith("graph a11y:"):
+            print(line, flush=True)
+            reported = True
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         return [detail or "graph accessibility check failed"]
+    if not reported:
+        return ["graph accessibility check did not report its mode"]
     return []
 
 
@@ -4362,7 +4370,7 @@ def check_dist(dist: Path) -> list[str]:
             failures.append(f"{page.relative_to(dist)} heading uses the upstream name")
     failures.extend(check_inline_spacing(dist, catalog))
     failures.extend(check_home_layout(dist))
-    failures.extend(check_graph_a11y(dist))
+    failures.extend(check_graph_a11y(dist, catalog))
     return failures
 
 
