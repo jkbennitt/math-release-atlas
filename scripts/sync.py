@@ -126,11 +126,43 @@ def current_anthropic_commits() -> tuple[str, str]:
     return fm_commit, flt_commit
 
 
-def anthropic_summary(old_fm: str, old_flt: str, payload: dict) -> str:
+def _recorded_zeta_pin(payload: dict[str, Any] | None) -> tuple[str, str]:
+    """zeta_tag and zeta_tag_commit already stored on the Anthropic pin."""
+    if not isinstance(payload, dict):
+        return "", ""
+    pins = payload.get("pins")
+    if not isinstance(pins, dict):
+        return "", ""
+    anthropic_pins = pins.get("anthropic")
+    if not isinstance(anthropic_pins, dict):
+        return "", ""
+    tag = anthropic_pins.get("zeta_tag")
+    commit = anthropic_pins.get("zeta_tag_commit")
+    return (
+        tag if isinstance(tag, str) else "",
+        commit if isinstance(commit, str) else "",
+    )
+
+
+def anthropic_summary(
+    old_fm: str,
+    old_flt: str,
+    payload: dict,
+    old_zeta_tag: str,
+    old_zeta_commit: str,
+) -> str:
     counts = payload["counts"]
+    zeta_rows = [item for item in payload["releases"] if item.get("id") == "zeta23"]
+    tag = zeta_rows[0].get("tag") if len(zeta_rows) == 1 else {}
+    if not isinstance(tag, dict):
+        tag = {}
+    new_zeta_tag = tag.get("name") if isinstance(tag.get("name"), str) else ""
+    new_zeta_commit = tag.get("commit") if isinstance(tag.get("commit"), str) else ""
     lines = [
         f"Anthropic formal-math `{old_fm[:12]}` → `{payload['source']['commit'][:12]}`.",
         f"Anthropic Fermat `{old_flt[:12]}` → `{payload['source']['also'][0]['commit'][:12]}`.",
+        f"Anthropic zeta tag `{old_zeta_tag}` → `{new_zeta_tag}`.",
+        f"Anthropic zeta tag commit `{old_zeta_commit[:12]}` → `{new_zeta_commit[:12]}`.",
         "",
         f"- Releases: {counts['releases']}",
         f"- Lean files: {counts['lean_files']}",
@@ -414,12 +446,19 @@ def main() -> int:
         write_json(FAMILIES_JSON, merged)
         write_json(SOURCES_JSON, extras["sources"])
         openai_body = diff_summary(old_payload, upstream, set(curated))
+        old_zeta_tag, old_zeta_commit = _recorded_zeta_pin(old_payload)
         body = (
             openai_body
             + "\n\n"
             + alphaproof_summary(old_apn, alphaproof_payload)
             + "\n\n"
-            + anthropic_summary(old_fm, old_flt, anthropic_payload)
+            + anthropic_summary(
+                old_fm,
+                old_flt,
+                anthropic_payload,
+                old_zeta_tag,
+                old_zeta_commit,
+            )
             + "\n\n"
             + count_golden_section(upstream, alphaproof_payload, anthropic_payload)
         )

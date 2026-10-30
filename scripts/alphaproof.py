@@ -776,9 +776,11 @@ def assert_alphaproof(
             raise AtlasError(f"{record['id']} has per-row provenance")
         if "solved" in record["statement"].lower() or "proves" in record["statement"].lower():
             raise AtlasError(f"{record['id']} statement uses a bare claim")
-        if record["category"] == "ErdosProblems" and not isinstance(record["erdos_number"], int):
-            raise AtlasError(f"{record['id']} has no Erdős number")
-        if record["category"] != "ErdosProblems" and record["erdos_number"] is not None:
+        if record["category"] == "ErdosProblems":
+            recorded_apn_erdos_numbers([record])
+            if record["erdos_number"] is None:
+                raise AtlasError(f"{record['id']} has no Erdős number")
+        elif record["erdos_number"] is not None:
             raise AtlasError(f"{record['id']} invented an Erdős number")
     oeis_gap = next(gap for gap in payload["gaps"] if gap["id"] == "oeis-count")
     expected_oeis = oeis_count_gap(counts["oeis_files"])
@@ -864,22 +866,28 @@ def assert_cross_source(
         raise AtlasError(f"pinned AlphaProof Erdős numbers are {sorted(alphaproof)}")
 
 
-def recorded_apn_erdos_numbers(records: list[dict[str, Any]]) -> set[Any]:
+def recorded_apn_erdos_numbers(records: list[dict[str, Any]]) -> set[int]:
     """Erdős numbers the pin tripwire compares with ``PINNED_APN_ERDOS``.
 
     None means the row is not an Erdős file and stays out of the set. Every
-    other value is kept. ``isinstance(..., int)`` drops a string or a float
-    before the comparison, so the sync note can report that the pinned set
-    still matches while that value is on the row. ``is not None`` is the
-    guard's rule: a malformed value cannot hide. Both copies call this.
+    other value must be a real int. ``bool`` is a subclass of ``int``, and
+    ``12.0 == 12``, so ``isinstance(..., int)`` or a set comparison would
+    treat those as pinned numbers and the tripwire would stay quiet. The
+    guard and the sync note both call this, and anything else raises
+    AtlasError.
     """
-    numbers: set[Any] = set()
+    numbers: set[int] = set()
     for record in records:
         if "erdos_number" not in record:
             raise AtlasError("AlphaProof record is missing an Erdős number")
         number = record["erdos_number"]
-        if number is not None:
-            numbers.add(number)
+        if number is None:
+            continue
+        if type(number) is not int:
+            label = record.get("id")
+            where = f"{label} " if isinstance(label, str) and label else ""
+            raise AtlasError(f"{where}Erdős number {number!r} is {type(number).__name__}, not an int")
+        numbers.add(number)
     return numbers
 
 

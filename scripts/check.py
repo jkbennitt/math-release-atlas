@@ -206,6 +206,7 @@ def check_source() -> list[str]:
     failures.extend(check_status_approvals(curated))
     failures.extend(check_codeowners())
     failures.extend(check_sync_does_not_write_status())
+    failures.extend(check_pages_runs_guard())
     failures.extend(check_upstream_text_is_shown())
     failures.extend(check_authored())
     failures.extend(check_preview_source())
@@ -340,6 +341,36 @@ def check_sync_does_not_write_status() -> list[str]:
         for status in sorted(COMMUNITY_STATUSES):
             if status in source:
                 failures.append(f"{label} names community status {status}")
+    return failures
+
+
+def check_pages_runs_guard() -> list[str]:
+    """Pages runs Guard's check before deploy, and keeps its pins and permissions."""
+    workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+    failures: list[str] = []
+    command = "python3 scripts/check.py --self-test --source --verify-upstream"
+    deploy_at = workflow.find("actions/deploy-pages@")
+    check_at = workflow.find(command)
+    if check_at < 0 or deploy_at < 0 or check_at > deploy_at:
+        failures.append("Pages workflow does not run Guard before the deploy step")
+    for pin in (
+        "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa",
+        "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e",
+    ):
+        if pin not in workflow:
+            failures.append(f"Pages workflow lost pin {pin}")
+    for step in ("pip install -r requirements.txt", "npm ci", "npm run build", "test -s dist/og.png"):
+        if step not in workflow:
+            failures.append(f"Pages workflow lost step {step}")
+    if workflow.count("contents: read") != 2:
+        failures.append("Pages workflow changed contents permissions")
+    if workflow.count("pages: write") != 1 or workflow.count("id-token: write") != 1:
+        failures.append("Pages workflow changed deploy permissions")
     return failures
 
 
@@ -971,31 +1002,41 @@ def alphaproof_self_test() -> list[str]:
         failures.append("count_golden_disagreements does not use the shared tripwire helper")
     if not _calls_named(alphaproof.alphaproof_tripwires, "recorded_apn_erdos_numbers"):
         failures.append("the tripwire helper does not use the shared Erdős filter")
-    drifted = copy.deepcopy(recorded)
-    stray = next(record for record in drifted["records"] if record["erdos_number"] is None)
-    stray["erdos_number"] = "999"
-    isinstance_copy = {
-        record.get("erdos_number")
-        for record in drifted["records"]
-        if isinstance(record.get("erdos_number"), int)
-    }
-    if isinstance_copy != alphaproof.PINNED_APN_ERDOS:
-        failures.append("drift fixture changed the integer Erdős set")
-    kept = alphaproof.recorded_apn_erdos_numbers(drifted["records"])
-    if "999" not in kept:
-        failures.append("the shared Erdős tripwire dropped a non-integer")
-    if kept == isinstance_copy:
-        failures.append("the shared Erdős tripwire matched the isinstance filter")
-    bool_rows = [{"erdos_number": number} for number in alphaproof.PINNED_APN_ERDOS]
-    bool_rows.append({"erdos_number": True})
-    if True not in alphaproof.recorded_apn_erdos_numbers(bool_rows):
-        failures.append("the shared Erdős tripwire dropped a boolean")
-    drift_notes = alphaproof.count_golden_disagreements(drifted, families)
-    if not any("PINNED_APN_ERDOS" in note for note in drift_notes):
-        failures.append(f"a non-integer Erdős number did not move the tripwire: {drift_notes}")
-    drift_guard = _atlas_error(lambda: assert_alphaproof(drifted))
-    if drift_guard is None or "Erdős" not in drift_guard:
-        failures.append(f"assert_alphaproof accepted a non-integer Erdős number: {drift_guard}")
+    if not _calls_named(assert_alphaproof, "recorded_apn_erdos_numbers"):
+        failures.append("assert_alphaproof does not use the shared Erdős filter")
+    if {12.0} != {12} or {True} != {1}:
+        failures.append("a float or a bool no longer compares equal to an int")
+
+    def reject_malformed_erdos(value: object) -> None:
+        payload = copy.deepcopy(recorded)
+        row = next(record for record in payload["records"] if record["erdos_number"] == 12)
+        row["erdos_number"] = value
+        if value == 12:
+            collapsed = {
+                record["erdos_number"]
+                for record in payload["records"]
+                if record["erdos_number"] is not None
+            }
+            if collapsed != alphaproof.PINNED_APN_ERDOS:
+                failures.append(f"{value!r} did not compare equal to the pinned Erdős ints")
+        helper_message = _atlas_error(lambda: alphaproof.recorded_apn_erdos_numbers(payload["records"]))
+        if helper_message is None or "not an int" not in helper_message:
+            failures.append(f"shared Erdős helper accepted {value!r}: {helper_message}")
+        note_message = _atlas_error(lambda: alphaproof.count_golden_disagreements(payload, families))
+        if note_message is None or "not an int" not in note_message:
+            failures.append(f"sync notes accepted Erdős number {value!r}: {note_message}")
+        guard_message = _atlas_error(lambda: assert_alphaproof(payload))
+        if guard_message is None or "not an int" not in guard_message:
+            failures.append(f"assert_alphaproof accepted Erdős number {value!r}: {guard_message}")
+
+    reject_malformed_erdos(12.0)
+    reject_malformed_erdos(True)
+    renumbered = copy.deepcopy(recorded)
+    renumbered_row = next(record for record in renumbered["records"] if record["erdos_number"] == 12)
+    renumbered_row["erdos_number"] = 999
+    renumber_notes = alphaproof.count_golden_disagreements(renumbered, families)
+    if not any("PINNED_APN_ERDOS" in note for note in renumber_notes):
+        failures.append(f"a new Erdős int did not move the tripwire: {renumber_notes}")
     return failures
 
 
@@ -1270,6 +1311,21 @@ def anthropic_self_test() -> list[str]:
         tag_notes = anthropic.count_golden_disagreements(renamed_tag)
         if not any("zeta_tag" in note for note in tag_notes):
             failures.append(f"sync notes omitted the zeta tag mismatch: {tag_notes}")
+        moved_zeta_pin = copy.deepcopy(recorded)
+        zeta_release = next(item for item in moved_zeta_pin["releases"] if item["id"] == "zeta23")
+        previous_tag = zeta_release["tag"]["name"]
+        previous_commit = zeta_release["tag"]["commit"]
+        zeta_release["tag"] = {"name": "v9.9", "commit": "a" * 40}
+        summary = sync.anthropic_summary("b" * 40, "c" * 40, moved_zeta_pin, previous_tag, previous_commit)
+        expected_tag = f"Anthropic zeta tag `{previous_tag}` → `v9.9`."
+        expected_commit = f"Anthropic zeta tag commit `{previous_commit[:12]}` → `{'a' * 12}`."
+        if expected_tag not in summary or expected_commit not in summary:
+            failures.append(f"sync notes omitted a zeta pin move: {summary}")
+        if "Anthropic formal-math `" not in summary or "Anthropic Fermat `" not in summary:
+            failures.append("sync notes dropped an existing Anthropic pin move")
+        main_source = inspect.getsource(sync.main)
+        if "old_zeta_tag" not in main_source or "old_zeta_commit" not in main_source:
+            failures.append("sync.py does not pass zeta pins into the sync notes")
         missing_source = copy.deepcopy(recorded)
         del missing_source["source"]
         missing_message = _atlas_error(lambda: assert_anthropic(missing_source))
