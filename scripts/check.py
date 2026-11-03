@@ -389,6 +389,10 @@ def check_chrome157_pin() -> list[str]:
     digest = "ab9dd0ba103be79cc602962d8b21e285f26731a5115c1a759a0814da1346b54d"
     if version not in script or url not in script or digest not in script:
         failures.append("Chrome for Testing 157.0.8103.15 is not pinned")
+    if "chrome_crashpad_handler" not in script or "chmod a+x" not in script:
+        failures.append(
+            "Chrome for Testing install leaves chrome_crashpad_handler non-executable"
+        )
     mjs = (ROOT / "scripts" / "graph_a11y_check.mjs").read_text(encoding="utf-8")
     if "graph a11y: ${mode}" not in mjs:
         failures.append("graph accessibility check does not log its mode")
