@@ -144,6 +144,16 @@ def _recorded_zeta_pin(payload: dict[str, Any] | None) -> tuple[str, str]:
     )
 
 
+def _shown_pin(value: str) -> str:
+    """Sync-note text for a zeta tag. An empty value is marked missing."""
+    return value if value else "(missing)"
+
+
+def _shown_sha(value: str) -> str:
+    """Sync-note text for a zeta tag commit. An empty value is marked missing."""
+    return value[:12] if value else "(missing)"
+
+
 def anthropic_summary(
     old_fm: str,
     old_flt: str,
@@ -161,8 +171,8 @@ def anthropic_summary(
     lines = [
         f"Anthropic formal-math `{old_fm[:12]}` → `{payload['source']['commit'][:12]}`.",
         f"Anthropic Fermat `{old_flt[:12]}` → `{payload['source']['also'][0]['commit'][:12]}`.",
-        f"Anthropic zeta tag `{old_zeta_tag}` → `{new_zeta_tag}`.",
-        f"Anthropic zeta tag commit `{old_zeta_commit[:12]}` → `{new_zeta_commit[:12]}`.",
+        f"Anthropic zeta tag `{_shown_pin(old_zeta_tag)}` → `{_shown_pin(new_zeta_tag)}`.",
+        f"Anthropic zeta tag commit `{_shown_sha(old_zeta_commit)}` → `{_shown_sha(new_zeta_commit)}`.",
         "",
         f"- Releases: {counts['releases']}",
         f"- Lean files: {counts['lean_files']}",

@@ -11,6 +11,7 @@ import re
 import struct
 import subprocess
 import tempfile
+import time
 import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, timezone
@@ -1838,7 +1839,7 @@ def _ensure_commit(repo: Path, commit: str) -> None:
     )
     if probe.returncode == 0:
         return
-    run_git(
+    run_git_retry(
         ["git", "fetch", "--filter=blob:none", "--depth", "1", "origin", commit],
         repo,
         f"could not fetch commit {commit}",
@@ -4739,16 +4740,21 @@ def check_graph_a11y(dist: Path, catalog: dict[str, Any]) -> list[str]:
         text=True,
         check=False,
     )
-    reported = False
+    reported: list[str] = []
     for line in (completed.stdout or "").splitlines():
         if line.startswith("graph a11y:"):
             print(line, flush=True)
-            reported = True
+            reported.append(line.strip())
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         return [detail or "graph accessibility check failed"]
     if not reported:
         return ["graph accessibility check did not report its mode"]
+    if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
+        drawable = any(line.startswith("graph a11y: drawable") for line in reported)
+        skipped = any("skipped" in line or line.startswith("graph a11y: fallback") for line in reported)
+        if not drawable or skipped:
+            return [f"graph accessibility check did not run the drawable path: {reported}"]
     return []
 
 
@@ -5035,6 +5041,54 @@ def run_git(args: list[str], cwd: Path | None, fallback: str) -> subprocess.Comp
     return result
 
 
+# Transient clone and fetch failures are retried. Local git commands stay on run_git.
+GIT_FETCH_ATTEMPTS = 3
+GIT_FETCH_BACKOFF_SECONDS = (1, 2)
+
+
+def _git_network_subcommand(args: list[str]) -> str:
+    if not args or args[0] != "git":
+        return ""
+    index = 1
+    while index < len(args) and args[index].startswith("-"):
+        token = args[index]
+        index += 1
+        if token in {"-c", "-C"} and index < len(args):
+            index += 1
+    if index >= len(args):
+        return ""
+    return args[index]
+
+
+def run_git_retry(args: list[str], cwd: Path | None, fallback: str) -> subprocess.CompletedProcess[str]:
+    """Run one git fetch or clone, at most three times, pausing after a failure.
+
+    The pause is one second, then two seconds. A checkout or rev-parse stays on
+    ``run_git`` and is not retried.
+    """
+    subcommand = _git_network_subcommand(args)
+    if subcommand not in {"fetch", "clone"}:
+        raise AtlasError("run_git_retry is only for git fetch and git clone")
+    last_error: AtlasError | None = None
+    for attempt in range(1, GIT_FETCH_ATTEMPTS + 1):
+        result = subprocess.run(
+            args,
+            cwd=cwd,
+            env=git_env(),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            return result
+        last_error = git_failure(result.stderr or result.stdout, fallback)
+        if attempt == GIT_FETCH_ATTEMPTS:
+            break
+        time.sleep(GIT_FETCH_BACKOFF_SECONDS[attempt - 1])
+    if last_error is None:
+        raise AtlasError(fallback)
+    raise last_error
+
+
 def assert_sha_is_ancestor(repo: Path, sha: str, head: str) -> None:
     """Fail unless sha is the commit named by head, or an ancestor of it.
 
@@ -5069,9 +5123,10 @@ def ensure_ancestor_of_origin_head(repo: Path, sha: str) -> None:
     """Fetch origin HEAD and require sha to be that commit or an ancestor.
 
     Uses `git fetch --filter=blob:none origin HEAD` and then
-    `git merge-base --is-ancestor`. The repository must already have origin.
+    `git merge-base --is-ancestor`. The fetch is tried at most three times.
+    The repository must already have origin.
     """
-    run_git(
+    run_git_retry(
         ["git", "fetch", "--filter=blob:none", "origin", "HEAD"],
         repo,
         "could not fetch upstream HEAD",
@@ -5083,7 +5138,7 @@ def require_upstream_ancestor(url: str, sha: str) -> None:
     """Fail unless sha is HEAD of url or an ancestor of that HEAD."""
     with tempfile.TemporaryDirectory(prefix="atlas-ancestor-") as tmp:
         dest = Path(tmp) / "repo"
-        run_git(
+        run_git_retry(
             ["git", "clone", "--filter=blob:none", "--no-checkout", url, str(dest)],
             None,
             "could not fetch upstream HEAD",
@@ -5101,7 +5156,7 @@ def materialize_upstream(
         raise AtlasError(f"{sha} is not a commit sha")
     if not (dest / ".git").exists():
         dest.parent.mkdir(parents=True, exist_ok=True)
-        run_git(
+        run_git_retry(
             [
                 "git",
                 "clone",
@@ -5117,7 +5172,7 @@ def materialize_upstream(
     # Check ancestry before the depth-1 fetch, which replaces FETCH_HEAD and
     # can shallow the clone. A fork commit served by the same URL is not an ancestor.
     ensure_ancestor_of_origin_head(dest, sha)
-    run_git(
+    run_git_retry(
         ["git", "fetch", "--filter=blob:none", "--depth", "1", "origin", sha],
         dest,
         "could not fetch upstream",

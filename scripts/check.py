@@ -207,6 +207,7 @@ def check_source() -> list[str]:
     failures.extend(check_codeowners())
     failures.extend(check_sync_does_not_write_status())
     failures.extend(check_pages_runs_guard())
+    failures.extend(check_chrome157_pin())
     failures.extend(check_upstream_text_is_shown())
     failures.extend(check_authored())
     failures.extend(check_preview_source())
@@ -371,6 +372,37 @@ def check_pages_runs_guard() -> list[str]:
         failures.append("Pages workflow changed contents permissions")
     if workflow.count("pages: write") != 1 or workflow.count("id-token: write") != 1:
         failures.append("Pages workflow changed deploy permissions")
+    return failures
+
+
+def check_chrome157_pin() -> list[str]:
+    """CI installs Chrome for Testing 157 before the build so the graph check draws."""
+    failures: list[str] = []
+    script_path = ROOT / "scripts" / "install_chrome157.sh"
+    if not script_path.is_file():
+        return ["Chrome for Testing install script is missing"]
+    if not os.access(script_path, os.X_OK):
+        failures.append("Chrome for Testing install script is not executable")
+    script = script_path.read_text(encoding="utf-8")
+    version = "157.0.8103.15"
+    url = "https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.15/linux64/chrome-linux64.zip"
+    digest = "ab9dd0ba103be79cc602962d8b21e285f26731a5115c1a759a0814da1346b54d"
+    if version not in script or url not in script or digest not in script:
+        failures.append("Chrome for Testing 157.0.8103.15 is not pinned")
+    mjs = (ROOT / "scripts" / "graph_a11y_check.mjs").read_text(encoding="utf-8")
+    if "graph a11y: ${mode}" not in mjs:
+        failures.append("graph accessibility check does not log its mode")
+    if "Chrome for Testing 157 is required in CI" not in mjs:
+        failures.append("graph accessibility check can skip Chrome for Testing 157 in CI")
+    if 'fail("CI ran the fallback map instead of the drawable path")' not in mjs:
+        failures.append("graph accessibility check accepts fallback mode in CI")
+    for name in ("ci.yml", "pages.yml", "sync.yml"):
+        text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+        install_at = text.find("bash scripts/install_chrome157.sh")
+        deps_at = text.find("npx playwright install-deps chromium")
+        build_at = text.find("npm run build")
+        if min(install_at, deps_at, build_at) < 0 or install_at > build_at or deps_at > build_at:
+            failures.append(f"{name} does not install Chrome for Testing 157 before the build")
     return failures
 
 
@@ -1004,6 +1036,10 @@ def alphaproof_self_test() -> list[str]:
         failures.append("the tripwire helper does not use the shared Erdős filter")
     if not _calls_named(assert_alphaproof, "recorded_apn_erdos_numbers"):
         failures.append("assert_alphaproof does not use the shared Erdős filter")
+    if not _calls_named(alphaproof.cross_source, "recorded_apn_erdos_numbers"):
+        failures.append("cross_source does not use the shared Erdős filter")
+    if not _calls_named(alphaproof.catalogue_extras, "recorded_apn_erdos_numbers"):
+        failures.append("catalogue_extras does not use the shared Erdős filter")
     if {12.0} != {12} or {True} != {1}:
         failures.append("a float or a bool no longer compares equal to an int")
 
@@ -1022,6 +1058,9 @@ def alphaproof_self_test() -> list[str]:
         helper_message = _atlas_error(lambda: alphaproof.recorded_apn_erdos_numbers(payload["records"]))
         if helper_message is None or "not an int" not in helper_message:
             failures.append(f"shared Erdős helper accepted {value!r}: {helper_message}")
+        join_message = _atlas_error(lambda: alphaproof.cross_source(families[:1], payload["records"]))
+        if join_message is None or "not an int" not in join_message:
+            failures.append(f"cross_source accepted Erdős number {value!r}: {join_message}")
         note_message = _atlas_error(lambda: alphaproof.count_golden_disagreements(payload, families))
         if note_message is None or "not an int" not in note_message:
             failures.append(f"sync notes accepted Erdős number {value!r}: {note_message}")
@@ -1037,6 +1076,101 @@ def alphaproof_self_test() -> list[str]:
     renumber_notes = alphaproof.count_golden_disagreements(renumbered, families)
     if not any("PINNED_APN_ERDOS" in note for note in renumber_notes):
         failures.append(f"a new Erdős int did not move the tripwire: {renumber_notes}")
+    return failures
+
+
+def git_fetch_retry_self_test() -> list[str]:
+    """A fetch or clone is tried three times. A local git command is not retried."""
+    failures: list[str] = []
+    if atlaslib.GIT_FETCH_ATTEMPTS != 3 or atlaslib.GIT_FETCH_BACKOFF_SECONDS != (1, 2):
+        failures.append(
+            f"git fetch retry bound moved: {atlaslib.GIT_FETCH_ATTEMPTS} {atlaslib.GIT_FETCH_BACKOFF_SECONDS}"
+        )
+    if not _calls_named(atlaslib._ensure_commit, "run_git_retry"):
+        failures.append("commit fetch does not retry")
+    if not _calls_named(ensure_ancestor_of_origin_head, "run_git_retry"):
+        failures.append("origin HEAD fetch does not retry")
+    if not _calls_named(materialize_upstream, "run_git_retry"):
+        failures.append("upstream checkout does not retry its fetch")
+    if not _calls_named(require_upstream_ancestor, "run_git_retry"):
+        failures.append("ancestry clone does not retry")
+
+    calls: list[list[str]] = []
+    sleeps: list[int] = []
+
+    def install(fake_run) -> None:
+        atlaslib.subprocess.run = fake_run
+        atlaslib.time.sleep = lambda seconds: sleeps.append(seconds)
+
+    original_run = atlaslib.subprocess.run
+    original_sleep = atlaslib.time.sleep
+
+    class Result:
+        def __init__(self, code: int, stderr: str = "") -> None:
+            self.returncode = code
+            self.stderr = stderr
+            self.stdout = ""
+
+    try:
+        def succeed_on_third(args, cwd=None, env=None, capture_output=False, text=False):
+            calls.append(list(args))
+            if len(calls) < 3:
+                return Result(1, "fatal: unable to access 'https://example.invalid/': temporary failure")
+            return Result(0)
+
+        install(succeed_on_third)
+        completed = atlaslib.run_git_retry(
+            ["git", "fetch", "--filter=blob:none", "origin", "HEAD"],
+            None,
+            "could not fetch upstream HEAD",
+        )
+        if completed.returncode != 0 or len(calls) != 3 or sleeps != [1, 2]:
+            failures.append(f"git fetch did not retry twice then succeed: calls={len(calls)} sleeps={sleeps}")
+
+        calls.clear()
+        sleeps.clear()
+
+        def always_fail(args, cwd=None, env=None, capture_output=False, text=False):
+            calls.append(list(args))
+            return Result(1, "fatal: repository not found")
+
+        install(always_fail)
+        try:
+            atlaslib.run_git_retry(["git", "clone", "--no-checkout", "https://example.invalid/repo.git", "dest"], None, "could not fetch upstream")
+        except AtlasError as exc:
+            message = str(exc)
+            if len(calls) != 3 or sleeps != [1, 2]:
+                failures.append(f"a failed clone was not bounded at 3 tries: calls={len(calls)} sleeps={sleeps}")
+            if "\n" in message or "Traceback" in message:
+                failures.append(f"retry failure was not one line: {message!r}")
+        else:
+            failures.append("a failed clone was accepted")
+
+        calls.clear()
+        sleeps.clear()
+
+        def succeed(args, cwd=None, env=None, capture_output=False, text=False):
+            calls.append(list(args))
+            return Result(0)
+
+        install(succeed)
+        atlaslib.run_git_retry(["git", "fetch", "origin", "HEAD"], None, "could not fetch upstream HEAD")
+        if len(calls) != 1 or sleeps:
+            failures.append(f"a successful fetch was retried: calls={len(calls)} sleeps={sleeps}")
+
+        calls.clear()
+        try:
+            atlaslib.run_git_retry(["git", "checkout", "HEAD"], None, "could not fetch upstream")
+        except AtlasError as exc:
+            if calls:
+                failures.append("a local git command was retried")
+            if "fetch" not in str(exc) and "clone" not in str(exc):
+                failures.append(f"local git command error was {exc}")
+        else:
+            failures.append("run_git_retry accepted a checkout")
+    finally:
+        atlaslib.subprocess.run = original_run
+        atlaslib.time.sleep = original_sleep
     return failures
 
 
@@ -1323,6 +1457,27 @@ def anthropic_self_test() -> list[str]:
             failures.append(f"sync notes omitted a zeta pin move: {summary}")
         if "Anthropic formal-math `" not in summary or "Anthropic Fermat `" not in summary:
             failures.append("sync notes dropped an existing Anthropic pin move")
+        blank = copy.deepcopy(recorded)
+        blank_zeta = next(item for item in blank["releases"] if item["id"] == "zeta23")
+        blank_zeta["tag"] = {"name": "", "commit": ""}
+        blank_summary = sync.anthropic_summary("b" * 40, "c" * 40, blank, "", "")
+        if "Anthropic zeta tag `(missing)` → `(missing)`." not in blank_summary:
+            failures.append(f"an empty zeta tag was not marked missing: {blank_summary}")
+        if "Anthropic zeta tag commit `(missing)` → `(missing)`." not in blank_summary:
+            failures.append(f"an empty zeta tag commit was not marked missing: {blank_summary}")
+        half_summary = sync.anthropic_summary("b" * 40, "c" * 40, moved_zeta_pin, "", "")
+        if "Anthropic zeta tag `(missing)` → `v9.9`." not in half_summary:
+            failures.append(f"an empty old zeta tag was not marked missing: {half_summary}")
+        if f"Anthropic zeta tag commit `(missing)` → `{'a' * 12}`." not in half_summary:
+            failures.append(f"an empty old zeta commit was not marked missing: {half_summary}")
+        absent = copy.deepcopy(recorded)
+        absent_zeta = next(item for item in absent["releases"] if item["id"] == "zeta23")
+        absent_zeta["tag"] = None
+        absent_summary = sync.anthropic_summary("b" * 40, "c" * 40, absent, previous_tag, previous_commit)
+        if f"Anthropic zeta tag `{previous_tag}` → `(missing)`." not in absent_summary:
+            failures.append(f"a missing zeta tag was not marked missing: {absent_summary}")
+        if f"Anthropic zeta tag commit `{previous_commit[:12]}` → `(missing)`." not in absent_summary:
+            failures.append(f"a missing zeta commit was not marked missing: {absent_summary}")
         main_source = inspect.getsource(sync.main)
         if "old_zeta_tag" not in main_source or "old_zeta_commit" not in main_source:
             failures.append("sync.py does not pass zeta pins into the sync notes")
@@ -1931,6 +2086,7 @@ Abstract with ABSTRACT-MARKER that must stay out of the summary.
         failures.append("a soft hyphen hid a denylist token")
     failures.extend(alphaproof_self_test())
     failures.extend(anthropic_self_test())
+    failures.extend(git_fetch_retry_self_test())
     failures.extend(ancestry_self_test())
 
     def missing_source() -> None:

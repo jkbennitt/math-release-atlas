@@ -76,6 +76,12 @@ function inCi() {
 async function launchBrowser() {
   const args = ["--no-sandbox", "--disable-dev-shm-usage"];
   const errors = [];
+  if (inCi() && !existsSync(CHROME_157)) {
+    console.error(
+      `graph a11y: Chrome for Testing 157 is required in CI and was not found at ${CHROME_157}`,
+    );
+    process.exit(1);
+  }
   if (existsSync(CHROME_157)) {
     try {
       return {
@@ -84,6 +90,10 @@ async function launchBrowser() {
       };
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
+      if (inCi()) {
+        console.error(`graph a11y: Chrome for Testing 157 failed to launch\n${errors.join("\n")}`);
+        process.exit(1);
+      }
     }
   }
   try {
@@ -345,6 +355,9 @@ try {
   }
   const mode = drawable ? "drawable" : "fallback";
   console.log(`graph a11y: ${mode}`);
+  if (inCi() && mode !== "drawable") {
+    fail("CI ran the fallback map instead of the drawable path");
+  }
   await assertMapLabel(page);
   if (drawable) {
     await checkDrawable(page);
