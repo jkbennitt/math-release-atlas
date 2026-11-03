@@ -334,11 +334,7 @@ def catalogue_extras(
         openai_erdos: set[int] = set()
         for family in upstream["families"]:
             openai_erdos.update(explicit_erdos_numbers(family))
-        apn_erdos = {
-            record["erdos_number"]
-            for record in records
-            if isinstance(record.get("erdos_number"), int)
-        }
+        apn_erdos = recorded_apn_erdos_numbers(records)
         other_text = "\n".join(
             f"{record.get('path', '')}\n{record.get('filename', '')}" for record in records
         )
@@ -399,11 +395,13 @@ def cross_source(families: list[dict[str, Any]], records: list[dict[str, Any]]) 
     Titles are not compared. A number that only one side names stays off the join.
     """
     openai = openai_erdos_index(families)
+    allowed = recorded_apn_erdos_numbers(records)
     alphaproof: dict[int, list[str]] = {}
     for record in records:
-        number = record.get("erdos_number")
-        if isinstance(number, int):
-            alphaproof.setdefault(number, []).append(record["id"])
+        number = record["erdos_number"]
+        if number not in allowed:
+            continue
+        alphaproof.setdefault(number, []).append(record["id"])
     shared_numbers = sorted(set(openai) & set(alphaproof))
     shared = [
         {

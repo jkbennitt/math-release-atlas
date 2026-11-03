@@ -65,6 +65,14 @@ jobs:
           npm ci > /tmp/build.log 2>&1
           install=$?
           if [ "$install" -eq 0 ]; then
+            npx playwright install-deps chromium >> /tmp/build.log 2>&1
+            install=$?
+          fi
+          if [ "$install" -eq 0 ]; then
+            bash scripts/install_chrome157.sh >> /tmp/build.log 2>&1
+            install=$?
+          fi
+          if [ "$install" -eq 0 ]; then
             npm run build >> /tmp/build.log 2>&1
             build=$?
             if [ "$build" -eq 0 ] && { [ ! -s public/og.png ] || [ ! -s dist/og.png ]; }; then
