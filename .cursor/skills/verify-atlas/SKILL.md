@@ -74,7 +74,7 @@ The harness is Playwright, launched from `drive-home.mjs` with the repo's `playw
 node .cursor/skills/verify-atlas/scripts/drive-home.mjs
 ```
 
-That script drives the home and source overview. The other routes below are the same harness: open the URL, act, then read the resulting state. Counts below are the current catalogue: OpenAI Math 373 families and 721 manuscripts, AlphaProof Nexus 71 Lean files, AlphaEvolve 18 notebook constructions, Anthropic 5 releases. The home table has 466 rows (373 + 71 + 18 + 5).
+That script drives the home and source overview. The other routes below are the same harness: open the URL, act, then read the resulting state. Counts below are the current catalogue: OpenAI Math 373 families and 721 manuscripts, AlphaProof Nexus 71 Lean files, AlphaEvolve 18 notebook constructions, Anthropic 5 releases. The home table has 467 rows (373 + 71 + 18 + 5).
 
 | Route | What to read |
 | --- | --- |

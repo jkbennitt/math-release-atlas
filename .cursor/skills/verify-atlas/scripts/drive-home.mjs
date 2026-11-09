@@ -134,7 +134,9 @@ try {
   notes.push("anthropic page names FlashProve");
 
   await page.goto(`${home}graph/`, { waitUntil: "networkidle", timeout: 60000 });
-  await page.locator("svg.graph-map").waitFor();
+  await page.locator("h1").waitFor();
+  const graphSvg = page.locator("svg.graph-map");
+  await graphSvg.waitFor({ state: "attached" });
   const graphHeading = await textOf(page.locator("h1"));
   if (graphHeading !== "Citation graph") fail(`graph heading ${JSON.stringify(graphHeading)}`);
   const graphBody = await textOf(page.locator("article"));
@@ -146,6 +148,8 @@ try {
   }
   const edges = await page.locator("ul.edge-list > li").count();
   if (edges !== 119) fail(`graph listed ${edges} edges`);
+  const svgHidden = await graphSvg.getAttribute("hidden");
+  notes.push(svgHidden !== null ? "graph map hidden after the canvas labels draw" : "graph map stayed visible");
   await writeFile(`${evidence}/graph.html`, await page.content());
   await page.screenshot({ path: `${evidence}/graph.png` });
   notes.push(`graph -> 119 edges`);

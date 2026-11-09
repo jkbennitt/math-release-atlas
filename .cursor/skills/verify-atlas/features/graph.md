@@ -19,7 +19,7 @@ From any page, use the primary nav link "Graph". The home page also links "Citat
 
 `node .cursor/skills/verify-atlas/scripts/drive-home.mjs` opens this page after the source pages.
 
-1. Open `http://127.0.0.1:4321/math-release-atlas/graph/` and wait for `svg.graph-map`.
+1. Open `http://127.0.0.1:4321/math-release-atlas/graph/` and wait for `h1`. `svg.graph-map` is in the HTML. Chrome for Testing 157 hides it after the canvas labels draw, so a visible SVG is not required on that browser.
 2. Read `h1`. It is `Citation graph`.
 3. Read the paragraph that contains `directed links among`. At this catalogue it is `119 directed links among 125 families in this catalogue.`
 4. Read the intro. It says AlphaEvolve records have no citation data in this atlas.
