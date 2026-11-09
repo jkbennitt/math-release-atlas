@@ -23,7 +23,7 @@ function gapBadgeClass(status: string): string {
 
 <Base
   title="Anthropic · Math Release Atlas"
-  description="Four Anthropic releases pinned to upstream commits, with derived Lean-file counts and the gaps this atlas records."
+  description="Five Anthropic releases pinned to upstream commits, with derived Lean-file counts and the gaps this atlas records."
 >
   <article class="prose source-page">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
@@ -38,6 +38,14 @@ function gapBadgeClass(status: string): string {
       {flt.label}: repository <a href={flt.repo}>{flt.repo}</a>,
       commit <a href={`${flt.repo}/commit/${flt.commit}`}><code>{flt.commit}</code></a>{" "}
       ({shortSha(flt.commit)}).
+      {record.source.also.slice(1).map((item) => (
+        <>
+          {" "}
+          {item.label}: repository <a href={item.repo}>{item.repo}</a>,
+          commit <a href={`${item.repo}/commit/${item.commit}`}><code>{item.commit}</code></a>{" "}
+          ({shortSha(item.commit)}).
+        </>
+      ))}
     </p>
     <p class="summary-lead">{record.check_wording}</p>
     <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>

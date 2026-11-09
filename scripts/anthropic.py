@@ -38,19 +38,31 @@ FORMAL_MATH_URL = "https://github.com/anthropics/formal-math.git"
 FORMAL_MATH_WEB = "https://github.com/anthropics/formal-math"
 FLT_URL = "https://github.com/anthropics/fermats-last-theorem.git"
 FLT_WEB = "https://github.com/anthropics/fermats-last-theorem"
+FLASHPROVE_URL = "https://github.com/anthropics/FlashProve.git"
+FLASHPROVE_WEB = "https://github.com/anthropics/FlashProve"
 ANTHROPIC_SOURCE_ID = "anthropic"
 
-RELEASE_IDS = ("zeta23", "3sum-apsp", "eth", "fermat-last-theorem")
+RELEASE_IDS = ("zeta23", "3sum-apsp", "eth", "fermat-last-theorem", "flashprove")
 FORMAL_MATH_PROJECTS = ("zeta23", "3sum-apsp", "eth")
 IGNORED_TOP_LEVEL = {".github"}
 ETH_HEADLINE = ["MainResults.ethIsFalse", "MainResults.mainTheorem"]
 ETH_AXIOMS = ["propext", "Quot.sound", "Classical.choice"]
 ETH_TOOLCHAIN = "leanprover/lean4:v4.33.1"
+FLASHPROVE_HEADLINES = (
+    "sound",
+    "soundAndBinding",
+    "completeOnCanServe",
+    "zeroKnowledgeOnCanServe",
+    "refusedHandsOutNoProof",
+    "repliesFit",
+)
+FLASHPROVE_TOOLCHAIN = "leanprover/lean4:v4.29.1"
 PINNED_TOOLCHAINS = {
     "zeta23": "leanprover/lean4:v4.33.0-rc2",
     "3sum-apsp": "leanprover/lean4:v4.33.1",
     "eth": ETH_TOOLCHAIN,
     "fermat-last-theorem": "leanprover/lean4:v4.33.1",
+    "flashprove": FLASHPROVE_TOOLCHAIN,
 }
 ETH_STATEMENT = (
     "Lean formalization in the upstream repo of a deterministic 2^{o(n)}-time algorithm "
@@ -77,6 +89,17 @@ FLT_SPARSE_PATHS = [
     "/lean-toolchain",
     "/formalization.yaml",
     "/FinalCheck.lean",
+]
+FLASHPROVE_SPARSE_PATHS = [
+    "/README.md",
+    "/VERSION",
+    "/LICENSE",
+    "/lean/THEOREM.md",
+    "/lean/lean-toolchain",
+    "/lean/CREDITS.md",
+    "/lean/CREDITS-FILES.tsv",
+    "/lean/README.md",
+    "/lean/VerifiableInference/Statements.lean",
 ]
 
 CHECK_WORDING = "Lean files deposited upstream. This atlas did not run Lean."
@@ -143,13 +166,16 @@ def anthropic_preview(payload: dict[str, Any]) -> dict[str, Any]:
     releases = int(counts["releases"])
     new_results = int(counts["new_results"])
     formalizations = int(counts["formalizations"])
+    protocol = int(counts.get("protocol_soundness", 0))
     release_noun = "release" if releases == 1 else "releases"
     result_noun = "new result" if new_results == 1 else "new results"
     formalization_noun = "formalization" if formalizations == 1 else "formalizations"
+    protocol_noun = "protocol-soundness release" if protocol == 1 else "protocol-soundness releases"
+    protocol_clause = f", {protocol} {protocol_noun}" if protocol else ""
     fragment = (
         f"{lean} Lean files from {name} "
         f"({releases} {release_noun}, {new_results} {result_noun}, "
-        f"{formalizations} {formalization_noun}). "
+        f"{formalizations} {formalization_noun}{protocol_clause}). "
         f"{FLT_PREVIEW_NOTE}"
     )
     return {
@@ -253,9 +279,13 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
         f"fermat-last-theorem: {flt['theorem_files']} theorem files.",
         f"fermat-last-theorem: {flt['proof_files']} pipeline files.",
         f"fermat-last-theorem: {flt['definition_files']} definition files.",
+        f"flashprove: {by_id['flashprove']['counts']['lean_files']} Lean files.",
+        f"flashprove: {by_id['flashprove']['counts']['first_party_lean_files']} first-party Lean files.",
+        f"flashprove: {by_id['flashprove']['counts']['vendored_lean_files']} vendored Lean files under lean/ThirdParty/.",
         f"All releases: {totals['lean_files']} Lean files.",
         f"All releases: {totals['new_results']} new results.",
         f"All releases: {totals['formalizations']} formalization.",
+        f"All releases: {totals['protocol_soundness']} protocol soundness.",
     ]
 
 
@@ -492,23 +522,85 @@ def _reject_eth_claim_words(release: dict[str, Any]) -> None:
                 parts.append(str(gap.get("label") or ""))
     hits = claim_word_hits("\n".join(parts))
     if hits:
-        raise AtlasError(f"eth release uses a claim word: {hits[0]}")
+        raise AtlasError(f"{release.get('id')} release uses a claim word: {hits[0]}")
+
+
+def classify_flashprove(paths: list[str]) -> dict[str, int]:
+    """Split Lean files by the lean/ThirdParty/ prefix. First-party is everything else."""
+    lean = [path for path in paths if path.endswith(".lean")]
+    vendored_prefix = "lean/ThirdParty/"
+    arklib_prefix = "lean/ThirdParty/ArkLib/"
+    backport_prefix = "lean/ThirdParty/MathlibBackport/"
+    vendored = [path for path in lean if path.startswith(vendored_prefix)]
+    arklib = [path for path in vendored if path.startswith(arklib_prefix)]
+    backport = [path for path in vendored if path.startswith(backport_prefix)]
+    other = [
+        path
+        for path in vendored
+        if not path.startswith(arklib_prefix) and not path.startswith(backport_prefix)
+    ]
+    return {
+        "lean_files": len(lean),
+        "first_party_lean_files": len(lean) - len(vendored),
+        "vendored_lean_files": len(vendored),
+        "arklib_lean_files": len(arklib),
+        "mathlib_backport_lean_files": len(backport),
+        "other_vendored_lean_files": len(other),
+    }
+
+
+def _credits_listed(text: str) -> int:
+    lines = [line for line in text.splitlines() if line.strip()]
+    if not lines or not lines[0].startswith("Lean file"):
+        raise AtlasError("FlashProve CREDITS-FILES.tsv has no header")
+    return len(lines) - 1
+
+
+def _named_count(text: str, label: str) -> int:
+    match = re.search(rf"the (\d+) Lean files under `{re.escape(label)}`", text)
+    if match is None:
+        raise AtlasError(f"FlashProve CREDITS.md does not name the {label} file count")
+    return int(match.group(1))
+
+
+def flashprove_statement(version: str) -> str:
+    return (
+        "Formalized cryptographic-protocol soundness in Lean 4 for a research prototype "
+        "of a zero-knowledge argument of AI inference (Llama 4 Maverick on one H100). "
+        "This is not a research-mathematics result. "
+        f"The repository says version {version} is not maintained."
+    )
+
+
+def flashprove_gap_label(version: str) -> str:
+    return (
+        "Formalized cryptographic-protocol soundness. Not a research-mathematics result. "
+        f"The repository says version {version} is not maintained."
+    )
 
 
 def assemble(
     fm_paths: list[str],
     flt_paths: list[str],
+    fp_paths: list[str],
     files: dict[str, str],
     fm_commit: str,
     flt_commit: str,
+    fp_commit: str,
     tag: dict[str, str],
     fm_date: str,
     fm_subject: str,
     flt_date: str,
     flt_subject: str,
+    fp_date: str,
+    fp_subject: str,
 ) -> dict[str, Any]:
     """Build the snapshot from path lists and the statement files already fetched."""
-    if not re.fullmatch(r"[0-9a-f]{40}", fm_commit) or not re.fullmatch(r"[0-9a-f]{40}", flt_commit):
+    if (
+        not re.fullmatch(r"[0-9a-f]{40}", fm_commit)
+        or not re.fullmatch(r"[0-9a-f]{40}", flt_commit)
+        or not re.fullmatch(r"[0-9a-f]{40}", fp_commit)
+    ):
         raise AtlasError("Anthropic commits must be full shas")
     for key in (
         "fm:LICENSE",
@@ -532,6 +624,14 @@ def assemble(
         "flt:README.md",
         "flt:lean-toolchain",
         "flt:formalization.yaml",
+        "fp:README.md",
+        "fp:VERSION",
+        "fp:LICENSE",
+        "fp:lean/THEOREM.md",
+        "fp:lean/lean-toolchain",
+        "fp:lean/CREDITS.md",
+        "fp:lean/CREDITS-FILES.tsv",
+        "fp:lean/README.md",
     ):
         if key not in files:
             raise AtlasError(f"Anthropic snapshot is missing {key}")
@@ -625,7 +725,7 @@ def assemble(
     if not pair_ceiling:
         raise AtlasError("zeta23 PairCeiling topic is missing from the tree")
 
-    identifier_text = "\n".join([*fm_paths, *flt_paths, *files.values()])
+    identifier_text = "\n".join([*fm_paths, *flt_paths, *fp_paths, *files.values()])
     identifiers = find_identifiers(identifier_text)
     identifiers["method"] = IDENTIFIER_METHOD
 
@@ -652,6 +752,60 @@ def assemble(
     three_license = _license_record(FORMAL_MATH_WEB, fm_commit, "3sum-apsp/LICENSE", files["fm:3sum-apsp/LICENSE"])
     eth_license = _license_record(FORMAL_MATH_WEB, fm_commit, "eth/LICENSE", files["fm:eth/LICENSE"])
     flt_license = _license_record(FLT_WEB, flt_commit, "LICENSE", files["flt:LICENSE"])
+    fp_counts = classify_flashprove(fp_paths)
+    fp_version = files["fp:VERSION"].strip()
+    if not fp_version or fp_version not in files["fp:README.md"]:
+        raise AtlasError("FlashProve VERSION is missing from the README")
+    if "not maintained" not in files["fp:README.md"]:
+        raise AtlasError("FlashProve README no longer says it is not maintained")
+    if "Llama 4 Maverick" not in files["fp:README.md"] or "H100" not in files["fp:README.md"]:
+        raise AtlasError("FlashProve README no longer names Llama 4 Maverick on an H100")
+    fp_toolchain = files["fp:lean/lean-toolchain"].strip()
+    if fp_toolchain != FLASHPROVE_TOOLCHAIN:
+        raise AtlasError(f"FlashProve toolchain is {fp_toolchain}")
+    fp_headlines = [name for name in FLASHPROVE_HEADLINES if f"`{name}`" in files["fp:lean/THEOREM.md"]]
+    if fp_headlines != list(FLASHPROVE_HEADLINES):
+        raise AtlasError(f"FlashProve theorem names are {fp_headlines}")
+    statement_path = "lean/VerifiableInference/Statements.lean"
+    for required in (
+        statement_path,
+        "lean/THEOREM.md",
+        "lean/README.md",
+        "README.md",
+        "VERSION",
+        "LICENSE",
+        "lean/CREDITS.md",
+        "lean/CREDITS-FILES.tsv",
+        "lean/lean-toolchain",
+    ):
+        if required not in fp_paths:
+            raise AtlasError(f"FlashProve tree is missing {required}")
+    credits_ark = _named_count(files["fp:lean/CREDITS.md"], "ThirdParty/ArkLib/")
+    credits_backport = _named_count(files["fp:lean/CREDITS.md"], "ThirdParty/MathlibBackport/")
+    if fp_counts["arklib_lean_files"] != credits_ark:
+        raise AtlasError(
+            f"FlashProve ArkLib tree count {fp_counts['arklib_lean_files']} disagrees with CREDITS.md {credits_ark}"
+        )
+    if fp_counts["mathlib_backport_lean_files"] != credits_backport:
+        raise AtlasError(
+            "FlashProve MathlibBackport tree count "
+            f"{fp_counts['mathlib_backport_lean_files']} disagrees with CREDITS.md {credits_backport}"
+        )
+    credits_listed = _credits_listed(files["fp:lean/CREDITS-FILES.tsv"])
+    fp_license = _license_record(FLASHPROVE_WEB, fp_commit, "LICENSE", files["fp:LICENSE"])
+    fp_scope = (
+        f"Lean files at this commit: {fp_counts['lean_files']}. "
+        f"First-party, not under lean/ThirdParty/: {fp_counts['first_party_lean_files']}. "
+        f"Vendored under lean/ThirdParty/: {fp_counts['vendored_lean_files']}, "
+        f"of which {fp_counts['arklib_lean_files']} are under lean/ThirdParty/ArkLib/ "
+        f"and {fp_counts['mathlib_backport_lean_files']} are under lean/ThirdParty/MathlibBackport/. "
+        "lean/CREDITS.md names those two directory counts. "
+        f"lean/CREDITS-FILES.tsv lists {credits_listed} Lean files that name third-party material, "
+        "a wider set than lean/ThirdParty/. "
+        f"VERSION says {fp_version}. The commit subject says {fp_subject}. "
+        f"Toolchain {fp_toolchain}. "
+        + CHECK_WORDING
+    )
 
     releases = [
         {
@@ -896,10 +1050,68 @@ def assemble(
                 }
             ],
         },
+        {
+            "id": "flashprove",
+            "kind": "protocol-soundness",
+            "kind_label": "Protocol soundness",
+            "title": "FlashProve",
+            "statement": flashprove_statement(fp_version),
+            "repo": FLASHPROVE_WEB,
+            "commit": fp_commit,
+            "commit_date": fp_date,
+            "commit_subject": fp_subject,
+            "path": "lean",
+            "tree_url": tree_url(FLASHPROVE_WEB, fp_commit, "lean"),
+            "license": "Apache-2.0",
+            "license_files": [fp_license],
+            "lean_toolchain": fp_toolchain,
+            "paper": None,
+            "announcement": None,
+            "announcement_date": None,
+            "tag": None,
+            "counts": {
+                **fp_counts,
+                "credits_listed_files": credits_listed,
+                "headline_theorems": len(fp_headlines),
+            },
+            "headline_theorems": fp_headlines,
+            "xi_prime_theorems": [],
+            "statement_files": [
+                {
+                    "path": statement_path,
+                    "url": blob_url(FLASHPROVE_WEB, fp_commit, statement_path),
+                    "role": "soundness statements",
+                },
+                {
+                    "path": "lean/THEOREM.md",
+                    "url": blob_url(FLASHPROVE_WEB, fp_commit, "lean/THEOREM.md"),
+                    "role": "theorem names",
+                },
+                {
+                    "path": "lean/README.md",
+                    "url": blob_url(FLASHPROVE_WEB, fp_commit, "lean/README.md"),
+                    "role": "lean readme",
+                },
+                {
+                    "path": "README.md",
+                    "url": blob_url(FLASHPROVE_WEB, fp_commit, "README.md"),
+                    "role": "repository readme",
+                },
+            ],
+            "scope_notes": [fp_scope],
+            "gaps": [
+                {
+                    "id": "flashprove-not-research-math",
+                    "status": "NOTED",
+                    "label": flashprove_gap_label(fp_version),
+                }
+            ],
+        },
     ]
     lean_files = sum(release["counts"]["lean_files"] for release in releases)
     new_results = sum(1 for release in releases if release["kind"] == "new-result")
     formalizations = sum(1 for release in releases if release["kind"] == "formalization")
+    protocol_soundness = sum(1 for release in releases if release["kind"] == "protocol-soundness")
     source = {
         "id": ANTHROPIC_SOURCE_ID,
         "name": "Anthropic",
@@ -914,7 +1126,12 @@ def assemble(
                 "label": "Fermat's Last Theorem",
                 "repo": FLT_WEB,
                 "commit": flt_commit,
-            }
+            },
+            {
+                "label": "FlashProve",
+                "repo": FLASHPROVE_WEB,
+                "commit": fp_commit,
+            },
         ],
     }
     payload: dict[str, Any] = {
@@ -927,6 +1144,7 @@ def assemble(
             "releases": len(releases),
             "new_results": new_results,
             "formalizations": formalizations,
+            "protocol_soundness": protocol_soundness,
             "lean_files": lean_files,
         },
         "identifiers": identifiers,
@@ -959,6 +1177,33 @@ def _release_counts_follow_rows(release: dict[str, Any]) -> None:
     xi_prime = release.get("xi_prime_theorems") or []
     if "xi_prime_statements" in counts and counts["xi_prime_statements"] != len(xi_prime):
         raise AtlasError(f"{release_id} xi-prime count does not match the named statements")
+    if release_id == "flashprove":
+        needed = (
+            "first_party_lean_files",
+            "vendored_lean_files",
+            "arklib_lean_files",
+            "mathlib_backport_lean_files",
+            "other_vendored_lean_files",
+            "credits_listed_files",
+        )
+        if any(key not in counts for key in needed):
+            raise AtlasError(f"pinned FlashProve counts are {counts}")
+        for key in needed:
+            value = counts[key]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise AtlasError(f"pinned FlashProve counts are {counts}")
+        if counts["first_party_lean_files"] + counts["vendored_lean_files"] != lean:
+            raise AtlasError(f"pinned FlashProve counts are {counts}")
+        vendored_parts = (
+            counts["arklib_lean_files"]
+            + counts["mathlib_backport_lean_files"]
+            + counts["other_vendored_lean_files"]
+        )
+        if vendored_parts != counts["vendored_lean_files"]:
+            raise AtlasError(f"pinned FlashProve counts are {counts}")
+        if counts["credits_listed_files"] < counts["vendored_lean_files"]:
+            raise AtlasError(f"pinned FlashProve credits list is smaller than the vendored tree: {counts}")
+        return
     if release_id != "fermat-last-theorem":
         return
     others = counts.get("other_lean_files")
@@ -983,13 +1228,19 @@ def assert_anthropic(
     source = payload.get("source")
     also = source.get("also") if isinstance(source, dict) else None
     flt_source = also[0] if isinstance(also, list) and also and isinstance(also[0], dict) else None
+    fp_source = also[1] if isinstance(also, list) and len(also) > 1 and isinstance(also[1], dict) else None
     if (
         not isinstance(source, dict)
         or not isinstance(source.get("commit"), str)
         or not source["commit"]
         or not isinstance(flt_source, dict)
+        or flt_source.get("label") != "Fermat's Last Theorem"
         or not isinstance(flt_source.get("commit"), str)
         or not flt_source["commit"]
+        or not isinstance(fp_source, dict)
+        or fp_source.get("label") != "FlashProve"
+        or not isinstance(fp_source.get("commit"), str)
+        or not fp_source["commit"]
     ):
         raise AtlasError("anthropic source is missing")
     releases = payload.get("releases")
@@ -1001,11 +1252,15 @@ def assert_anthropic(
     if ids != list(RELEASE_IDS):
         raise AtlasError(f"Anthropic releases are {ids}")
     kinds = [release["kind"] for release in releases]
-    if kinds != ["new-result", "new-result", "new-result", "formalization"]:
+    if kinds != ["new-result", "new-result", "new-result", "formalization", "protocol-soundness"]:
         raise AtlasError(f"Anthropic kinds are {kinds}")
-    if payload["counts"]["releases"] != 4:
+    if payload["counts"]["releases"] != 5:
         raise AtlasError("Anthropic release count drifted")
-    if payload["counts"]["new_results"] != 3 or payload["counts"]["formalizations"] != 1:
+    if (
+        payload["counts"]["new_results"] != 3
+        or payload["counts"]["formalizations"] != 1
+        or payload["counts"]["protocol_soundness"] != 1
+    ):
         raise AtlasError("Anthropic kind counts drifted")
     lean_files = sum(release["counts"]["lean_files"] for release in releases)
     if payload["counts"]["lean_files"] != lean_files:
@@ -1029,12 +1284,23 @@ def assert_anthropic(
             raise AtlasError("formalization badge label drifted")
         if release["kind"] == "new-result" and release["kind_label"] != "New result":
             raise AtlasError("new-result badge label drifted")
+        if release["kind"] == "protocol-soundness" and release["kind_label"] != "Protocol soundness":
+            raise AtlasError("protocol-soundness badge label drifted")
         for gap in release["gaps"]:
             if not gap.get("id") or not gap.get("status") or not gap.get("label"):
                 raise AtlasError(f"{release['id']} gap is incomplete")
         _release_counts_follow_rows(release)
     by_id = {release["id"]: release for release in releases}
     _reject_eth_claim_words(by_id["eth"])
+    _reject_eth_claim_words(by_id["flashprove"])
+    if by_id["flashprove"]["kind"] != "protocol-soundness":
+        raise AtlasError("FlashProve release is not marked as protocol soundness")
+    if by_id["flashprove"]["paper"] is not None:
+        raise AtlasError("FlashProve paper link is not recorded")
+    if "not a research-mathematics result" not in by_id["flashprove"]["statement"].lower():
+        raise AtlasError("FlashProve statement dropped the research-mathematics wording")
+    if by_id["flashprove"]["statement_files"][0]["path"] != "lean/VerifiableInference/Statements.lean":
+        raise AtlasError("FlashProve source chip is not the soundness statements file")
     if by_id["eth"]["kind"] != "new-result":
         raise AtlasError("eth release is not marked as a new result")
     if by_id["eth"]["statement"] != ETH_STATEMENT or by_id["eth"]["gaps"][0]["label"] != ETH_GAP_LABEL:
@@ -1048,9 +1314,14 @@ def assert_anthropic(
         raise AtlasError("Fermat release is not marked as a formalization")
     fm_commit = source["commit"]
     flt_commit = flt_source["commit"]
+    fp_commit = fp_source["commit"]
     loaded = pins if pins is not None else load_upstream_pins()
     anthropic_pin = loaded["anthropic"]
-    if fm_commit != anthropic_pin["commit"] or flt_commit != anthropic_pin["flt_commit"]:
+    if (
+        fm_commit != anthropic_pin["commit"]
+        or flt_commit != anthropic_pin["flt_commit"]
+        or fp_commit != anthropic_pin["flashprove_commit"]
+    ):
         if enforce_pin:
             raise AtlasError("anthropic checks did not run for the pins in upstream.json")
         return
@@ -1203,13 +1474,20 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = None) -> dict[str, Any]:
+def build_anthropic(
+    fm_repo: Path,
+    flt_repo: Path,
+    fp_repo: Path,
+    tag: dict[str, str] | None = None,
+) -> dict[str, Any]:
     fm_commit = git(fm_repo, "rev-parse", "HEAD").strip()
     flt_commit = git(flt_repo, "rev-parse", "HEAD").strip()
+    fp_commit = git(fp_repo, "rev-parse", "HEAD").strip()
     if tag is None:
         tag = resolve_tag(FORMAL_MATH_URL, str(load_upstream_pins()["anthropic"]["zeta_tag"]))
     fm_date, fm_subject = _commit_meta(fm_repo)
     flt_date, flt_subject = _commit_meta(flt_repo)
+    fp_date, fp_subject = _commit_meta(fp_repo)
     files = {
         "fm:LICENSE": _read(fm_repo / "LICENSE"),
         "fm:zeta23/LICENSE": _read(fm_repo / "zeta23" / "LICENSE"),
@@ -1234,10 +1512,19 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
         "flt:README.md": _read(flt_repo / "README.md"),
         "flt:lean-toolchain": _read(flt_repo / "lean-toolchain"),
         "flt:formalization.yaml": _read(flt_repo / "formalization.yaml"),
+        "fp:README.md": _read(fp_repo / "README.md"),
+        "fp:VERSION": _read(fp_repo / "VERSION"),
+        "fp:LICENSE": _read(fp_repo / "LICENSE"),
+        "fp:lean/THEOREM.md": _read(fp_repo / "lean" / "THEOREM.md"),
+        "fp:lean/lean-toolchain": _read(fp_repo / "lean" / "lean-toolchain"),
+        "fp:lean/CREDITS.md": _read(fp_repo / "lean" / "CREDITS.md"),
+        "fp:lean/CREDITS-FILES.tsv": _read(fp_repo / "lean" / "CREDITS-FILES.tsv"),
+        "fp:lean/README.md": _read(fp_repo / "lean" / "README.md"),
     }
     fm_paths = list_paths(fm_repo)
     flt_paths = list_paths(flt_repo)
-    for prefix, expected in (("zeta23/", None), ("3sum-apsp/", None), ("eth/", None)):
+    fp_paths = list_paths(fp_repo)
+    for prefix in ("zeta23/", "3sum-apsp/", "eth/"):
         listed = [path for path in fm_paths if path.startswith(prefix) and path.endswith(".lean")]
         on_disk = sorted(
             path.relative_to(fm_repo).as_posix()
@@ -1246,30 +1533,35 @@ def build_anthropic(fm_repo: Path, flt_repo: Path, tag: dict[str, str] | None = 
         )
         if on_disk != listed:
             raise AtlasError(f"{prefix} checkout does not match the commit tree")
-        del expected
     return assemble(
         fm_paths,
         flt_paths,
+        fp_paths,
         files,
         fm_commit,
         flt_commit,
+        fp_commit,
         tag,
         fm_date,
         fm_subject,
         flt_date,
         flt_subject,
+        fp_date,
+        fp_subject,
     )
 
 
-def fetch_anthropic(fm_commit: str, flt_commit: str) -> dict[str, Any]:
+def fetch_anthropic(fm_commit: str, flt_commit: str, fp_commit: str) -> dict[str, Any]:
     tag = resolve_tag(FORMAL_MATH_URL, str(load_upstream_pins()["anthropic"]["zeta_tag"]))
     with tempfile.TemporaryDirectory(prefix="atlas-anthropic-") as tmp:
         root = Path(tmp)
         fm_repo = root / "formal-math"
         flt_repo = root / "flt"
+        fp_repo = root / "flashprove"
         materialize_upstream(FORMAL_MATH_URL, fm_commit, fm_repo, FORMAL_MATH_SPARSE_PATHS)
         materialize_upstream(FLT_URL, flt_commit, flt_repo, FLT_SPARSE_PATHS)
-        return build_anthropic(fm_repo, flt_repo, tag)
+        materialize_upstream(FLASHPROVE_URL, fp_commit, fp_repo, FLASHPROVE_SPARSE_PATHS)
+        return build_anthropic(fm_repo, flt_repo, fp_repo, tag)
 
 
 def verify_recorded_anthropic() -> None:
@@ -1279,14 +1571,20 @@ def verify_recorded_anthropic() -> None:
     and the snapshot digest field are ignored. A fetch or network failure is an AtlasError.
     """
     recorded = read_json(ANTHROPIC_JSON)
-    fm_commit = str(recorded.get("source", {}).get("commit", ""))
-    also = recorded.get("source", {}).get("also") or []
+    source = recorded.get("source", {})
+    fm_commit = str(source.get("commit", ""))
+    also = source.get("also") or []
     flt_commit = str(also[0].get("commit", "")) if also else ""
-    if not re.fullmatch(r"[0-9a-f]{40}", fm_commit) or not re.fullmatch(r"[0-9a-f]{40}", flt_commit):
+    fp_commit = str(also[1].get("commit", "")) if len(also) > 1 else ""
+    if (
+        not re.fullmatch(r"[0-9a-f]{40}", fm_commit)
+        or not re.fullmatch(r"[0-9a-f]{40}", flt_commit)
+        or not re.fullmatch(r"[0-9a-f]{40}", fp_commit)
+    ):
         raise AtlasError("anthropic.json has no commit sha")
-    rebuilt = fetch_anthropic(fm_commit, flt_commit)
+    rebuilt = fetch_anthropic(fm_commit, flt_commit, fp_commit)
     if snapshot_body(recorded) != snapshot_body(rebuilt):
-        raise AtlasError(f"anthropic.json differs from commits {fm_commit} and {flt_commit}")
+        raise AtlasError(f"anthropic.json differs from commits {fm_commit}, {flt_commit}, and {fp_commit}")
 
 
 def main() -> int:
@@ -1294,8 +1592,9 @@ def main() -> int:
     pins = load_upstream_pins()
     parser.add_argument("--formal-math-sha", default=pins["anthropic"]["commit"])
     parser.add_argument("--flt-sha", default=pins["anthropic"]["flt_commit"])
+    parser.add_argument("--flashprove-sha", default=pins["anthropic"]["flashprove_commit"])
     args = parser.parse_args()
-    payload = fetch_anthropic(args.formal_math_sha, args.flt_sha)
+    payload = fetch_anthropic(args.formal_math_sha, args.flt_sha, args.flashprove_sha)
     write_json(ANTHROPIC_JSON, payload)
     counts = payload["counts"]
     print(f"wrote {ANTHROPIC_JSON}")
@@ -1305,9 +1604,11 @@ def main() -> int:
         f"releases={counts['releases']} "
         f"lean={counts['lean_files']} "
         f"new={counts['new_results']} "
-        f"formalizations={counts['formalizations']}"
+        f"formalizations={counts['formalizations']} "
+        f"protocol={counts['protocol_soundness']}"
     )
     return 0
+
 
 
 if __name__ == "__main__":

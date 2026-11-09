@@ -36,6 +36,7 @@ from alphaproof import (
     catalogue_extras,
     verify_recorded_alphaproof,
 )
+from alphaevolve import ALPHAEVOLVE_JSON, assert_alphaevolve, verify_recorded_alphaevolve
 from anthropic import (
     ANTHROPIC_JSON,
     assert_anthropic,
@@ -103,6 +104,7 @@ def report_check_counts(
     upstream: dict,
     alphaproof_payload: dict,
     anthropic_payload: dict,
+    alphaevolve_payload: dict,
     families: dict,
     curated: dict,
 ) -> list[str]:
@@ -111,6 +113,7 @@ def report_check_counts(
     family_n = len(upstream.get("families") or [])
     record_n = len(alphaproof_payload.get("records") or [])
     release_n = len(anthropic_payload.get("releases") or [])
+    evolve_n = len(alphaevolve_payload.get("records") or [])
     cross = families.get("cross") or {}
     openai_n = len(cross.get("openai_numbers") or [])
     apn_n = len(cross.get("alphaproof_numbers") or [])
@@ -128,6 +131,7 @@ def report_check_counts(
     print(f"checked openai-math: {family_n}")
     print(f"checked alphaproof-nexus: {record_n}")
     print(f"checked anthropic: {release_n}")
+    print(f"checked alphaevolve: {evolve_n}")
     print(
         f"checked cross-source: {openai_n} openai numbers, {apn_n} alphaproof numbers, {an_n} anthropic ids"
     )
@@ -138,6 +142,8 @@ def report_check_counts(
         failures.append("alphaproof-nexus check saw no records")
     if release_n <= 0:
         failures.append("anthropic check saw no releases")
+    if evolve_n <= 0:
+        failures.append("alphaevolve check saw no records")
     if openai_n <= 0 or apn_n <= 0:
         failures.append("cross-source check saw no rows")
     if examined <= 0:
@@ -165,7 +171,8 @@ def check_source() -> list[str]:
         families = read_json(FAMILIES_JSON)
         alphaproof_payload = read_json(ALPHAPROOF_JSON)
         anthropic_payload = read_json(ANTHROPIC_JSON)
-        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
+        alphaevolve_payload = read_json(ALPHAEVOLVE_JSON)
+        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload, alphaevolve_payload)
         pins = load_upstream_pins()
         assert_counts(upstream, pins)
         assert_upstream_digest(upstream, pins)
@@ -179,6 +186,12 @@ def check_source() -> list[str]:
         flt_commit = str((anthropic_source.get("also") or [{}])[0].get("commit", ""))
         if anthropic_source.get("commit") != anthropic_pin["commit"] or flt_commit != anthropic_pin["flt_commit"]:
             raise AtlasError("anthropic checks did not run for the pins in upstream.json")
+        fp_commit = str((anthropic_source.get("also") or [{}, {}])[1].get("commit", ""))
+        if fp_commit != anthropic_pin["flashprove_commit"]:
+            raise AtlasError("anthropic checks did not run for the FlashProve pin in upstream.json")
+        assert_alphaevolve(alphaevolve_payload, pins)
+        if alphaevolve_payload["source"]["commit"] != pins["alphaevolve"]["commit"]:
+            raise AtlasError("alphaevolve checks did not run for the pin in upstream.json")
         assert_cross_source(
             upstream["upstream"]["commit"],
             alphaproof_payload["source"]["commit"],
@@ -191,7 +204,14 @@ def check_source() -> list[str]:
             raise AtlasError("sources.json does not match the source registry")
         assert_merged_catalogue(upstream, families, curated, cautions, extras)
         failures.extend(
-            report_check_counts(upstream, alphaproof_payload, anthropic_payload, families, curated)
+            report_check_counts(
+                upstream,
+                alphaproof_payload,
+                anthropic_payload,
+                alphaevolve_payload,
+                families,
+                curated,
+            )
         )
     except AtlasError as exc:
         failures.append(str(exc))
@@ -2769,7 +2789,7 @@ def preview_self_test() -> list[str]:
         failures.append(f"catalogue alt omits the formalization note: {catalogue_alt}")
     if "AI math claims:" not in catalogue_alt:
         failures.append(f"catalogue alt does not describe the share card: {catalogue_alt}")
-    for source_name in ("OpenAI Math", "AlphaProof Nexus", "Anthropic"):
+    for source_name in ("OpenAI Math", "AlphaProof Nexus", "AlphaEvolve", "Anthropic"):
         if source_name not in catalogue_alt:
             failures.append(f"catalogue alt omits {source_name}: {catalogue_alt}")
     if not catalogue_alt.endswith("Unofficial, not affiliated with OpenAI, Google DeepMind, or Anthropic."):
@@ -2814,7 +2834,16 @@ def preview_self_test() -> list[str]:
         if release["counts"]["lean_files"] > 0
         and any(gap["status"] == "NOT FORMALIZED" for gap in release["gaps"])
     )
-    if partial:
+    protocols = sum(1 for release in releases if release["kind"] == "protocol-soundness")
+    if protocols and partial:
+        release_caption = (
+            f"{full} in Lean  ·  {partial} partly in Lean  ·  "
+            f"{formalizations} formalization, {protocols} protocol"
+        )
+        release_short = (
+            f"{full} in Lean  ·  {partial} partly in Lean  ·  {protocols} protocol"
+        )
+    elif partial:
         release_caption = (
             f"{full} in Lean  ·  {partial} partly in Lean  ·  {new_results} new, "
             f"{formalizations} formalization ({formal_letters})"
@@ -2859,6 +2888,9 @@ def preview_self_test() -> list[str]:
     matched_rows = [row for row in share_doc["rows"] if row["caption"] == release_caption]
     if len(matched_rows) != 1 or matched_rows[0]["shortCaption"] != release_short:
         failures.append(f"narrow share caption dropped the formalization: {share_doc['rows']}")
+    notebook_rows = [row for row in share_doc["rows"] if row["name"] == "AlphaEvolve"]
+    if len(notebook_rows) != 1 or "checked by notebook" not in notebook_rows[0]["caption"]:
+        failures.append(f"AlphaEvolve share caption dropped the notebook label: {share_doc['rows']}")
     legend_labels = [item["label"] for item in share_doc["legend"]]
     expected_legend = [style.label for style in og_card.legend_for(og_card.share_rows(catalog))]
     if legend_labels != expected_legend:
@@ -2934,6 +2966,10 @@ def preview_self_test() -> list[str]:
             failures.append(f"claim word was allowed: {phrase!r}")
     if atlaslib.claim_word_hits("The commit was approved.") or atlaslib.claim_word_hits("AlphaProof Nexus"):
         failures.append("a whole-word ban matched inside another word")
+    if atlaslib.claim_word_hits("FlashProve"):
+        failures.append("the name FlashProve was treated as a claim word")
+    if not atlaslib.claim_word_hits("FlashProve proof"):
+        failures.append("a claim word beside FlashProve was allowed")
     social_source = (ROOT / "src" / "lib" / "social.ts").read_text(encoding="utf-8")
     if r"\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b" not in social_source:
         failures.append("social alt text dropped the claim-word ban")
@@ -3608,6 +3644,7 @@ def pin_derivation_self_test() -> str | None:
             {"families": []},
             {"records": []},
             {"releases": []},
+            {"records": []},
             {"cross": {"openai_numbers": [], "alphaproof_numbers": [], "anthropic_identifiers": {}}},
             {},
         )
@@ -3622,6 +3659,7 @@ def pin_derivation_self_test() -> str | None:
             {"families": [{"id": "001"}]},
             {"records": [{"id": "1"}]},
             {"releases": [{"id": "zeta23"}]},
+            {"records": [{"id": "omega"}]},
             {
                 "cross": {
                     "openai_numbers": [{"number": 970}],
@@ -3711,6 +3749,7 @@ def main() -> int:
             verify_recorded_upstream()
             verify_recorded_alphaproof()
             verify_recorded_anthropic()
+            verify_recorded_alphaevolve()
         except AtlasError as exc:
             failures.append(str(exc))
         except subprocess.CalledProcessError as exc:

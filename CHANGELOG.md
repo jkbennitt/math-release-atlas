@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Anthropic FlashProve is the fifth Anthropic release, pinned at `9e2bdd8ff5bf9c62f18263d7dac189b0400b260c` (2026-10-30). Jason approved the pin on 2026-11-09. The commit subject is "Initial public release (FlashProve 0.16.0-rc.26)". VERSION says 0.16.0. The license is Apache-2.0. The repository says that version is not maintained. The row is formalized cryptographic-protocol soundness in Lean 4 for a research prototype of a zero-knowledge argument of AI inference (Llama 4 Maverick on one H100). It is not a research-mathematics result. At this commit the tree has 29566 Lean files: 29425 first-party, and 141 under `lean/ThirdParty/` (126 ArkLib, 13 MathlibBackport, 2 other). `lean/CREDITS-FILES.tsv` lists 401 Lean files, a wider set than `lean/ThirdParty/`. The badge says Protocol soundness. The existing OpenAI, AlphaProof, formal-math, and Fermat pins are unchanged.
+- Google DeepMind AlphaEvolve is a new source next to AlphaProof Nexus, pinned at `aafb1e2684f1404c676ad213e4c55ebfceab4908` (2026-11-04). Jason approved the pin on 2026-11-09. The tree has no Lean files. The atlas lists 18 constructions checked by notebook: 15 maths problems (circle packing, Erdös minimum overlap, three autocorrelation inequalities, two Heilbronn problems, hexagon packing, kissing numbers, max to min ratio, sums and differences, uncertainty principles, extremal girth 5, Shannon capacity of cycle graphs, and cap sets), one claimed bound on the matrix multiplication exponent, and two matrix-multiplication tensor decompositions, across 19 notebooks. The README paper link is still TODO. The repository says this is not an official Google product. Code is Apache-2.0. Other materials are CC-BY 4.0. The badge says Checked by notebook. The share card uses a separate notebook segment. The caption says "checked by notebook".
+- The daily sync tracks the FlashProve commit and the AlphaEvolve commit.
+- `scripts/install_chrome157.sh` checks zip member paths before extracting.
+
 ## 0.4.9
 
 - Where the browser can draw HTML inside a canvas, the citation map labels are those HTML links. They stay in the page HTML, and each label still opens its family page. The earlier map is removed from the tab order there.

@@ -11,7 +11,7 @@
 
 ## How to get to it (user POV)
 
-There is no page for the pins. The home page links the OpenAI commit. The source pages show the pinned commits for OpenAI Math, AlphaProof Nexus, and Anthropic. The check is a terminal command, which is what CI runs in Guard and again inside `npm run build`.
+There is no page for the pins. The home page links the OpenAI commit. The source pages show the pinned commits for OpenAI Math, AlphaProof Nexus, AlphaEvolve, and the Anthropic releases, including FlashProve. The check is a terminal command, which is what CI runs in Guard and again inside `npm run build`. `--verify-upstream` sparse-fetches those commits, including the AlphaEvolve commit and the FlashProve commit.
 
 ## Driving it with check.py
 

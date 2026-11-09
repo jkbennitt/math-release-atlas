@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from anthropic import anthropic_join, anthropic_preview
+from alphaevolve import alphaevolve_preview
 from atlaslib import (
     ROOT,
     UPSTREAM_WEB,
@@ -292,6 +293,11 @@ def derived_source_previews(catalog: dict[str, Any]) -> dict[str, dict[str, Any]
         source_id = str(anthropic.get("source", {}).get("id", ""))
         if source_id in by_id:
             derived[source_id] = anthropic_preview(anthropic)
+    alphaevolve = catalog.get("alphaevolve")
+    if isinstance(alphaevolve, dict):
+        source_id = str(alphaevolve.get("source", {}).get("id", ""))
+        if source_id in by_id:
+            derived[source_id] = alphaevolve_preview(alphaevolve)
     return derived
 
 
@@ -300,6 +306,7 @@ def attach_previews(
     upstream: dict[str, Any],
     alphaproof: dict[str, Any],
     anthropic: dict[str, Any] | None,
+    alphaevolve: dict[str, Any] | None = None,
 ) -> None:
     """Write one preview onto every registered source. Known sources are derived; others must carry one."""
     catalog = {
@@ -309,6 +316,8 @@ def attach_previews(
     }
     if anthropic is not None:
         catalog["anthropic"] = anthropic
+    if alphaevolve is not None:
+        catalog["alphaevolve"] = alphaevolve
     derived = derived_source_previews(catalog)
     for source in registry["sources"]:
         expected = derived.get(source["id"])
@@ -324,10 +333,15 @@ def catalogue_extras(
     upstream: dict[str, Any],
     alphaproof: dict[str, Any],
     anthropic: dict[str, Any] | None = None,
+    alphaevolve: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    extra = [dict(anthropic["source"])] if anthropic is not None else None
-    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"], extra)
-    attach_previews(registry, upstream, alphaproof, anthropic)
+    extra: list[dict[str, Any]] = []
+    if alphaevolve is not None:
+        extra.append(dict(alphaevolve["source"]))
+    if anthropic is not None:
+        extra.append(dict(anthropic["source"]))
+    registry = source_registry(upstream["upstream"]["commit"], alphaproof["source"]["commit"], extra or None)
+    attach_previews(registry, upstream, alphaproof, anthropic, alphaevolve)
     records = alphaproof["records"]
     joined = cross_source(upstream["families"], records)
     if anthropic is not None:
@@ -347,6 +361,8 @@ def catalogue_extras(
     }
     if anthropic is not None:
         payload["anthropic"] = anthropic
+    if alphaevolve is not None:
+        payload["alphaevolve"] = alphaevolve
     return payload
 
 

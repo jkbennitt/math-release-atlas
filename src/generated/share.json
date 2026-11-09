@@ -1,7 +1,7 @@
 {
   "headline": "AI math claims: on paper, or in Lean?",
   "shareHeading": "Share of each catalogue with Lean files",
-  "sentence": "373 OpenAI result families, 71 Google DeepMind AlphaProof Nexus Lean files and 4 Anthropic releases, each linked to its paper or Lean files at a pinned commit.",
+  "sentence": "373 OpenAI result families, 71 Google DeepMind AlphaProof Nexus Lean files, 18 Google DeepMind AlphaEvolve notebook constructions and 5 Anthropic releases, each at a pinned commit.",
   "legend": [
     {
       "role": "lean",
@@ -18,6 +18,10 @@
     {
       "role": "paper",
       "label": "paper only"
+    },
+    {
+      "role": "notebook",
+      "label": "checked by notebook"
     }
   ],
   "rows": [
@@ -60,14 +64,27 @@
       ]
     },
     {
-      "name": "Anthropic",
-      "unit": "4 releases",
-      "percent": "100%",
-      "caption": "3 in Lean  \u00b7  1 partly in Lean  \u00b7  3 new, 1 formalization (FLT)",
-      "shortCaption": "3 in Lean  \u00b7  1 partly in Lean  \u00b7  1 formalization (FLT)",
+      "name": "AlphaEvolve",
+      "unit": "18 constructions",
+      "percent": "0%",
+      "caption": "0 in Lean  \u00b7  18 checked by notebook",
+      "shortCaption": "0 in Lean  \u00b7  19 notebooks",
       "segments": [
         {
-          "count": 3,
+          "count": 18,
+          "role": "notebook"
+        }
+      ]
+    },
+    {
+      "name": "Anthropic",
+      "unit": "5 releases",
+      "percent": "100%",
+      "caption": "4 in Lean  \u00b7  1 partly in Lean  \u00b7  1 formalization, 1 protocol",
+      "shortCaption": "4 in Lean  \u00b7  1 partly in Lean  \u00b7  1 protocol",
+      "segments": [
+        {
+          "count": 4,
           "role": "lean"
         },
         {

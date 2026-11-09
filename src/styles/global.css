@@ -174,6 +174,7 @@ h1 {
 .seg-challenge { background: #2c6f6f; }
 .seg-partial { background-color: #b37a4c; background-image: repeating-linear-gradient(45deg, #b37a4c 0 3px, #1d1a16 3px 4px); }
 .seg-paper { background: #93866e; }
+.seg-notebook { background: #0c245c; }
 .share-pct {
   flex: 0 0 auto;
   min-width: 3.2rem;
@@ -453,9 +454,12 @@ a.chip:hover { border-color: var(--accent); }
 .badge.none, .badge.missing, .badge.not-in-comparator { background: var(--none); }
 .badge.new-result { background: var(--match); }
 .badge.formalization { background: #5c3d6e; }
+.badge.protocol-soundness { background: #1f4d7a; }
+.badge.notebook { background: #0c245c; }
 .badge.source-openai { background: var(--formal); }
 .badge.source-alphaproof { background: var(--deposited); }
 .badge.source-anthropic { background: var(--comparator); }
+.badge.source-alphaevolve { background: #0c245c; }
 .badge.not-formalized { background: var(--more-than-paper); }
 .badge.noted { background: var(--comparator); }
 .source-grid {

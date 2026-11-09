@@ -38,6 +38,8 @@ from alphaproof import (
 )
 from anthropic import (
     ANTHROPIC_JSON,
+    FLASHPROVE_SPARSE_PATHS,
+    FLASHPROVE_URL,
     FLT_SPARSE_PATHS,
     FLT_URL,
     FORMAL_MATH_SPARSE_PATHS,
@@ -45,6 +47,13 @@ from anthropic import (
     build_anthropic,
     count_golden_disagreements as anthropic_golden_disagreements,
     snapshot_digest as anthropic_snapshot_digest,
+)
+from alphaevolve import (
+    ALPHAEVOLVE_JSON,
+    ALPHAEVOLVE_SPARSE_PATHS,
+    ALPHAEVOLVE_URL,
+    build_alphaevolve,
+    snapshot_digest as alphaevolve_snapshot_digest,
 )
 from atlaslib import (
     CAUTIONS_JSON,
@@ -112,6 +121,22 @@ def current_alphaproof_commit() -> str | None:
         return None
     commit = read_json(ALPHAPROOF_JSON).get("source", {}).get("commit")
     return commit if isinstance(commit, str) else None
+
+
+def current_flashprove_commit() -> str:
+    if not ANTHROPIC_JSON.is_file():
+        return ""
+    also = read_json(ANTHROPIC_JSON).get("source", {}).get("also") or []
+    if len(also) > 1 and isinstance(also[1], dict) and isinstance(also[1].get("commit"), str):
+        return also[1]["commit"]
+    return ""
+
+
+def current_alphaevolve_commit() -> str:
+    if not ALPHAEVOLVE_JSON.is_file():
+        return ""
+    commit = read_json(ALPHAEVOLVE_JSON).get("source", {}).get("commit")
+    return commit if isinstance(commit, str) else ""
 
 
 def current_anthropic_commits() -> tuple[str, str]:
@@ -198,6 +223,10 @@ def write_outputs(
     fm_new: str,
     flt_old: str,
     flt_new: str,
+    fp_old: str,
+    fp_new: str,
+    ae_old: str,
+    ae_new: str,
 ) -> None:
     SUMMARY_PATH.write_text(body + "\n", encoding="utf-8")
     set_output("status", status)
@@ -209,6 +238,10 @@ def write_outputs(
     set_output("fm_new", fm_new)
     set_output("flt_old", flt_old)
     set_output("flt_new", flt_new)
+    set_output("fp_old", fp_old)
+    set_output("fp_new", fp_new)
+    set_output("ae_old", ae_old)
+    set_output("ae_new", ae_new)
     print(body)
     print(f"status={status}")
 
@@ -217,6 +250,7 @@ def stamp_catalogue_pins(
     upstream: dict[str, Any],
     alphaproof_payload: dict[str, Any],
     anthropic_payload: dict[str, Any],
+    alphaevolve_payload: dict[str, Any],
     previous: dict[str, Any] | None = None,
     overview_line_count: int | None = None,
 ) -> dict[str, Any]:
@@ -239,6 +273,9 @@ def stamp_catalogue_pins(
     if not isinstance(tag, dict) or not tag.get("name") or not tag.get("commit"):
         raise AtlasError("anthropic zeta tag pin cannot be read from the snapshot")
     stamped = copy.deepcopy(upstream)
+    also = anthropic_payload["source"]["also"]
+    if also[0].get("label") != "Fermat's Last Theorem" or also[1].get("label") != "FlashProve":
+        raise AtlasError("anthropic also list is not Fermat then FlashProve")
     stamped["pins"] = {
         "openai-math": {
             "commit": upstream["upstream"]["commit"],
@@ -253,9 +290,14 @@ def stamp_catalogue_pins(
             "commit": alphaproof_payload["source"]["commit"],
             "digest": alphaproof_snapshot_digest(alphaproof_payload),
         },
+        "alphaevolve": {
+            "commit": alphaevolve_payload["source"]["commit"],
+            "digest": alphaevolve_snapshot_digest(alphaevolve_payload),
+        },
         "anthropic": {
             "commit": anthropic_payload["source"]["commit"],
-            "flt_commit": anthropic_payload["source"]["also"][0]["commit"],
+            "flt_commit": also[0]["commit"],
+            "flashprove_commit": also[1]["commit"],
             "zeta_tag": tag["name"],
             "zeta_tag_commit": tag["commit"],
             "digest": anthropic_snapshot_digest(anthropic_payload),
@@ -284,14 +326,16 @@ def count_golden_section(
             "File totals other than the tripwires below are derived from the pinned snapshot: "
             "AlphaProof category rows other than the OEIS shortfall, subcategory rows, and the "
             "attempted-list newline count; Anthropic headline and xi-prime name lists; Fermat's "
-            "classed files plus its other Lean files. Those totals move with the snapshot and do "
+            "classed files plus its other Lean files; FlashProve first-party and vendored Lean files; "
+            "AlphaEvolve notebook rows. Those totals move with the snapshot and do "
             "not need a code edit. The snapshot digest still pins the exact bytes.",
             "",
             "Tripwires that stay in code, and why a move needs an edit:",
             "- PINNED_OEIS_FILE_COUNT: the OEIS tree is still short of the paper count, and the gap stays unexplained.",
             "- PAPER_ERDOS_ATTEMPTED and the MATCH status: the attempted list still matches the paper.",
             "- PINNED_APN_ERDOS and PINNED_OPENAI_ERDOS: which Erdős numbers each catalogue names.",
-            "- ETH_HEADLINE, ETH_AXIOMS, toolchain strings, the empty skip list, and the empty identifier lists: names and absences this atlas does not infer from a file total.",
+            "- ETH_HEADLINE, ETH_AXIOMS, FLASHPROVE_HEADLINES, toolchain strings, the empty skip list, and the empty identifier lists: names and absences this atlas does not infer from a file total.",
+            "- MATHS_TITLES: the AlphaEvolve maths directory names. A directory the map does not name stops the build.",
             "- pins.anthropic.zeta_tag must equal the tag name recorded in data/anthropic.json.",
         ]
     )
@@ -333,12 +377,16 @@ def main() -> int:
     parser.add_argument("--alphaproof-checkout", type=Path, help="Existing AlphaProof clone already at the commit.")
     parser.add_argument("--formal-math-sha", help="anthropics/formal-math commit. Defaults to origin HEAD.")
     parser.add_argument("--flt-sha", help="fermats-last-theorem commit. Defaults to origin HEAD.")
+    parser.add_argument("--flashprove-sha", help="FlashProve commit. Defaults to origin HEAD.")
+    parser.add_argument("--alphaevolve-sha", help="AlphaEvolve commit. Defaults to origin HEAD.")
     parser.add_argument("--repo-url", default=UPSTREAM_URL)
     parser.add_argument("--force", action="store_true", help="Rewrite data even if every commit matches.")
     args = parser.parse_args()
     old_commit = current_commit() or ""
     old_apn = current_alphaproof_commit() or ""
     old_fm, old_flt = current_anthropic_commits()
+    old_fp = current_flashprove_commit()
+    old_ae = current_alphaevolve_commit()
     owned: list[tempfile.TemporaryDirectory[str]] = []
     openai_repo: Path | None = None
     try:
@@ -359,11 +407,23 @@ def main() -> int:
             apn_full = resolve_remote_sha(ALPHAPROOF_URL, args.alphaproof_sha)
         fm_full = resolve_remote_sha(FORMAL_MATH_URL, args.formal_math_sha)
         flt_full = resolve_remote_sha(FLT_URL, args.flt_sha)
+        fp_full = resolve_remote_sha(FLASHPROVE_URL, args.flashprove_sha)
+        ae_full = resolve_remote_sha(ALPHAEVOLVE_URL, args.alphaevolve_sha)
         openai_changed = full != old_commit
         apn_changed = apn_full != old_apn
         fm_changed = fm_full != old_fm
         flt_changed = flt_full != old_flt
-        if not openai_changed and not apn_changed and not fm_changed and not flt_changed and not args.force:
+        fp_changed = fp_full != old_fp
+        ae_changed = ae_full != old_ae
+        if (
+            not openai_changed
+            and not apn_changed
+            and not fm_changed
+            and not flt_changed
+            and not fp_changed
+            and not ae_changed
+            and not args.force
+        ):
             # Every recorded commit still matches HEAD. Upstream commit is unchanged.
             write_outputs(
                 "unchanged",
@@ -376,6 +436,10 @@ def main() -> int:
                 fm_full,
                 old_flt,
                 flt_full,
+                old_fp,
+                fp_full,
+                old_ae,
+                ae_full,
             )
             return 0
         if args.checkout:
@@ -404,21 +468,35 @@ def main() -> int:
             alphaproof_payload = read_json(ALPHAPROOF_JSON)
         if alphaproof_payload["source"]["commit"] != apn_full:
             raise AtlasError("built AlphaProof commit does not match the requested sha")
-        anthropic_changed = fm_changed or flt_changed
+        anthropic_changed = fm_changed or flt_changed or fp_changed
         if anthropic_changed or args.force or not ANTHROPIC_JSON.is_file():
             scratch = tempfile.TemporaryDirectory(prefix="math-atlas-anthropic-")
             owned.append(scratch)
             fm_repo = Path(scratch.name) / "formal-math"
             flt_repo = Path(scratch.name) / "flt"
+            fp_repo = Path(scratch.name) / "flashprove"
             materialize_upstream(FORMAL_MATH_URL, fm_full, fm_repo, FORMAL_MATH_SPARSE_PATHS)
             materialize_upstream(FLT_URL, flt_full, flt_repo, FLT_SPARSE_PATHS)
-            anthropic_payload = build_anthropic(fm_repo, flt_repo)
+            materialize_upstream(FLASHPROVE_URL, fp_full, fp_repo, FLASHPROVE_SPARSE_PATHS)
+            anthropic_payload = build_anthropic(fm_repo, flt_repo, fp_repo)
         else:
             anthropic_payload = read_json(ANTHROPIC_JSON)
         if anthropic_payload["source"]["commit"] != fm_full:
             raise AtlasError("built formal-math commit does not match the requested sha")
         if anthropic_payload["source"]["also"][0]["commit"] != flt_full:
             raise AtlasError("built Fermat commit does not match the requested sha")
+        if anthropic_payload["source"]["also"][1]["commit"] != fp_full:
+            raise AtlasError("built FlashProve commit does not match the requested sha")
+        if ae_changed or args.force or not ALPHAEVOLVE_JSON.is_file():
+            scratch = tempfile.TemporaryDirectory(prefix="math-atlas-alphaevolve-")
+            owned.append(scratch)
+            ae_repo = Path(scratch.name) / "alphaevolve"
+            materialize_upstream(ALPHAEVOLVE_URL, ae_full, ae_repo, ALPHAEVOLVE_SPARSE_PATHS)
+            alphaevolve_payload = build_alphaevolve(ae_repo)
+        else:
+            alphaevolve_payload = read_json(ALPHAEVOLVE_JSON)
+        if alphaevolve_payload["source"]["commit"] != ae_full:
+            raise AtlasError("built AlphaEvolve commit does not match the requested sha")
         old_payload = read_json(UPSTREAM_JSON) if UPSTREAM_JSON.is_file() else None
         curated = load_curated(CURATED_DIR)
         if openai_repo is not None and (openai_changed or args.force):
@@ -435,10 +513,11 @@ def main() -> int:
             upstream,
             alphaproof_payload,
             anthropic_payload,
+            alphaevolve_payload,
             old_payload,
             overview_line_count,
         )
-        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload)
+        extras = catalogue_extras(upstream, alphaproof_payload, anthropic_payload, alphaevolve_payload)
         merged = merge_data(
             upstream,
             curated,
@@ -453,6 +532,8 @@ def main() -> int:
             write_json(ALPHAPROOF_JSON, alphaproof_payload)
         if anthropic_changed or args.force or not ANTHROPIC_JSON.is_file():
             write_json(ANTHROPIC_JSON, anthropic_payload)
+        if ae_changed or args.force or not ALPHAEVOLVE_JSON.is_file():
+            write_json(ALPHAEVOLVE_JSON, alphaevolve_payload)
         write_json(FAMILIES_JSON, merged)
         write_json(SOURCES_JSON, extras["sources"])
         openai_body = diff_summary(old_payload, upstream, set(curated))
@@ -484,6 +565,10 @@ def main() -> int:
             fm_full,
             old_flt,
             flt_full,
+            old_fp,
+            fp_full,
+            old_ae,
+            ae_full,
         )
         return 2 if counts_ok else 3
     finally:

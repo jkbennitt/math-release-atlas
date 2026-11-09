@@ -18,9 +18,12 @@ const LEAN_CHALLENGE = "comparator-challenge-only";
 const LEAN_NONE = "none";
 const KIND_NEW = "new-result";
 const KIND_FORMALIZATION = "formalization";
+const KIND_PROTOCOL = "protocol-soundness";
 // Whole words only, matching claim_word_hits in scripts/atlaslib.py.
+// The repository name FlashProve is removed before the scan.
 const CLAIM_WORD =
   /\b(?:verified|verify|proved|proven|proof|confirmed|certified|solved)\b/i;
+const FLASHPROVE_NAME = /\bFlashProve\b/g;
 
 interface ShareGap {
   id?: string;
@@ -40,6 +43,9 @@ interface ShareBlock {
     releases?: number;
     new_results?: number;
     formalizations?: number;
+    protocol_soundness?: number;
+    records?: number;
+    notebooks?: number;
   };
   gaps?: ShareGap[];
   releases?: ShareRelease[];
@@ -52,7 +58,7 @@ interface ShareRow {
   alt: string;
 }
 
-type ReleaseKind = "new-result" | "formalization";
+type ReleaseKind = "new-result" | "formalization" | "protocol-soundness";
 
 function joinSeries(items: string[], conjunction: string): string {
   if (items.length === 1) {
@@ -95,7 +101,7 @@ function plural(count: number, singular: string, pluralForm?: string): string {
 }
 
 function rejectClaimWords(text: string, label: string): void {
-  const hit = text.match(CLAIM_WORD);
+  const hit = text.replace(FLASHPROVE_NAME, " ").match(CLAIM_WORD);
   if (hit) {
     throw new Error(`${label} uses a claim word: ${hit[0]}`);
   }
@@ -224,15 +230,17 @@ function fileRow(name: string, org: string, block: ShareBlock): ShareRow {
 }
 
 function isReleaseKind(kind: string): kind is ReleaseKind {
-  return kind === KIND_NEW || kind === KIND_FORMALIZATION;
+  return kind === KIND_NEW || kind === KIND_FORMALIZATION || kind === KIND_PROTOCOL;
 }
 
-function releaseBucket(kind: ReleaseKind): "new" | "formalization" {
+function releaseBucket(kind: ReleaseKind): "new" | "formalization" | "protocol" {
   switch (kind) {
     case KIND_NEW:
       return "new";
     case KIND_FORMALIZATION:
       return "formalization";
+    case KIND_PROTOCOL:
+      return "protocol";
     default: {
       const exhaustive: never = kind;
       throw new Error(`${String(exhaustive)} is a release kind the share card cannot draw`);
@@ -251,6 +259,7 @@ function releaseRow(name: string, org: string, block: ShareBlock): ShareRow {
   }
   let newResults = 0;
   let formalizations = 0;
+  let protocols = 0;
   let withLean = 0;
   for (const release of releases) {
     const kind = release.kind ?? "";
@@ -264,6 +273,9 @@ function releaseRow(name: string, org: string, block: ShareBlock): ShareRow {
         break;
       case "formalization":
         formalizations += 1;
+        break;
+      case "protocol":
+        protocols += 1;
         break;
       default: {
         const exhaustive: never = bucket;
@@ -286,12 +298,32 @@ function releaseRow(name: string, org: string, block: ShareBlock): ShareRow {
   if (recordedFormal !== null && recordedFormal !== formalizations) {
     throw new Error(`${name} formalization count disagrees with its releases`);
   }
+  const recordedProtocol = integer(block.counts?.protocol_soundness);
+  if (recordedProtocol !== null && recordedProtocol !== protocols) {
+    throw new Error(`${name} protocol-soundness count disagrees with its releases`);
+  }
   const total = releases.length;
   return {
     name,
     org,
     percent: `${percent(withLean, total)}%`,
     alt: `(${withLean} of ${total}; ${plural(newResults, "new result")}, ${plural(formalizations, "formalization")})`,
+  };
+}
+
+function notebookRow(name: string, org: string, block: ShareBlock): ShareRow {
+  const records = integer(block.counts?.records);
+  if (records === null || records <= 0) {
+    throw new Error(`${name} has no notebook constructions`);
+  }
+  if (integer(block.counts?.lean_files) !== 0) {
+    throw new Error(`${name} reports Lean files in a notebook catalogue`);
+  }
+  return {
+    name,
+    org,
+    percent: `${percent(0, records)}%`,
+    alt: "",
   };
 }
 
@@ -309,6 +341,11 @@ function rowFor(sourceId: string, name: string, org: string): ShareRow {
   }
   if (Array.isArray(block.releases)) {
     return releaseRow(name, org, block);
+  }
+  const leanFiles = integer(block.counts?.lean_files);
+  const records = integer(block.counts?.records);
+  if (leanFiles === 0 && records !== null && records > 0) {
+    return notebookRow(name, org, block);
   }
   return fileRow(name, org, block);
 }
@@ -334,9 +371,14 @@ function formalizationNote(): string {
   return "";
 }
 
+function altClause(row: ShareRow): string {
+  const alt = row.alt.trim();
+  return alt ? `${row.name} ${alt}` : row.name;
+}
+
 export function previewAltFromCatalogue(): string {
   const rows = shareRows();
-  const body = rows.map((row) => `${row.name} ${row.percent} ${row.alt}`).join("; ");
+  const body = rows.map((row) => altClause(row)).join("; ");
   const note = formalizationNote();
   const line = affiliation(rows.map((row) => row.org));
   const alt = note

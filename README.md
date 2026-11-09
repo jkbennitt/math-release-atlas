@@ -1,10 +1,12 @@
 # Math Release Atlas
 
-Unofficial index of three pinned catalogues. One is the result families in the
+Unofficial index of four pinned catalogues. One is the result families in the
 manuscript collection at github.com/openai/math. Another is the Lean files
 in github.com/google-deepmind/alphaproof-nexus-results, read with arXiv
-2605.22763. The third is the Anthropic repositories
-github.com/anthropics/formal-math and github.com/anthropics/fermats-last-theorem.
+2605.22763. Another is the notebook constructions in
+github.com/google-deepmind/alphaevolve. The Anthropic repositories are
+github.com/anthropics/formal-math, github.com/anthropics/fermats-last-theorem,
+and github.com/anthropics/FlashProve.
 Not affiliated with OpenAI, Google DeepMind, or Anthropic.
 
 The site is a table of every family at a pinned upstream commit: subject,
@@ -46,7 +48,7 @@ catalogue that has Lean files. The percent is printed beside the bar, and
 the image alt says it is the share with Lean files. A family catalogue splits Lean status into a
 main result, a comparator challenge, and paper only. A file catalogue counts
 Lean files against the paper gap of results that have no file. A release list
-counts releases that include Lean files. A release whose notes say some claims are not formalized is its own segment: the caption and the legend say "partly in Lean", and the swatch is hatched. A family catalogue captions its middle segment "challenge only" and the legend calls that swatch "Lean challenge only". The two never share a label. The legend lists only the segments that appear. Each segment has a different lightness, so the bars stay distinct in grayscale. A formalization keeps that label,
+counts releases that include Lean files. A protocol-soundness release stays on that list. It is not counted as a new result or as a formalization. A catalogue of notebook constructions, with no Lean files, is its own segment. The caption and the legend say "checked by notebook". The alt names that source. An empty bar stops the build. A release whose notes say some claims are not formalized is its own segment: the caption and the legend say "partly in Lean", and the swatch is hatched. A family catalogue captions its middle segment "challenge only" and the legend calls that swatch "Lean challenge only". The two never share a label. The legend lists only the segments that appear. Each segment has a different lightness, so the bars stay distinct in grayscale. A formalization keeps that label,
 including Fermat's Last Theorem. A source that matches none of those shapes,
 or that no longer fits on the card, stops the build. Adding a source that
 does match, or a count changing on sync, updates the card and the alt text
@@ -68,7 +70,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.4.9.
+Package version 0.5.0.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -78,10 +80,10 @@ python3 scripts/sync.py --checkout /path/to/openai-math
 ```
 
 Omit `--checkout` to sparse-fetch openai/math HEAD, the AlphaProof Nexus
-tree, and the two Anthropic repositories. The OpenAI fetch does not download
-the PDF tree. Fermat's Last Theorem is counted from `git ls-tree` and is not
+tree, the AlphaEvolve tree, and the three Anthropic repositories. The OpenAI fetch does not download
+the PDF tree. Fermat's Last Theorem and FlashProve are counted from `git ls-tree` and are not
 checked out in full. If every commit already matches `data/upstream.json`,
-`data/alphaproof.json`, and `data/anthropic.json`, the script exits without
+`data/alphaproof.json`, `data/alphaevolve.json`, and `data/anthropic.json`, the script exits without
 writing and prints `Upstream commit is unchanged.` It never edits
 `data/curated/`.
 
@@ -139,7 +141,9 @@ Lens tags are `condensed-matter`, `plasma-kinetic`, `fluids-continuum`,
 `algebraic-geometry`, and `analysis`. Each lens and each related link needs a
 non-empty `source`. A math-subject lens cites an https URL at the family's
 pinned commit. AlphaProof and Anthropic lenses live in
-`data/curated/alphaproof.yaml` and `data/curated/anthropic.yaml`. Community status ids are `claimed`, `community-checking`,
+`data/curated/alphaproof.yaml` and `data/curated/anthropic.yaml`.
+AlphaEvolve lenses, when present, live in `data/curated/alphaevolve.yaml`.
+That file is absent, so those rows have no lens tags. Community status ids are `claimed`, `community-checking`,
 `independently-checked`, `disputed`, and `retracted`. Any status other than
 `claimed` needs evidence: an http or https URL, a `YYYY-MM-DD` date, and a
 short neutral note of at most 25 words. That status is recorded only when
@@ -296,12 +300,24 @@ fetched and compared. `generated_at` and the snapshot digest field are
 ignored in that comparison. While that commit is the pinned one, the build
 requires 9 Erdős Lean files, 38 OEIS Lean files, 11 Stacks Lean files, and
 13 AI collaborator Lean files. `data/anthropic.json` names the formal-math
-commit and, under `source.also`, the Fermat commit. The same ancestry check
-runs against each of those repositories, then the recorded trees are fetched
+commit and, under `source.also`, the Fermat commit and the FlashProve commit.
+The same ancestry check runs against each of those repositories, then the recorded trees are fetched
 and compared. While those commits are the pinned ones, the build requires
-326 zeta23 Lean files, 434 3sum-apsp Lean files, 1052 eth Lean files, and 60478 Fermat Lean files.
+326 zeta23 Lean files, 434 3sum-apsp Lean files, 1052 eth Lean files, 60478 Fermat Lean files,
+and 29566 FlashProve Lean files. Of the FlashProve files, 29425 are first-party
+(not under `lean/ThirdParty/`) and 141 are vendored under `lean/ThirdParty/`.
+`lean/CREDITS.md` names 126 of those under `lean/ThirdParty/ArkLib/` and 13 under
+`lean/ThirdParty/MathlibBackport/`. The other 2 vendored files sit beside those directories.
+`lean/CREDITS-FILES.tsv` lists 401 Lean files, a wider set than `lean/ThirdParty/`.
+The FlashProve toolchain pin is `leanprover/lean4:v4.29.1`. The six names in `lean/THEOREM.md`
+are a tripwire. `data/alphaevolve.json` names its own commit. The same ancestry check runs against
+google-deepmind/alphaevolve HEAD, then the recorded tree is fetched and compared.
+While that commit is the pinned one, the build requires the `maths/` directory set to match
+the title map, a notebook named in the README for each of those directories, the omega notebook,
+and the two notebooks under `matmul_tensor_decompositions/`. A `.lean` file in that tree fails the build.
+At this pin the snapshot has 18 records, 15 maths problems, 19 notebooks, and 0 Lean files.
 `families.json` must be the merge of the OpenAI snapshot, the curated notes,
-the AlphaProof snapshot, and the Anthropic snapshot.
+the AlphaProof snapshot, the AlphaEvolve snapshot, and the Anthropic snapshot.
 Fixed cautions for families 002, 003,
 032, 102, 103, 107, and 376 always render.
 
@@ -320,9 +336,14 @@ is named by more than one catalogue. At these pinned commits that list is
 empty. Per-row provenance is
 `MISSING`.
 
-The Anthropic page is four releases, not one row per Lean file. zeta23,
+The Anthropic page is five releases, not one row per Lean file. zeta23,
 3sum-apsp, and eth are new results. Fermat's Last Theorem is a formalization of a
-known theorem, and its badge says Formalization. The zeta release is a
+known theorem, and its badge says Formalization. FlashProve is formalized
+cryptographic-protocol soundness in Lean 4 for a research prototype of a
+zero-knowledge argument of AI inference (Llama 4 Maverick on one H100).
+It is not a research-mathematics result. The repository says version 0.16.0
+is not maintained. Its badge says Protocol soundness. The source chip links
+`lean/VerifiableInference/Statements.lean` at the pinned commit. The zeta release is a
 lower bound on the proportion of zeta zeros that are simple and on the
 critical line (more than two thirds). It is not the Riemann Hypothesis.
 Real-number inputs and
@@ -339,8 +360,21 @@ reads pinned paths and the statement files fetched for each release. It does
 not read every Lean file in the Fermat repository. At these commits that scan
 finds no Erdős, OEIS, or Stacks ids, and the cross-source page says none are
 shared with OpenAI Math or AlphaProof Nexus. A directory that is not one of
-the four releases is recorded as skipped. At the recorded formal-math commit
+the five releases is recorded as skipped. At the recorded formal-math commit
 that list is empty.
+
+The AlphaEvolve page lists one row per construction. The 15 maths rows are
+circle packing, Erdös minimum overlap, the first, second, and third
+autocorrelation inequalities, the Heilbronn problem for convex regions, the
+Heilbronn problem for triangles, hexagon packing, kissing numbers, max to min
+ratio, sums and differences, uncertainty principles, extremal girth 5, the
+Shannon capacity of cycle graphs, and cap sets. Uncertainty principles has two
+notebooks. The omega row is a claimed bound on the matrix multiplication
+exponent, checked in exact rational arithmetic by a notebook. Two further rows
+are the matrix-multiplication tensor rank and the tensor support rank. The
+badge says Checked by notebook. The README paper link is still TODO. This
+atlas did not run the notebooks. The repository says this is not an official
+Google product.
 
 ## License
 
@@ -348,6 +382,8 @@ Apache-2.0. See `NOTICE` and `UPSTREAM_LICENSE`. AlphaProof Nexus code is
 Apache-2.0. Its other materials are CC-BY 4.0. OEIS-derived material is
 CC BY-SA 4.0. The repository copyright notice names Google LLC. The
 organization label on this atlas is Google DeepMind. That repository says
-this is not an official Google product. anthropics/formal-math and
-anthropics/fermats-last-theorem are Apache-2.0. This atlas links to those
-license files and does not copy the Lean sources.
+this is not an official Google product. AlphaEvolve code is Apache-2.0. Its
+other materials are CC-BY 4.0. That repository also says this is not an
+official Google product. anthropics/formal-math,
+anthropics/fermats-last-theorem, and anthropics/FlashProve are Apache-2.0.
+This atlas links to those license files and does not copy the Lean sources.

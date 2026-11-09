@@ -1,0 +1,71 @@
+---
+import Base from "../../layouts/Base.astro";
+import { atlas, formatIso, shortSha } from "../../lib/atlas";
+
+const base = import.meta.env.BASE_URL;
+const record = atlas.alphaevolve;
+const counts = record.counts;
+const commit = record.source.commit;
+---
+
+<Base
+  title="AlphaEvolve · Math Release Atlas"
+  description="Notebook-checked constructions from AlphaEvolve. This tree has no Lean files. The README paper link is still TODO."
+>
+  <article class="prose source-page">
+    <p class="meta"><a href={`${base}source/`}>All sources</a></p>
+    <h1>AlphaEvolve</h1>
+    <p class="status-line">
+      <span class="badge notebook">{record.badge}</span>
+      <span>{record.check_wording}</span>
+    </p>
+    <p>
+      {record.source.org}. Repository{" "}
+      <a href={record.source.repo}>{record.source.repo}</a>.
+      Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
+      ({shortSha(commit)}), committed {formatIso(record.commit_date)}, message “{record.commit_subject}”.
+    </p>
+    <p class="summary-lead">
+      {counts.records} constructions at this commit: {counts.maths_problems} maths problems,
+      {counts.notebooks} notebooks, {counts.lean_files} Lean files.
+      {record.paper_note} {record.product_note}
+    </p>
+    <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
+
+    <div class="receipts">
+      <details open>
+        <summary>Counts at this commit</summary>
+        <ul id="alphaevolve-counts">
+          <li>{counts.records} constructions.</li>
+          <li>{counts.maths_problems} maths problems.</li>
+          <li>{counts.notebooks} notebooks.</li>
+          <li>{counts.omega_notebooks} matrix-multiplication exponent notebooks.</li>
+          <li>{counts.matmul_notebooks} tensor-decomposition notebooks.</li>
+          <li>{counts.lean_files} Lean files.</li>
+        </ul>
+      </details>
+    </div>
+
+    {
+      record.records.map((item) => (
+        <section id={item.anchor}>
+          <h2>{item.title}</h2>
+          <p class="status-line">
+            <span class="badge notebook">{record.badge}</span>
+          </p>
+          <p>{item.statement}</p>
+          {item.scope_notes.map((note) => (
+            <p class="caution">{note}</p>
+          ))}
+          <ul class="links">
+            {item.notebooks.map((notebook) => (
+              <li>
+                <a href={notebook.url}>{notebook.path}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </article>
+</Base>
