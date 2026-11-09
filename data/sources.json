@@ -152,6 +152,72 @@
       }
     },
     {
+      "id": "alphaevolve",
+      "name": "AlphaEvolve",
+      "org": "Google DeepMind",
+      "repo": "https://github.com/google-deepmind/alphaevolve",
+      "paper": null,
+      "license": "Apache-2.0 code; CC-BY 4.0 other materials",
+      "sync": "tree-snapshot",
+      "commit": "aafb1e2684f1404c676ad213e4c55ebfceab4908",
+      "preview": {
+        "fragment": "18 notebook-checked constructions from AlphaEvolve (15 maths problems, 19 notebooks, 0 Lean files)",
+        "tiles": [
+          {
+            "value": "18",
+            "label": "constructions"
+          },
+          {
+            "value": "15",
+            "label": "maths problems"
+          },
+          {
+            "value": "19",
+            "label": "notebooks"
+          },
+          {
+            "value": "0",
+            "label": "Lean files"
+          }
+        ],
+        "detail": "Checked by notebook. Not formal Lean artifacts. The README paper link is still TODO.",
+        "bindings": [
+          {
+            "value": "18",
+            "path": [
+              "alphaevolve",
+              "counts",
+              "records"
+            ]
+          },
+          {
+            "value": "15",
+            "path": [
+              "alphaevolve",
+              "counts",
+              "maths_problems"
+            ]
+          },
+          {
+            "value": "19",
+            "path": [
+              "alphaevolve",
+              "counts",
+              "notebooks"
+            ]
+          },
+          {
+            "value": "0",
+            "path": [
+              "alphaevolve",
+              "counts",
+              "lean_files"
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "anthropic",
       "name": "Anthropic",
       "org": "Anthropic",
@@ -165,17 +231,22 @@
           "label": "Fermat's Last Theorem",
           "repo": "https://github.com/anthropics/fermats-last-theorem",
           "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+        },
+        {
+          "label": "FlashProve",
+          "repo": "https://github.com/anthropics/FlashProve",
+          "commit": "9e2bdd8ff5bf9c62f18263d7dac189b0400b260c"
         }
       ],
       "preview": {
-        "fragment": "62290 Lean files from Anthropic (4 releases, 3 new results, 1 formalization). Fermat's Last Theorem: Formalization, not a new result",
+        "fragment": "91856 Lean files from Anthropic (5 releases, 3 new results, 1 formalization, 1 protocol-soundness release). Fermat's Last Theorem: Formalization, not a new result",
         "tiles": [
           {
-            "value": "62290",
+            "value": "91856",
             "label": "Lean files"
           },
           {
-            "value": "4",
+            "value": "5",
             "label": "releases"
           },
           {
@@ -190,7 +261,7 @@
         "detail": "Fermat's Last Theorem: Formalization, not a new result.",
         "bindings": [
           {
-            "value": "62290",
+            "value": "91856",
             "path": [
               "anthropic",
               "counts",
@@ -198,7 +269,7 @@
             ]
           },
           {
-            "value": "4",
+            "value": "5",
             "path": [
               "anthropic",
               "counts",

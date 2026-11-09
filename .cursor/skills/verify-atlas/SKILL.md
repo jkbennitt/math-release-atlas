@@ -74,18 +74,19 @@ The harness is Playwright, launched from `drive-home.mjs` with the repo's `playw
 node .cursor/skills/verify-atlas/scripts/drive-home.mjs
 ```
 
-That script drives the home and source overview. The other routes below are the same harness: open the URL, act, then read the resulting state. Counts below are the current catalogue: OpenAI Math 373 families and 721 manuscripts, AlphaProof Nexus 71 Lean files, Anthropic 4 releases. The home table has 448 rows (373 + 71 + 4).
+That script drives the home and source overview. The other routes below are the same harness: open the URL, act, then read the resulting state. Counts below are the current catalogue: OpenAI Math 373 families and 721 manuscripts, AlphaProof Nexus 71 Lean files, AlphaEvolve 18 notebook constructions, Anthropic 5 releases. The home table has 466 rows (373 + 71 + 18 + 5).
 
 | Route | What to read |
 | --- | --- |
-| `http://127.0.0.1:4321/math-release-atlas/` | `#family-search`, `#source-filter` options `OpenAI Math (373)`, `AlphaProof Nexus (71)`, `Anthropic (4)`, `ul.catalogue`, `#shown-count`, `table[data-family-table]` |
-| `http://127.0.0.1:4321/math-release-atlas/graph/` | `h1` "Citation graph", the sentence "119 directed links among 125 families in this catalogue.", `svg.graph-map`, `ul.edge-list` |
+| `http://127.0.0.1:4321/math-release-atlas/` | `#family-search`, `#source-filter` options `OpenAI Math (373)`, `AlphaProof Nexus (71)`, `AlphaEvolve (18)`, `Anthropic (5)`, `ul.catalogue`, `#shown-count`, `table[data-family-table]` |
+| `http://127.0.0.1:4321/math-release-atlas/graph/` | `h1` "Citation graph", the sentence "119 directed links among 125 families in this catalogue.", the sentence that AlphaEvolve records have no citation data, `svg.graph-map`, `ul.edge-list` |
 | `http://127.0.0.1:4321/math-release-atlas/f/001/` | `article.family`, `h1[data-upstream="title"]`, `a.direct-upstream` |
 | `http://127.0.0.1:4321/math-release-atlas/source/openai-math/` | `h1` "Manuscript catalogue", `p.summary-lead` "373 result families and 721 manuscripts" |
 | `http://127.0.0.1:4321/math-release-atlas/source/alphaproof-nexus/` | `#alphaproof-counts` containing "71 Lean files in total." |
-| `http://127.0.0.1:4321/math-release-atlas/source/anthropic/` | `#anthropic-counts` |
+| `http://127.0.0.1:4321/math-release-atlas/source/alphaevolve/` | `h1` "AlphaEvolve", `#alphaevolve-counts` "18 constructions.", "19 notebooks.", "0 Lean files.", badge "Checked by notebook" |
+| `http://127.0.0.1:4321/math-release-atlas/source/anthropic/` | `#anthropic-counts`, and the FlashProve commit on the page |
 
-The home script's path: load `/`, read the three option labels and the catalogue sentences, select each `#source-filter` value and read `#shown-count` plus the visible `tr[data-source]` rows, click `#filter-reset`, click the nav link "Sources", then click "OpenAI Math catalogue" and read the source page lead.
+The home script's path: load `/`, read the four option labels and the catalogue sentences, select each `#source-filter` value and read `#shown-count` plus the visible `tr[data-source]` rows, click `#filter-reset`, click the nav link "Sources", then click "OpenAI Math catalogue" and read the source page lead. It then opens the AlphaEvolve source page, the Anthropic source page, `/graph/`, and `/f/001/`.
 
 ## Evidence
 
@@ -98,8 +99,12 @@ Keep it under `/tmp/verify-atlas-evidence` (or `VERIFY_ATLAS_EVIDENCE`). Cleanup
 | `doctor-home.html` | Home response body saved by doctor |
 | `check-py.txt` | `scripts/check.py --self-test --source --verify-upstream` |
 | `home.html`, `home.png` | Home page after load |
-| `home-openai-math.png`, `home-alphaproof-nexus.png`, `home-anthropic.png` | Table after each source filter |
+| `home-openai-math.png`, `home-alphaproof-nexus.png`, `home-alphaevolve.png`, `home-anthropic.png` | Table after each source filter |
 | `source-openai.html`, `source-openai.png` | OpenAI source page after the click from Sources |
+| `source-alphaevolve.html`, `source-alphaevolve.png` | AlphaEvolve source page |
+| `source-anthropic.html`, `source-anthropic.png` | Anthropic source page, including FlashProve |
+| `graph.html`, `graph.png` | Citation graph |
+| `family-001.html`, `family-001.png` | Family 001 |
 | `drive-result.txt` | Action and the resulting shown-count or lead text |
 
 ### Proof standards

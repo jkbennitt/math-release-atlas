@@ -63,14 +63,16 @@ import zipfile
 
 archive = zipfile.ZipFile(sys.argv[1])
 dest = sys.argv[2]
+for info in archive.infolist():
+    rel = info.filename
+    if rel.startswith("/") or ".." in rel.split("/"):
+        raise SystemExit(f"refusing zip path {rel}")
 archive.extractall(dest)
 for info in archive.infolist():
     mode = (info.external_attr >> 16) & 0o7777
     if mode == 0:
         continue
     rel = info.filename
-    if rel.startswith("/") or ".." in rel.split("/"):
-        raise SystemExit(f"refusing zip path {rel}")
     path = os.path.join(dest, rel)
     if os.path.lexists(path):
         os.chmod(path, mode)

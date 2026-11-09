@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-28T17:58:36+00:00",
+  "generated_at": "2026-11-09T18:42:34+00:00",
   "source": {
     "id": "anthropic",
     "name": "Anthropic",
@@ -15,6 +15,11 @@
         "label": "Fermat's Last Theorem",
         "repo": "https://github.com/anthropics/fermats-last-theorem",
         "commit": "6e837e75355538c7f80bab5b956861e86c4eacc2"
+      },
+      {
+        "label": "FlashProve",
+        "repo": "https://github.com/anthropics/FlashProve",
+        "commit": "9e2bdd8ff5bf9c62f18263d7dac189b0400b260c"
       }
     ]
   },
@@ -38,10 +43,11 @@
     }
   ],
   "counts": {
-    "releases": 4,
+    "releases": 5,
     "new_results": 3,
     "formalizations": 1,
-    "lean_files": 62290
+    "protocol_soundness": 1,
+    "lean_files": 91856
   },
   "identifiers": {
     "erdos": [],
@@ -380,6 +386,83 @@
           "label": "README says 60475 modules, which is the 60474 files under Theorems, P2M, and Definitions plus FinalCheck.lean. The tree has 60478 .lean files. The 3 extra .lean files are lakefile.lean, verification/comparator/Challenge.lean, and verification/comparator/Solution.lean. They are not package modules. The README says Challenge.lean is not part of the package."
         }
       ]
+    },
+    {
+      "id": "flashprove",
+      "kind": "protocol-soundness",
+      "kind_label": "Protocol soundness",
+      "title": "FlashProve",
+      "statement": "Formalized cryptographic-protocol soundness in Lean 4 for a research prototype of a zero-knowledge argument of AI inference (Llama 4 Maverick on one H100). This is not a research-mathematics result. The repository says version 0.16.0 is not maintained.",
+      "repo": "https://github.com/anthropics/FlashProve",
+      "commit": "9e2bdd8ff5bf9c62f18263d7dac189b0400b260c",
+      "commit_date": "2026-10-30",
+      "commit_subject": "Initial public release (FlashProve 0.16.0-rc.26)",
+      "path": "lean",
+      "tree_url": "https://github.com/anthropics/FlashProve/tree/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/lean",
+      "license": "Apache-2.0",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/anthropics/FlashProve/blob/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "lean_toolchain": "leanprover/lean4:v4.29.1",
+      "paper": null,
+      "announcement": null,
+      "announcement_date": null,
+      "tag": null,
+      "counts": {
+        "lean_files": 29566,
+        "first_party_lean_files": 29425,
+        "vendored_lean_files": 141,
+        "arklib_lean_files": 126,
+        "mathlib_backport_lean_files": 13,
+        "other_vendored_lean_files": 2,
+        "credits_listed_files": 401,
+        "headline_theorems": 6
+      },
+      "headline_theorems": [
+        "sound",
+        "soundAndBinding",
+        "completeOnCanServe",
+        "zeroKnowledgeOnCanServe",
+        "refusedHandsOutNoProof",
+        "repliesFit"
+      ],
+      "xi_prime_theorems": [],
+      "statement_files": [
+        {
+          "path": "lean/VerifiableInference/Statements.lean",
+          "url": "https://github.com/anthropics/FlashProve/blob/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/lean/VerifiableInference/Statements.lean",
+          "role": "soundness statements"
+        },
+        {
+          "path": "lean/THEOREM.md",
+          "url": "https://github.com/anthropics/FlashProve/blob/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/lean/THEOREM.md",
+          "role": "theorem names"
+        },
+        {
+          "path": "lean/README.md",
+          "url": "https://github.com/anthropics/FlashProve/blob/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/lean/README.md",
+          "role": "lean readme"
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/anthropics/FlashProve/blob/9e2bdd8ff5bf9c62f18263d7dac189b0400b260c/README.md",
+          "role": "repository readme"
+        }
+      ],
+      "scope_notes": [
+        "Lean files at this commit: 29566. First-party, not under lean/ThirdParty/: 29425. Vendored under lean/ThirdParty/: 141, of which 126 are under lean/ThirdParty/ArkLib/ and 13 are under lean/ThirdParty/MathlibBackport/. lean/CREDITS.md names those two directory counts. lean/CREDITS-FILES.tsv lists 401 Lean files that name third-party material, a wider set than lean/ThirdParty/. VERSION says 0.16.0. The commit subject says Initial public release (FlashProve 0.16.0-rc.26). Toolchain leanprover/lean4:v4.29.1. Lean files deposited upstream. This atlas did not run Lean."
+      ],
+      "gaps": [
+        {
+          "id": "flashprove-not-research-math",
+          "status": "NOTED",
+          "label": "Formalized cryptographic-protocol soundness. Not a research-mathematics result. The repository says version 0.16.0 is not maintained."
+        }
+      ]
     }
   ],
   "count_lines": [
@@ -395,9 +478,13 @@
     "fermat-last-theorem: 29511 theorem files.",
     "fermat-last-theorem: 29513 pipeline files.",
     "fermat-last-theorem: 1450 definition files.",
-    "All releases: 62290 Lean files.",
+    "flashprove: 29566 Lean files.",
+    "flashprove: 29425 first-party Lean files.",
+    "flashprove: 141 vendored Lean files under lean/ThirdParty/.",
+    "All releases: 91856 Lean files.",
     "All releases: 3 new results.",
-    "All releases: 1 formalization."
+    "All releases: 1 formalization.",
+    "All releases: 1 protocol soundness."
   ],
-  "snapshot_digest": "2e5a3a7a187e12b25c44ef024ccb5b61eb251c07c6a479c92664257385c46ad8"
+  "snapshot_digest": "072c02e976723996be5efff69173e8034116dd62bd33849790cce52bebbed121"
 }

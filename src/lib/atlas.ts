@@ -227,7 +227,7 @@ export interface AnthropicTag {
   commit: string;
 }
 
-export type AnthropicKind = "new-result" | "formalization";
+export type AnthropicKind = "new-result" | "formalization" | "protocol-soundness";
 
 export interface AnthropicRelease {
   id: string;
@@ -274,6 +274,7 @@ export interface AnthropicData {
     releases: number;
     new_results: number;
     formalizations: number;
+    protocol_soundness: number;
     lean_files: number;
   };
   identifiers: {
@@ -293,11 +294,49 @@ export function anthropicLeanRank(kind: AnthropicKind): number {
       return 4;
     case "formalization":
       return 5;
+    case "protocol-soundness":
+      return 6;
     default: {
       const exhaustive: never = kind;
       return exhaustive;
     }
   }
+}
+
+export interface AlphaEvolveNotebook {
+  path: string;
+  url: string;
+}
+
+export interface AlphaEvolveRecord {
+  id: string;
+  anchor: string;
+  source: string;
+  area: string;
+  title: string;
+  statement: string;
+  notebooks: AlphaEvolveNotebook[];
+  scope_notes: string[];
+  lenses: LensNote[];
+}
+
+export interface AlphaEvolveData {
+  source: SourceInfo;
+  check_wording: string;
+  badge: string;
+  paper_note: string;
+  product_note: string;
+  commit_date: string;
+  commit_subject: string;
+  counts: {
+    lean_files: number;
+    maths_problems: number;
+    notebooks: number;
+    omega_notebooks: number;
+    matmul_notebooks: number;
+    records: number;
+  };
+  records: AlphaEvolveRecord[];
 }
 
 export interface CrossJoin {
@@ -321,6 +360,7 @@ export interface AtlasData {
   generated_at: string;
   sources: { schema_version: number; sources: SourceInfo[] };
   alphaproof: AlphaProofData;
+  alphaevolve: AlphaEvolveData;
   anthropic: AnthropicData;
   cross: CrossJoin;
   upstream: {

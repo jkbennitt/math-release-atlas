@@ -1,14 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
-import { anthropicLeanRank, atlas, dateRange, formatIso, shortSha, type AlphaProofRecord } from "../lib/atlas";
+import { anthropicLeanRank, atlas, dateRange, formatIso, shortSha, type AlphaEvolveRecord, type AlphaProofRecord } from "../lib/atlas";
 import { lensChoices, subjectChoices } from "../lib/filters";
 import { leanLabel, leanRank } from "../lib/lean";
-import { anthropicStatementHref, gapPlainStatus, openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
+import { anthropicStatementHref, alphaevolveDirectLinks, gapPlainStatus, openaiDirectHref, provenanceLine, sourceChip } from "../lib/rows";
 import shareDocument from "../generated/share.json";
 
 interface ShareSegment {
   count: number;
-  role: "lean" | "challenge" | "partial" | "paper";
+  role: "lean" | "challenge" | "partial" | "paper" | "notebook";
 }
 
 interface ShareRow {
@@ -36,20 +36,25 @@ const base = import.meta.env.BASE_URL;
 const subjects = subjectChoices();
 const lenses = lensChoices();
 const alphaproof = atlas.alphaproof;
+const alphaevolve = atlas.alphaevolve;
 const anthropic = atlas.anthropic;
 const sources = atlas.sources.sources;
 const openaiSource = sources.find((item) => item.id === "openai-math");
 const apnSource = sources.find((item) => item.id === "alphaproof-nexus");
 const fltRepo = anthropic.source.also[0];
+const flashproveRepo = anthropic.source.also[1];
 const oeisGap = alphaproof.gaps.find((gap) => gap.id === "oeis-count");
 const attemptedGap = alphaproof.gaps.find((gap) => gap.id === "erdos-attempted");
-const totalRows = counts.families + alphaproof.counts.lean_files + anthropic.counts.releases;
+const totalRows =
+  counts.families + alphaproof.counts.lean_files + alphaevolve.counts.records + anthropic.counts.releases;
 const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization" : "formalizations";
+const protocolWord =
+  anthropic.counts.protocol_soundness === 1 ? "protocol soundness" : "protocol soundness results";
 ---
 
 <Base
   title="Math Release Atlas"
-  description="Unofficial table of the OpenAI Math catalogue, the AlphaProof Nexus Lean files, and the Anthropic releases, with links back to each pinned upstream commit."
+  description="Unofficial table of the OpenAI Math catalogue, the AlphaProof Nexus Lean files, the AlphaEvolve notebook constructions, and the Anthropic releases, with links back to each pinned upstream commit."
 >
   <h1 class="home-title">{share.headline}</h1>
   <section class="share" aria-labelledby="share-heading">
@@ -114,6 +119,7 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
         <option value="">All sources</option>
         <option value="openai-math">OpenAI Math ({counts.families})</option>
         <option value="alphaproof-nexus">AlphaProof Nexus ({alphaproof.counts.lean_files})</option>
+        <option value="alphaevolve">AlphaEvolve ({alphaevolve.counts.records})</option>
         <option value="anthropic">Anthropic ({anthropic.counts.releases})</option>
       </select>
     </label>
@@ -127,6 +133,8 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
         <option value="new-result">New result ({anthropic.counts.new_results})</option>
         <option value="deposited">Deposited ({alphaproof.counts.lean_files})</option>
         <option value="formalization">Formalization ({anthropic.counts.formalizations})</option>
+        <option value="protocol-soundness">Protocol soundness ({anthropic.counts.protocol_soundness})</option>
+        <option value="notebook">Checked by notebook ({alphaevolve.counts.records})</option>
       </select>
     </label>
     <button id="filter-reset" type="button">Reset</button>
@@ -288,6 +296,50 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
             <td class="date" data-label="Date">{formatIso(alphaproof.commit_date)}</td>
           </tr>
         ))}
+        {alphaevolve.records.map((record: AlphaEvolveRecord) => {
+          const primary = alphaevolveDirectLinks(record)[0];
+          return (
+            <tr
+              id={`ae-${record.anchor}`}
+              data-source="alphaevolve"
+              data-id={record.anchor}
+              data-title={record.title}
+              data-area={record.area}
+              data-areas={record.area}
+              data-lean="notebook"
+              data-lean-rank="7"
+              data-lenses={record.lenses.map((lens) => lens.tag).join("|")}
+              data-date={alphaevolve.commit_date}
+              data-manuscripts={record.notebooks.length}
+            >
+              <td data-label="Source">
+                <a class="chip direct-upstream" href={primary.href}>{sourceChip("alphaevolve")}</a>
+              </td>
+              <td class="id" data-label="ID" title={record.anchor}>{record.anchor}</td>
+              <td data-label="Result">
+                <div class="result-line">
+                  <p class="title">
+                    <a class="direct-upstream" href={primary.href}>{record.title}</a>
+                  </p>
+                  <details class="row-more">
+                    <summary>Receipt</summary>
+                    <div class="receipt">
+                      <p>{record.statement}</p>
+                      {record.scope_notes.map((note) => <p class="caution">{note}</p>)}
+                      {alphaevolveDirectLinks(record).map((link) => (
+                        <p class="meta"><a class="direct-upstream" href={link.href}>{link.label}</a></p>
+                      ))}
+                      <p class="meta"><a href={`${base}source/alphaevolve/#${record.anchor}`}>Source notes</a></p>
+                    </div>
+                  </details>
+                </div>
+              </td>
+              <td data-label="Lean"><span class="badge notebook">{alphaevolve.badge}</span></td>
+              <td class="subject" data-label="Subject">{record.area}</td>
+              <td class="date" data-label="Date">{formatIso(alphaevolve.commit_date)}</td>
+            </tr>
+          );
+        })}
         {anthropic.releases.map((release) => {
           const dated = release.paper?.v1_submitted ?? release.announcement_date ?? release.commit_date;
           const statementHref = anthropicStatementHref(release);
@@ -386,10 +438,19 @@ const formalizationWord = anthropic.counts.formalizations === 1 ? "formalization
       <a href={`${base}source/alphaproof-nexus/`}>Source page</a>.
     </li>
     <li>
+      <strong>AlphaEvolve.</strong> {alphaevolve.counts.records} notebook constructions
+      ({alphaevolve.counts.maths_problems} maths problems, {alphaevolve.counts.notebooks} notebooks,
+      {alphaevolve.counts.lean_files} Lean files) at{" "}
+      <a href={`${alphaevolve.source.repo}/commit/${alphaevolve.source.commit}`}><code>{shortSha(alphaevolve.source.commit)}</code></a>.
+      {alphaevolve.paper_note} {alphaevolve.check_wording}{" "}
+      <a href={`${base}source/alphaevolve/`}>Source page</a>.
+    </li>
+    <li>
       <strong>Anthropic.</strong> {anthropic.counts.releases} releases and {anthropic.counts.lean_files} Lean files
-      ({anthropic.counts.new_results} new results, {anthropic.counts.formalizations} {formalizationWord})
+      ({anthropic.counts.new_results} new results, {anthropic.counts.formalizations} {formalizationWord}, {anthropic.counts.protocol_soundness} {protocolWord})
       in <a href={`${anthropic.source.repo}/commit/${anthropic.source.commit}`}><code>{shortSha(anthropic.source.commit)}</code></a>{" "}
-      and <a href={`${fltRepo.repo}/commit/${fltRepo.commit}`}><code>{shortSha(fltRepo.commit)}</code></a>.
+      and <a href={`${fltRepo.repo}/commit/${fltRepo.commit}`}><code>{shortSha(fltRepo.commit)}</code></a>,
+      plus <a href={`${flashproveRepo.repo}/commit/${flashproveRepo.commit}`}><code>{shortSha(flashproveRepo.commit)}</code></a>.
       {anthropic.source.license}.{" "}
       <a href={`${base}source/anthropic/`}>Source page</a>.
     </li>

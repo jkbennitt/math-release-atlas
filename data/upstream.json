@@ -16571,12 +16571,17 @@
       "commit": "0647711a71183c1ea492ad60860776617ce1ea88",
       "digest": "3154316e6483999d4859116c2c6e2c347f63acf59756cf6c13aedcc73585efa5"
     },
+    "alphaevolve": {
+      "commit": "aafb1e2684f1404c676ad213e4c55ebfceab4908",
+      "digest": "791d479c3bc9460c085f97482772edb8c60aa53bf62e717ce9f310133adc1b2a"
+    },
     "anthropic": {
       "commit": "16a5ce41304fcdaea4e0be7c132e1c361dc26da5",
       "flt_commit": "6e837e75355538c7f80bab5b956861e86c4eacc2",
+      "flashprove_commit": "9e2bdd8ff5bf9c62f18263d7dac189b0400b260c",
       "zeta_tag": "v1.0",
       "zeta_tag_commit": "3635e74826a4c1fcece7d1cd2b6fa75e43a00510",
-      "digest": "2e5a3a7a187e12b25c44ef024ccb5b61eb251c07c6a479c92664257385c46ad8"
+      "digest": "072c02e976723996be5efff69173e8034116dd62bd33849790cce52bebbed121"
     }
   }
 }

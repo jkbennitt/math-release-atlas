@@ -48,6 +48,7 @@ RIEMANN_SENTENCE = "It is not the Riemann Hypothesis."
 PINNED_SOURCE_ORGS = {
     "openai-math": "OpenAI",
     "alphaproof-nexus": "Google DeepMind",
+    "alphaevolve": "Google DeepMind",
     "anthropic": "Anthropic",
 }
 
@@ -1597,6 +1598,16 @@ def apply_catalogue_lenses(extras: dict[str, Any]) -> dict[str, Any]:
             lambda record: str(record.get("commit", "")),
             "anthropic",
         )
+    alphaevolve = cloned.get("alphaevolve")
+    if isinstance(alphaevolve, dict):
+        commit = str(alphaevolve.get("source", {}).get("commit", ""))
+        _attach_record_lenses(
+            alphaevolve.get("records") or [],
+            _read_catalogue_lens_file(CURATED_DIR / "alphaevolve.yaml"),
+            "id",
+            lambda _record: commit,
+            "alphaevolve",
+        )
     return cloned
 
 
@@ -1614,6 +1625,11 @@ def openai_direct_href(family: dict[str, Any], repo: str) -> str:
 def openai_manuscript_hrefs(family: dict[str, Any]) -> list[str]:
     """Every pinned manuscript PDF for this family, in catalogue order."""
     return [str(item["pdf"]) for item in family.get("manuscripts") or []]
+
+
+def alphaevolve_direct_hrefs(record: dict[str, Any]) -> list[str]:
+    notebooks = record.get("notebooks") or []
+    return [str(item["url"]) for item in notebooks if isinstance(item, dict) and item.get("url")]
 
 
 def anthropic_direct_hrefs(release: dict[str, Any]) -> list[str]:
@@ -1664,6 +1680,12 @@ def check_direct_links(index_html: str, catalog: dict[str, Any]) -> list[str]:
         element_id = f"apn-{record['anchor']}"
         rows.append((element_id, [str(record["url"])]))
         commits[element_id] = alphaproof_commit
+    alphaevolve = catalog.get("alphaevolve") or {}
+    alphaevolve_commit = str((alphaevolve.get("source") or {}).get("commit", ""))
+    for record in alphaevolve.get("records") or []:
+        element_id = f"ae-{record['anchor']}"
+        rows.append((element_id, alphaevolve_direct_hrefs(record)))
+        commits[element_id] = alphaevolve_commit
     for release in catalog["anthropic"]["releases"]:
         element_id = f"an-{release['id']}"
         rows.append((element_id, anthropic_direct_hrefs(release)))
@@ -2182,7 +2204,15 @@ _PIN_FIELDS = {
     "openai-math": {"commit", "digest", "overview_line_count"},
     "openai-math-baseline": {"commit", "digest"},
     "alphaproof-nexus": {"commit", "digest"},
-    "anthropic": {"commit", "digest", "flt_commit", "zeta_tag", "zeta_tag_commit"},
+    "alphaevolve": {"commit", "digest"},
+    "anthropic": {
+        "commit",
+        "digest",
+        "flt_commit",
+        "flashprove_commit",
+        "zeta_tag",
+        "zeta_tag_commit",
+    },
 }
 
 
@@ -2266,6 +2296,7 @@ def load_upstream_pins(path: Path | None = None) -> dict[str, Any]:
             require_overview_line_count(entry.get("overview_line_count"))
     anthropic = pins["anthropic"]
     _require_sha(anthropic.get("flt_commit"), "anthropic flt pin")
+    _require_sha(anthropic.get("flashprove_commit"), "anthropic flashprove pin")
     _require_sha(anthropic.get("zeta_tag_commit"), "anthropic zeta tag pin")
     tag = anthropic.get("zeta_tag")
     if not isinstance(tag, str) or not tag.strip():
@@ -2662,9 +2693,17 @@ CLAIM_WORD_RE = re.compile(
 )
 
 
+_FLASHPROVE_NAME_RE = re.compile(r"\bFlashProve\b")
+
+
 def claim_word_hits(text: str) -> list[str]:
-    """Case-insensitive whole-word hits for the share card, its alt, and the home share."""
-    return [match.group(0) for match in CLAIM_WORD_RE.finditer(text)]
+    """Case-insensitive whole-word hits for the share card, its alt, and the home share.
+
+    The repository name FlashProve is a proper name. It is removed before the
+    scan so that name alone is not a hit. Any other claim word still is.
+    """
+    masked = _FLASHPROVE_NAME_RE.sub(" ", text)
+    return [match.group(0) for match in CLAIM_WORD_RE.finditer(masked)]
 
 
 def claim_word_failures(text: str, label: str) -> list[str]:
@@ -3051,19 +3090,25 @@ def check_lens_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     families = catalog["families"]
     repo = str(catalog["upstream"]["repo"])
     grouped: dict[str, dict[str, int]] = {
-        tag: {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0} for tag in LENS_ORDER
+        tag: {"openai-math": 0, "alphaproof-nexus": 0, "alphaevolve": 0, "anthropic": 0}
+        for tag in LENS_ORDER
     }
+    empty_counts = {"openai-math": 0, "alphaproof-nexus": 0, "alphaevolve": 0, "anthropic": 0}
     for family in families:
         for lens in family.get("lenses") or []:
-            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped.setdefault(lens["tag"], dict(empty_counts))
             grouped[lens["tag"]]["openai-math"] += 1
     for record in catalog["alphaproof"]["records"]:
         for lens in record.get("lenses") or []:
-            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped.setdefault(lens["tag"], dict(empty_counts))
             grouped[lens["tag"]]["alphaproof-nexus"] += 1
+    for record in (catalog.get("alphaevolve") or {}).get("records") or []:
+        for lens in record.get("lenses") or []:
+            grouped.setdefault(lens["tag"], dict(empty_counts))
+            grouped[lens["tag"]]["alphaevolve"] += 1
     for release in catalog["anthropic"]["releases"]:
         for lens in release.get("lenses") or []:
-            grouped.setdefault(lens["tag"], {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+            grouped.setdefault(lens["tag"], dict(empty_counts))
             grouped[lens["tag"]]["anthropic"] += 1
     for tag in LENS_ORDER:
         if f"lens/{tag}/" not in index_text:
@@ -3073,10 +3118,11 @@ def check_lens_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
             failures.append(f"missing lens page {tag}")
             continue
         text = page.read_text(encoding="utf-8")
-        counts = grouped.get(tag, {"openai-math": 0, "alphaproof-nexus": 0, "anthropic": 0})
+        counts = grouped.get(tag, dict(empty_counts))
         expected = (
             f"OpenAI Math (openai-math) {counts['openai-math']}. "
             f"AlphaProof Nexus (alphaproof-nexus) {counts['alphaproof-nexus']}. "
+            f"AlphaEvolve (alphaevolve) {counts['alphaevolve']}. "
             f"Anthropic (anthropic) {counts['anthropic']}."
         )
         if expected not in text:
@@ -3386,7 +3432,7 @@ def check_graph_page(dist: Path, catalog: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     for phrase in (
         "Citation edges come from OpenAI Math manuscripts only.",
-        "AlphaProof Nexus and Anthropic records have no citation data in this atlas.",
+        "AlphaProof Nexus, AlphaEvolve, and Anthropic records have no citation data in this atlas.",
         "source/cross/",
     ):
         if phrase not in text:
@@ -4453,6 +4499,38 @@ def check_riemann_sentence(detail_html: str) -> list[str]:
     return []
 
 
+def check_alphaevolve_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
+    """The AlphaEvolve page names every notebook construction and says these are not Lean files."""
+    failures: list[str] = []
+    payload = catalog.get("alphaevolve")
+    if not isinstance(payload, dict):
+        return ["families.json is missing alphaevolve"]
+    detail = dist / "source" / "alphaevolve" / "index.html"
+    home = dist / "index.html"
+    if not detail.is_file() or not home.is_file():
+        return ["missing AlphaEvolve source page"]
+    detail_raw = detail.read_text(encoding="utf-8")
+    detail_text = _visible_text(detail_raw)
+    home_raw = home.read_text(encoding="utf-8")
+    for phrase in (payload["check_wording"], payload["paper_note"], payload["badge"], payload["product_note"]):
+        if phrase not in detail_text:
+            failures.append(f"AlphaEvolve page is missing {phrase!r}")
+    records = payload["records"]
+    if home_raw.count('data-source="alphaevolve"') != len(records):
+        failures.append("home table AlphaEvolve row count does not match the snapshot")
+    if 'data-lean="notebook"' not in home_raw:
+        failures.append("home table does not mark AlphaEvolve rows as notebooks")
+    for record in records:
+        if record["title"] not in detail_text:
+            failures.append(f"AlphaEvolve page is missing {record['id']}")
+        if f'id="{record["anchor"]}"' not in detail_raw and f"id=\"{record['anchor']}\"" not in detail_raw:
+            failures.append(f"AlphaEvolve page is missing the anchor for {record['id']}")
+        for item in record["notebooks"]:
+            if item["url"] not in detail_raw:
+                failures.append(f"AlphaEvolve page is missing {item['path']}")
+    return failures
+
+
 def check_anthropic_pages(dist: Path, catalog: dict[str, Any]) -> list[str]:
     """The third source is three release rows, its own page, and the identifier join."""
     failures: list[str] = []
@@ -4646,13 +4724,15 @@ def check_inline_spacing(dist: Path, catalog: dict[str, Any]) -> list[str]:
     footer_phrase = (
         "https://github.com/openai/math · "
         "https://github.com/google-deepmind/alphaproof-nexus-results · "
+        "https://github.com/google-deepmind/alphaevolve · "
         "https://github.com/anthropics/formal-math · "
-        "https://github.com/anthropics/fermats-last-theorem"
+        "https://github.com/anthropics/fermats-last-theorem · "
+        "https://github.com/anthropics/FlashProve"
     )
     if footer is None or footer_phrase not in tight_text(footer.group(0)):
         failures.append("footer catalogue links run together")
     source_phrase = (
-        "AlphaProof Nexus counts and scope notes · Anthropic releases · Cross-source problem ids"
+        "AlphaProof Nexus counts and scope notes · AlphaEvolve notebook constructions · Anthropic releases · Cross-source problem ids"
     )
     if source_phrase not in tight_text(source_path.read_text(encoding="utf-8")):
         failures.append("source index runs the catalogue links together")
@@ -4889,6 +4969,7 @@ def check_dist(dist: Path) -> list[str]:
     failures.extend(check_family_pages(dist, catalog["families"], index_html, repo))
     failures.extend(check_direct_links(index_html, catalog))
     failures.extend(check_alphaproof_pages(dist, catalog))
+    failures.extend(check_alphaevolve_pages(dist, catalog))
     failures.extend(check_anthropic_pages(dist, catalog))
     failures.extend(check_lens_pages(dist, catalog))
     failures.extend(check_graph_page(dist, catalog))

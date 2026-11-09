@@ -1,5 +1,6 @@
 import {
   atlas,
+  type AlphaEvolveRecord,
   type AlphaProofRecord,
   type AnthropicRelease,
   type Family,
@@ -11,7 +12,7 @@ export interface DirectLink {
   label: string;
 }
 
-export type CatalogueSource = "openai-math" | "alphaproof-nexus" | "anthropic";
+export type CatalogueSource = "openai-math" | "alphaproof-nexus" | "alphaevolve" | "anthropic";
 
 export interface LensRow {
   source: CatalogueSource;
@@ -46,6 +47,13 @@ export function alphaproofDirectLinks(record: AlphaProofRecord): DirectLink[] {
   return [{ href: record.url, label: "Lean file" }];
 }
 
+export function alphaevolveDirectLinks(record: AlphaEvolveRecord): DirectLink[] {
+  return record.notebooks.map((item, index) => ({
+    href: item.url,
+    label: record.notebooks.length === 1 ? "Notebook" : `Notebook ${index + 1}`,
+  }));
+}
+
 export function anthropicStatementHref(release: AnthropicRelease): string {
   const lean = release.statement_files.find((item) => item.path.endsWith(".lean"));
   if (lean) {
@@ -72,6 +80,7 @@ export function lensCarriers(): { lenses: LensNote[] }[] {
   return [
     ...atlas.families,
     ...atlas.alphaproof.records,
+    ...atlas.alphaevolve.records,
     ...atlas.anthropic.releases,
   ];
 }
@@ -139,6 +148,8 @@ export function sourceChip(source: CatalogueSource): string {
       return "OpenAI";
     case "alphaproof-nexus":
       return "APN";
+    case "alphaevolve":
+      return "AlphaEvolve";
     case "anthropic":
       return "Anthropic";
     default: {
@@ -154,6 +165,8 @@ function sourceBadge(source: CatalogueSource): { label: string; className: strin
       return { label: "OpenAI Math", className: "source-openai" };
     case "alphaproof-nexus":
       return { label: "AlphaProof Nexus", className: "source-alphaproof" };
+    case "alphaevolve":
+      return { label: "AlphaEvolve", className: "source-alphaevolve" };
     case "anthropic":
       return { label: "Anthropic", className: "source-anthropic" };
     default: {
@@ -207,6 +220,27 @@ export function lensRows(tag: string): LensRow[] {
       });
     }
   }
+  for (const record of atlas.alphaevolve.records) {
+    for (const lens of record.lenses) {
+      if (lens.tag !== tag) {
+        continue;
+      }
+      const badge = sourceBadge("alphaevolve");
+      rows.push({
+        source: "alphaevolve",
+        sourceLabel: badge.label,
+        sourceClass: badge.className,
+        kindClass: "notebook",
+        kindLabel: atlas.alphaevolve.badge,
+        atlasPath: `source/alphaevolve/#${record.anchor}`,
+        idLabel: record.anchor,
+        title: record.title,
+        direct: alphaevolveDirectLinks(record),
+        why: lens.why,
+        lensSource: lens.source,
+      });
+    }
+  }
   for (const release of atlas.anthropic.releases) {
     for (const lens of release.lenses) {
       if (lens.tag !== tag) {
@@ -235,6 +269,7 @@ export function lensSourceCounts(tag: string): Record<CatalogueSource, number> {
   const counts: Record<CatalogueSource, number> = {
     "openai-math": 0,
     "alphaproof-nexus": 0,
+    alphaevolve: 0,
     anthropic: 0,
   };
   for (const row of lensRows(tag)) {

@@ -48,6 +48,7 @@ ACCENT = (31, 77, 74)
 CHALLENGE = (44, 111, 111)
 PARTIAL = (179, 122, 76)
 PAPER_ONLY = (147, 134, 110)
+NOTEBOOK = (12, 36, 92)
 MARK_INK = (244, 240, 230)
 GOLD = (228, 196, 138)
 HATCH_STEP = 4
@@ -58,13 +59,17 @@ BRAND = "Math Release Atlas"
 HEADLINE = "AI math claims: on paper, or in Lean?"
 PANEL_TITLE = "SHARE OF EACH CATALOGUE WITH LEAN FILES"
 UNAFFILIATED = "Unofficial · not affiliated with any lab"
-SENTENCE_TAIL = ", each linked to its paper or Lean files at a pinned commit."
+SENTENCE_TAIL = ", each at a pinned commit."
 CAPTION_GAP = "  \u00b7  "
 LEAN_MAIN = "main-result-formalized"
 LEAN_CHALLENGE = "comparator-challenge-only"
 LEAN_NONE = "none"
 KIND_NEW = "new-result"
 KIND_FORMALIZATION = "formalization"
+KIND_PROTOCOL = "protocol-soundness"
+ROW_BAR_OFFSET = 32
+ROW_BAR_HEIGHT = 20
+ROW_AFTER_BAR = 32
 _INITIALS = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)?")
 _NOT_FORMALIZED = "NOT FORMALIZED"
 
@@ -96,6 +101,7 @@ STYLES: tuple[SegmentStyle, ...] = (
     SegmentStyle("challenge", "Lean challenge only", CHALLENGE, False),
     SegmentStyle("partial", "partly in Lean", PARTIAL, True),
     SegmentStyle("paper", "paper only", PAPER_ONLY, False),
+    SegmentStyle("notebook", "checked by notebook", NOTEBOOK, False),
 )
 _STYLE_BY_ROLE = {style.role: style for style in STYLES}
 
@@ -493,6 +499,8 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
             new_results.append(release)
         elif kind == KIND_FORMALIZATION:
             formalizations.append(release)
+        elif kind == KIND_PROTOCOL:
+            pass
         else:
             raise SystemExit(f"{name} has a release kind the share card cannot draw")
         release_counts = release.get("counts")
@@ -517,23 +525,38 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         raise SystemExit(f"{name} new-result count disagrees with its releases")
     if isinstance(recorded_formal, int) and recorded_formal != len(formalizations):
         raise SystemExit(f"{name} formalization count disagrees with its releases")
+    protocols = sum(1 for release in releases if isinstance(release, dict) and release.get("kind") == KIND_PROTOCOL)
+    recorded_protocol = counts.get("protocol_soundness")
+    if isinstance(recorded_protocol, int) and recorded_protocol != protocols:
+        raise SystemExit(f"{name} protocol-soundness count disagrees with its releases")
     tags = [_initials(str(release.get("title") or "")) for release in formalizations]
     formal_phrase = _plural(len(formalizations), "formalization")
     if tags:
         formal_phrase += f" ({', '.join(tags)})"
+    protocol_phrase = ""
+    if protocols:
+        protocol_phrase = f", {protocols} protocol"
     new_phrase = _plural(len(new_results), "new result")
     release_noun = "release" if total == 1 else "releases"
     who = name if name == org else f"{org} {name}"
-    if partial:
+    if partial and protocols:
         caption = (
             f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}"
-            f"{len(new_results)} new, {formal_phrase}"
+            f"{_plural(len(formalizations), 'formalization')}, {protocols} protocol"
         )
         short_caption = (
-            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}{formal_phrase}"
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}{protocols} protocol"
+        )
+    elif partial:
+        caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}"
+            f"{len(new_results)} new, {formal_phrase}{protocol_phrase}"
+        )
+        short_caption = (
+            f"{full} in Lean{CAPTION_GAP}{partial} partly in Lean{CAPTION_GAP}{formal_phrase}{protocol_phrase}"
         )
     else:
-        caption = f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}"
+        caption = f"{with_lean} of {total} with Lean{CAPTION_GAP}{new_phrase}, {formal_phrase}{protocol_phrase}"
         short_caption = f"{with_lean} of {total} with Lean"
     return {
         "name": name,
@@ -543,8 +566,38 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "caption": caption,
         "short_caption": short_caption,
         "clause": f"{total} {who} {release_noun}",
-        "alt": f"({with_lean} of {total}; {new_phrase}, {_plural(len(formalizations), 'formalization')})",
+        "alt": (
+            f"({with_lean} of {total}; {new_phrase}, "
+            f"{_plural(len(formalizations), 'formalization')})"
+        ),
         "segments": [(full, "lean"), (partial, "partial"), (paper, "paper")],
+    }
+
+
+def _notebook_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
+    records = block.get("records")
+    counts = block.get("counts") if isinstance(block.get("counts"), dict) else {}
+    if not isinstance(records, list) or not records:
+        raise SystemExit(f"{name} has no notebook constructions")
+    if counts.get("lean_files") != 0:
+        raise SystemExit(f"{name} reports Lean files in a notebook catalogue")
+    recorded = counts.get("records")
+    if isinstance(recorded, int) and recorded != len(records):
+        raise SystemExit(f"{name} construction count disagrees with its rows")
+    total = len(records)
+    notebooks = counts.get("notebooks")
+    notebook_count = notebooks if isinstance(notebooks, int) else total
+    who = name if name == org else f"{org} {name}"
+    return {
+        "name": name,
+        "org": org,
+        "unit": f"{total} constructions",
+        "percent": f"{percent(0, total)}%",
+        "caption": f"0 in Lean{CAPTION_GAP}{total} checked by notebook",
+        "short_caption": f"0 in Lean{CAPTION_GAP}{notebook_count} notebooks",
+        "clause": f"{total} {who} notebook constructions",
+        "alt": "",
+        "segments": [(total, "notebook")],
     }
 
 
@@ -562,6 +615,9 @@ def row_for(catalog: dict[str, Any], entry: dict[str, Any]) -> dict[str, Any]:
         raise SystemExit(f"{name} has no catalogue the share card can draw")
     if isinstance(block.get("releases"), list):
         return _release_row(name, org, block)
+    counts = block.get("counts") if isinstance(block.get("counts"), dict) else {}
+    if isinstance(block.get("records"), list) and counts.get("lean_files") == 0:
+        return _notebook_row(name, org, block)
     return _file_row(name, org, block)
 
 
@@ -598,10 +654,17 @@ def formalization_note(catalog: dict[str, Any]) -> str:
     return ""
 
 
+def _alt_clause(row: dict[str, Any]) -> str:
+    alt = str(row["alt"]).strip()
+    if alt:
+        return f"{row['name']} {alt}"
+    return str(row["name"])
+
+
 def card_alt(catalog: dict[str, Any]) -> str:
     """Image alt for the share card. Names every source and stays within the X limit."""
     rows = share_rows(catalog)
-    body = "; ".join(f"{row['name']} {row['percent']} {row['alt']}" for row in rows)
+    body = "; ".join(_alt_clause(row) for row in rows)
     note = formalization_note(catalog)
     line = affiliation_sentence([str(row["org"]) for row in rows])
     if note:
@@ -670,7 +733,7 @@ def compose(catalog: dict[str, Any]) -> list[str]:
             raise SystemExit(f"percent label does not fit beside the bar for {name}")
         _reject_overclaim(f"{name} {unit} {pct} {label}")
         lines.extend([name, unit, pct, label])
-        y = (y + 42) + 36 + 50
+        y = (y + ROW_BAR_OFFSET) + ROW_BAR_HEIGHT + ROW_AFTER_BAR
     legend_lines = _legend_lines(legend_for(rows), caption_face, iw)
     legend_y = y + 2
     if legend_y + _legend_height(len(legend_lines)) > 540:
@@ -754,8 +817,8 @@ def render(catalog: dict[str, Any]) -> Image.Image:
             (ix + iw - text_width(unit_face, unit), ink_top(unit_face, unit, y + 6)),
             MUTED,
         )
-        bar_y = y + 42
-        bar_h = 36
+        bar_y = y + ROW_BAR_OFFSET
+        bar_h = ROW_BAR_HEIGHT
         bar_w = iw - PERCENT_GUTTER
         segments = [(count, style_for(role)) for count, role in row["segments"] if count > 0]
         total = sum(count for count, _style in segments)
@@ -771,7 +834,7 @@ def render(catalog: dict[str, Any]) -> Image.Image:
             INK,
         )
         paint(caption_face, label, (ix, ink_top(caption_face, label, bar_y + bar_h + 10)), MUTED)
-        y = bar_y + bar_h + 50
+        y = bar_y + bar_h + ROW_AFTER_BAR
 
     legend_y = y + 2
     for line_index, legend_line in enumerate(_legend_lines(legend_for(rows), caption_face, iw)):

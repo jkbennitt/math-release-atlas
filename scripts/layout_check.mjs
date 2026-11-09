@@ -37,6 +37,7 @@ const PAGES = [
   { path: "/", name: "home" },
   { path: "/source/", name: "source" },
   { path: "/source/alphaproof-nexus/", name: "alphaproof" },
+  { path: "/source/alphaevolve/", name: "alphaevolve" },
   { path: "/source/anthropic/", name: "anthropic" },
   { path: "/source/cross/", name: "cross" },
   { path: "/about/", name: "about" },
