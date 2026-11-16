@@ -100,6 +100,10 @@ function startServer(root) {
 
 async function launchChrome() {
   const args = ["--no-sandbox", "--disable-dev-shm-usage"];
+  const pinned = process.env.CHROME_PATH;
+  if (pinned) {
+    return await chromium.launch({ executablePath: pinned, args });
+  }
   try {
     return await chromium.launch({ channel: "chrome", args });
   } catch (error) {
@@ -205,12 +209,19 @@ async function readGraphMap(page) {
     const topic = map.querySelector("line.topic") ?? map.querySelector(".topic-arrow");
     const label = map.querySelector("text");
     const box = map.getBoundingClientRect();
+    const canvas = document.querySelector("canvas.graph-canvas");
+    const canvasStyle = canvas === null ? null : getComputedStyle(canvas);
+    const canvasBox = canvas === null ? null : canvas.getBoundingClientRect();
     return {
       missing: false,
       display: style.display,
       visibility: style.visibility,
       width: box.width,
       height: box.height,
+      canvasDisplay: canvasStyle === null ? "" : canvasStyle.display,
+      canvasVisibility: canvasStyle === null ? "" : canvasStyle.visibility,
+      canvasWidth: canvasBox === null ? 0 : canvasBox.width,
+      canvasHeight: canvasBox === null ? 0 : canvasBox.height,
       background: style.backgroundColor,
       cite: paint(cite),
       topic: paint(topic),
@@ -223,20 +234,34 @@ async function readGraphMap(page) {
   });
 }
 
+function shownMap(map) {
+  const svgHidden = map.display === "none" || map.visibility === "hidden";
+  const canvasShown =
+    map.canvasDisplay !== "none" &&
+    map.canvasVisibility !== "hidden" &&
+    map.canvasWidth >= 1 &&
+    map.canvasHeight >= 1;
+  if (svgHidden && canvasShown) {
+    return { width: map.canvasWidth, height: map.canvasHeight, hidden: false };
+  }
+  return { width: map.width, height: map.height, hidden: svgHidden };
+}
+
 function graphMapFailures(label, map, width) {
   const failures = [];
   if (map.missing) {
     failures.push(`${label}: citation map is missing`);
     return failures;
   }
-  if (map.display === "none" || map.visibility === "hidden") {
+  const shown = shownMap(map);
+  if (shown.hidden) {
     failures.push(`${label}: citation map is hidden (${map.display}, ${map.visibility})`);
   }
-  if (map.width < 1 || map.height < 1) {
-    failures.push(`${label}: citation map is ${map.width} by ${map.height}`);
+  if (shown.width < 1 || shown.height < 1) {
+    failures.push(`${label}: citation map is ${shown.width} by ${shown.height}`);
   }
-  if (width === 390 && map.width < 900) {
-    failures.push(`${label}: citation map is ${map.width.toFixed(1)}px wide`);
+  if (width === 390 && shown.width < 900) {
+    failures.push(`${label}: citation map is ${shown.width.toFixed(1)}px wide`);
   }
   if (map.hiddenSentence) {
     failures.push(`${label}: the narrow-screen hide sentence is still on the page`);

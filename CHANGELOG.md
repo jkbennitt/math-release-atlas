@@ -6,6 +6,7 @@
 - The share-card alt for a release list includes the protocol-soundness count.
 - The Fermat count line says "Lean files (P2M)" for the files under `P2M/`.
 - The Chrome for Testing zip check also refuses symlink members and paths that contain a backslash.
+- The layout check measures the canvas citation map when the browser draws HTML inside a canvas. A hidden SVG with no visible canvas still fails, and the narrow map still has to be at least 900px wide.
 
 ## 0.5.0
 
