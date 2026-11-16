@@ -317,6 +317,11 @@ async function checkDrawable(page) {
   if (flatNames.size !== expected) {
     fail(`drawable: flat canvas tab order visited ${flatNames.size} family labels, expected ${expected}`);
   }
+  await page.keyboard.press("Tab");
+  const flatAfter = await focusState(page);
+  if (flatAfter.label || flatAfter.svg) {
+    fail(`drawable: tab left the labels onto another map link (${flatAfter.text})`);
+  }
 }
 
 async function checkReduced(browser, url) {
