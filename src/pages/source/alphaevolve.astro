@@ -10,7 +10,7 @@ const commit = record.source.commit;
 
 <Base
   title="AlphaEvolve · Math Release Atlas"
-  description="Notebook-checked constructions from AlphaEvolve. This tree has no Lean files. The README paper link is still TODO."
+  description="Notebook-checked constructions from AlphaEvolve. This tree has no Lean files. The README links arXiv 2506.13131."
 >
   <article class="prose source-page">
     <p class="meta"><a href={`${base}source/`}>All sources</a></p>
@@ -22,6 +22,12 @@ const commit = record.source.commit;
     <p>
       {record.source.org}. Repository{" "}
       <a href={record.source.repo}>{record.source.repo}</a>.
+      {record.source.paper ? (
+        <>
+          {" "}
+          Paper <a href={record.source.paper}>{record.source.paper}</a>.
+        </>
+      ) : null}
       Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
       ({shortSha(commit)}), committed {formatIso(record.commit_date)}, message “{record.commit_subject}”.
     </p>

@@ -476,7 +476,7 @@
     "eth: 2 headline theorems in the comparator configuration.",
     "fermat-last-theorem: 60478 Lean files.",
     "fermat-last-theorem: 29511 theorem files.",
-    "fermat-last-theorem: 29513 pipeline files.",
+    "fermat-last-theorem: 29513 Lean files (P2M).",
     "fermat-last-theorem: 1450 definition files.",
     "flashprove: 29566 Lean files.",
     "flashprove: 29425 first-party Lean files.",
@@ -486,5 +486,5 @@
     "All releases: 1 formalization.",
     "All releases: 1 protocol soundness."
   ],
-  "snapshot_digest": "072c02e976723996be5efff69173e8034116dd62bd33849790cce52bebbed121"
+  "snapshot_digest": "1124a56e7c442e08ea9bd8e3c6057f5e848efc3107896d6ec3c9a8b92fd63dee"
 }

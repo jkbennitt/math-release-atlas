@@ -70,7 +70,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.5.0.
+Package version 0.5.1.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -372,7 +372,9 @@ Shannon capacity of cycle graphs, and cap sets. Uncertainty principles has two
 notebooks. The omega row is a claimed bound on the matrix multiplication
 exponent, checked in exact rational arithmetic by a notebook. Two further rows
 are the matrix-multiplication tensor rank and the tensor support rank. The
-badge says Checked by notebook. The README paper link is still TODO. This
+badge says Checked by notebook. The README links the paper
+[AlphaEvolve: A coding agent for scientific and algorithmic discovery](https://arxiv.org/abs/2506.13131)
+(arXiv 2506.13131). This
 atlas did not run the notebooks. The repository says this is not an official
 Google product.
 

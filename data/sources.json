@@ -156,10 +156,10 @@
       "name": "AlphaEvolve",
       "org": "Google DeepMind",
       "repo": "https://github.com/google-deepmind/alphaevolve",
-      "paper": null,
+      "paper": "https://arxiv.org/abs/2506.13131",
       "license": "Apache-2.0 code; CC-BY 4.0 other materials",
       "sync": "tree-snapshot",
-      "commit": "aafb1e2684f1404c676ad213e4c55ebfceab4908",
+      "commit": "c42694909d50f92cb01c2d50916f022b1c7e74d1",
       "preview": {
         "fragment": "18 notebook-checked constructions from AlphaEvolve (15 maths problems, 19 notebooks, 0 Lean files)",
         "tiles": [
@@ -180,7 +180,7 @@
             "label": "Lean files"
           }
         ],
-        "detail": "Checked by notebook. Not formal Lean artifacts. The README paper link is still TODO.",
+        "detail": "Checked by notebook. Not formal Lean artifacts. The README links the paper.",
         "bindings": [
           {
             "value": "18",

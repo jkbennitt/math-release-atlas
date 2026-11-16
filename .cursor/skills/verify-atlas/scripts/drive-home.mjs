@@ -150,6 +150,27 @@ try {
   if (edges !== 119) fail(`graph listed ${edges} edges`);
   const svgHidden = await graphSvg.getAttribute("hidden");
   notes.push(svgHidden !== null ? "graph map hidden after the canvas labels draw" : "graph map stayed visible");
+  const graph3d = page.locator("#graph-3d");
+  if (existsSync(chrome)) {
+    await graph3d.waitFor({ state: "visible", timeout: 15000 });
+    const before = await textOf(graph3d);
+    if (before !== "3D view") fail(`graph 3d button is ${JSON.stringify(before)}`);
+    await graph3d.click();
+    await page.locator("#graph-3d", { hasText: "Flat map" }).waitFor({ timeout: 15000 });
+    const after = await textOf(graph3d);
+    if (after !== "Flat map") fail(`graph 3d button after click is ${JSON.stringify(after)}`);
+    const spin = await textOf(page.locator("#graph-spin"));
+    if (spin !== "Pause rotation" && spin !== "Resume rotation") {
+      fail(`graph spin control is ${JSON.stringify(spin)}`);
+    }
+    const webglHidden = await page.locator("canvas.graph-webgl").getAttribute("hidden");
+    if (webglHidden !== null) fail("graph webgl canvas stayed hidden after 3D view");
+    notes.push(`graph 3d -> ${after}; spin ${spin}`);
+  } else if ((await graph3d.getAttribute("hidden")) === null) {
+    fail("graph 3d button was visible without the pinned Chrome binary");
+  } else {
+    notes.push("graph 3d stayed hidden");
+  }
   await writeFile(`${evidence}/graph.html`, await page.content());
   await page.screenshot({ path: `${evidence}/graph.png` });
   notes.push(`graph -> 119 edges`);

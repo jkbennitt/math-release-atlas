@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1
+
+- AlphaEvolve is re-pinned to `c42694909d50f92cb01c2d50916f022b1c7e74d1` (2026-11-11, "Edited README."). That commit changes only README.md. It replaces the paper TODO with a link to *AlphaEvolve: A coding agent for scientific and algorithmic discovery* (https://arxiv.org/abs/2506.13131) and replaces the citation TODO with the BibTeX entry `novikov2025alphaevolve` (arXiv 2506.13131). The daily sync guard now requires that link, that citation, and the existing product and license sentences, and it still fails when the README shape changes. The catalogue stays 18 constructions, 15 maths problems, 19 notebooks, and 0 Lean files. The OpenAI, AlphaProof, formal-math, Fermat, and FlashProve pins are unchanged.
+- The share-card alt for a release list includes the protocol-soundness count.
+- The Fermat count line says "Lean files (P2M)" for the files under `P2M/`.
+- The Chrome for Testing zip check also refuses symlink members and paths that contain a backslash.
+
 ## 0.5.0
 
 - Anthropic FlashProve is the fifth Anthropic release, pinned at `9e2bdd8ff5bf9c62f18263d7dac189b0400b260c` (2026-10-30). Jason approved the pin on 2026-11-09. The commit subject is "Initial public release (FlashProve 0.16.0-rc.26)". VERSION says 0.16.0. The license is Apache-2.0. The repository says that version is not maintained. The row is formalized cryptographic-protocol soundness in Lean 4 for a research prototype of a zero-knowledge argument of AI inference (Llama 4 Maverick on one H100). It is not a research-mathematics result. At this commit the tree has 29566 Lean files: 29425 first-party, and 141 under `lean/ThirdParty/` (126 ArkLib, 13 MathlibBackport, 2 other). `lean/CREDITS-FILES.tsv` lists 401 Lean files, a wider set than `lean/ThirdParty/`. The badge says Protocol soundness. The existing OpenAI, AlphaProof, formal-math, and Fermat pins are unchanged.

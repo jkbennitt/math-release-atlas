@@ -277,7 +277,7 @@ def count_lines(payload: dict[str, Any]) -> list[str]:
         f"eth: {eth['headline_theorems']} headline theorems in the comparator configuration.",
         f"fermat-last-theorem: {flt['lean_files']} Lean files.",
         f"fermat-last-theorem: {flt['theorem_files']} theorem files.",
-        f"fermat-last-theorem: {flt['proof_files']} pipeline files.",
+        f"fermat-last-theorem: {flt['proof_files']} Lean files (P2M).",
         f"fermat-last-theorem: {flt['definition_files']} definition files.",
         f"flashprove: {by_id['flashprove']['counts']['lean_files']} Lean files.",
         f"flashprove: {by_id['flashprove']['counts']['first_party_lean_files']} first-party Lean files.",

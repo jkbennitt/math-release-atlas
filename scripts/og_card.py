@@ -534,8 +534,10 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
     if tags:
         formal_phrase += f" ({', '.join(tags)})"
     protocol_phrase = ""
+    protocol_alt = ""
     if protocols:
         protocol_phrase = f", {protocols} protocol"
+        protocol_alt = f", {_plural(protocols, 'protocol')}"
     new_phrase = _plural(len(new_results), "new result")
     release_noun = "release" if total == 1 else "releases"
     who = name if name == org else f"{org} {name}"
@@ -568,7 +570,7 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "clause": f"{total} {who} {release_noun}",
         "alt": (
             f"({with_lean} of {total}; {new_phrase}, "
-            f"{_plural(len(formalizations), 'formalization')})"
+            f"{_plural(len(formalizations), 'formalization')}{protocol_alt})"
         ),
         "segments": [(full, "lean"), (partial, "partial"), (paper, "paper")],
     }

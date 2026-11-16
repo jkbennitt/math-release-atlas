@@ -1,26 +1,26 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-09T18:41:49+00:00",
+  "generated_at": "2026-11-16T15:38:11+00:00",
   "source": {
     "id": "alphaevolve",
     "name": "AlphaEvolve",
     "org": "Google DeepMind",
     "repo": "https://github.com/google-deepmind/alphaevolve",
-    "paper": null,
+    "paper": "https://arxiv.org/abs/2506.13131",
     "license": "Apache-2.0 code; CC-BY 4.0 other materials",
     "sync": "tree-snapshot",
-    "commit": "aafb1e2684f1404c676ad213e4c55ebfceab4908"
+    "commit": "c42694909d50f92cb01c2d50916f022b1c7e74d1"
   },
   "check_wording": "Constructions checked by notebook. This tree has no Lean files. This atlas did not run the notebooks.",
   "badge": "Checked by notebook",
-  "paper_note": "The README paper link is still TODO.",
+  "paper_note": "The README links the paper AlphaEvolve: A coding agent for scientific and algorithmic discovery (arXiv 2506.13131).",
   "product_note": "The repository says this is not an official Google product.",
-  "commit_date": "2026-11-04",
-  "commit_subject": "Initial commit of alphaevolve.",
+  "commit_date": "2026-11-11",
+  "commit_subject": "Edited README.",
   "license_files": [
     {
       "path": "LICENSE",
-      "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/LICENSE",
+      "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/LICENSE",
       "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
     }
   ],
@@ -43,7 +43,7 @@
       "notebooks": [
         {
           "path": "maths/circle_packing/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/circle_packing/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/circle_packing/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -60,7 +60,7 @@
       "notebooks": [
         {
           "path": "maths/erdos_minimum_overlap/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/erdos_minimum_overlap/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/erdos_minimum_overlap/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -77,7 +77,7 @@
       "notebooks": [
         {
           "path": "maths/first_autocorrelation_inequality/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/first_autocorrelation_inequality/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/first_autocorrelation_inequality/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -94,7 +94,7 @@
       "notebooks": [
         {
           "path": "maths/second_autocorrelation_inequality/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/second_autocorrelation_inequality/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/second_autocorrelation_inequality/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -111,7 +111,7 @@
       "notebooks": [
         {
           "path": "maths/third_autocorrelation_inequality/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/third_autocorrelation_inequality/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/third_autocorrelation_inequality/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -128,7 +128,7 @@
       "notebooks": [
         {
           "path": "maths/heilbronn_convex/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/heilbronn_convex/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/heilbronn_convex/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -145,7 +145,7 @@
       "notebooks": [
         {
           "path": "maths/heilbronn_triangle/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/heilbronn_triangle/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/heilbronn_triangle/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -162,7 +162,7 @@
       "notebooks": [
         {
           "path": "maths/hexagon_packing/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/hexagon_packing/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/hexagon_packing/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -179,7 +179,7 @@
       "notebooks": [
         {
           "path": "maths/kissing/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/kissing/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/kissing/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -196,7 +196,7 @@
       "notebooks": [
         {
           "path": "maths/max_min_ratio/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/max_min_ratio/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/max_min_ratio/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -213,7 +213,7 @@
       "notebooks": [
         {
           "path": "maths/sums_and_differences/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/sums_and_differences/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/sums_and_differences/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -230,11 +230,11 @@
       "notebooks": [
         {
           "path": "maths/uncertainty_principles/verification_hermite.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/uncertainty_principles/verification_hermite.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/uncertainty_principles/verification_hermite.ipynb"
         },
         {
           "path": "maths/uncertainty_principles/verification_laguerre.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/uncertainty_principles/verification_laguerre.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/uncertainty_principles/verification_laguerre.ipynb"
         }
       ],
       "scope_notes": [
@@ -251,7 +251,7 @@
       "notebooks": [
         {
           "path": "maths/extremal_girth_5/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/extremal_girth_5/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/extremal_girth_5/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -268,7 +268,7 @@
       "notebooks": [
         {
           "path": "maths/shannon_cycle/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/shannon_cycle/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/shannon_cycle/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -285,7 +285,7 @@
       "notebooks": [
         {
           "path": "maths/cap_sets/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/maths/cap_sets/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/maths/cap_sets/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -302,7 +302,7 @@
       "notebooks": [
         {
           "path": "omega/verification.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/omega/verification.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/omega/verification.ipynb"
         }
       ],
       "scope_notes": [
@@ -319,7 +319,7 @@
       "notebooks": [
         {
           "path": "matmul_tensor_decompositions/verification_rank.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/matmul_tensor_decompositions/verification_rank.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/matmul_tensor_decompositions/verification_rank.ipynb"
         }
       ],
       "scope_notes": [
@@ -336,7 +336,7 @@
       "notebooks": [
         {
           "path": "matmul_tensor_decompositions/verification_support_rank.ipynb",
-          "url": "https://github.com/google-deepmind/alphaevolve/blob/aafb1e2684f1404c676ad213e4c55ebfceab4908/matmul_tensor_decompositions/verification_support_rank.ipynb"
+          "url": "https://github.com/google-deepmind/alphaevolve/blob/c42694909d50f92cb01c2d50916f022b1c7e74d1/matmul_tensor_decompositions/verification_support_rank.ipynb"
         }
       ],
       "scope_notes": [
@@ -344,5 +344,5 @@
       ]
     }
   ],
-  "snapshot_digest": "791d479c3bc9460c085f97482772edb8c60aa53bf62e717ce9f310133adc1b2a"
+  "snapshot_digest": "827f428557bfb95e1f7650c624465f01fe51d0bb7958f57ab765e7e8cbee3a44"
 }
