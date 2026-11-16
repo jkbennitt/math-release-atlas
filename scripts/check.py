@@ -2773,8 +2773,7 @@ def preview_self_test() -> list[str]:
     catalog = read_json(FAMILIES_JSON)
     entries = atlaslib.preview_entries(catalog["sources"]["sources"])
     catalogue_alt = og_card.card_alt(catalog)
-    # 410 is this catalogue after the protocol count. The 420 cap below is unchanged.
-    if len(catalogue_alt) > 410:
+    if len(catalogue_alt) > 400:
         failures.append(
             f"catalogue alt is {len(catalogue_alt)} characters, leaving no room under 420"
         )
@@ -2864,14 +2863,14 @@ def preview_self_test() -> list[str]:
         f"of {family_total} families ({main} main result, {challenge} challenge only, {paper} paper only)"
     )
     file_alt = f"({files} files, {absent} paper only)"
-    def counted(count: int, word: str) -> str:
-        return f"{count} {word}" if count == 1 else f"{count} {word}s"
+    def counted(count: int, singular: str, plural: str | None = None) -> str:
+        word = singular if count == 1 else (plural if plural is not None else f"{singular}s")
+        return f"{count} {word}"
 
     release_alt = (
-        f"({with_lean} of {len(releases)}; {counted(new_results, 'new result')}, "
+        f"{with_lean} of {len(releases)}: {counted(new_results, 'new', 'new')}, "
         f"{counted(formalizations, 'formalization')}"
         + (f", {counted(protocols, 'protocol')}" if protocols else "")
-        + ")"
     )
     for piece in (family_alt, file_alt, release_alt):
         if piece not in catalogue_alt:

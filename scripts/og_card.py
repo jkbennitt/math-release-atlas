@@ -569,8 +569,8 @@ def _release_row(name: str, org: str, block: dict[str, Any]) -> dict[str, Any]:
         "short_caption": short_caption,
         "clause": f"{total} {who} {release_noun}",
         "alt": (
-            f"({with_lean} of {total}; {new_phrase}, "
-            f"{_plural(len(formalizations), 'formalization')}{protocol_alt})"
+            f"{with_lean} of {total}: {_plural(len(new_results), 'new', 'new')}, "
+            f"{_plural(len(formalizations), 'formalization')}{protocol_alt}"
         ),
         "segments": [(full, "lean"), (partial, "partial"), (paper, "paper")],
     }

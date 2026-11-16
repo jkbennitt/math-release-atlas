@@ -307,7 +307,7 @@ function releaseRow(name: string, org: string, block: ShareBlock): ShareRow {
     name,
     org,
     percent: `${percent(withLean, total)}%`,
-    alt: `(${withLean} of ${total}; ${plural(newResults, "new result")}, ${plural(formalizations, "formalization")}${protocols > 0 ? `, ${plural(protocols, "protocol")}` : ""})`,
+    alt: `${withLean} of ${total}: ${plural(newResults, "new", "new")}, ${plural(formalizations, "formalization")}${protocols > 0 ? `, ${plural(protocols, "protocol")}` : ""}`,
   };
 }
 
