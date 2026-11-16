@@ -1433,8 +1433,8 @@ def anthropic_self_test() -> list[str]:
             failures.append("recorded eth release is missing Lean files")
         if any("P2M files" in line for line in recorded["count_lines"]):
             failures.append("Anthropic count line still says P2M files")
-        if not any(line.endswith("pipeline files.") for line in recorded["count_lines"]):
-            failures.append("Anthropic count line dropped the pipeline-files label")
+        if not any(line.endswith("Lean files (P2M).") for line in recorded["count_lines"]):
+            failures.append("Anthropic count line dropped the Lean files (P2M) label")
         for line in recorded["count_lines"]:
             if atlaslib.claim_word_hits(line):
                 failures.append(f"Anthropic count line uses a claim word: {line}")
@@ -2863,8 +2863,14 @@ def preview_self_test() -> list[str]:
         f"of {family_total} families ({main} main result, {challenge} challenge only, {paper} paper only)"
     )
     file_alt = f"({files} files, {absent} paper only)"
+    def counted(count: int, singular: str, plural: str | None = None) -> str:
+        word = singular if count == 1 else (plural if plural is not None else f"{singular}s")
+        return f"{count} {word}"
+
     release_alt = (
-        f"({with_lean} of {len(releases)}; {new_results} new results, {formalizations} formalization)"
+        f"{with_lean} of {len(releases)}: {counted(new_results, 'new', 'new')}, "
+        f"{counted(formalizations, 'formalization')}"
+        + (f", {counted(protocols, 'protocol')}" if protocols else "")
     )
     for piece in (family_alt, file_alt, release_alt):
         if piece not in catalogue_alt:

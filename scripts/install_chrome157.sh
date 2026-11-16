@@ -58,6 +58,7 @@ PY
 mkdir -p "$PREFIX"
 python3 - "$tmpdir/chrome.zip" "$PREFIX" <<'PY'
 import os
+import stat
 import sys
 import zipfile
 
@@ -65,7 +66,7 @@ archive = zipfile.ZipFile(sys.argv[1])
 dest = sys.argv[2]
 for info in archive.infolist():
     rel = info.filename
-    if rel.startswith("/") or ".." in rel.split("/"):
+    if rel.startswith("/") or "\\" in rel or ".." in rel.split("/") or stat.S_ISLNK(info.external_attr >> 16):
         raise SystemExit(f"refusing zip path {rel}")
 archive.extractall(dest)
 for info in archive.infolist():

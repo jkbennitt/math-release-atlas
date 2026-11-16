@@ -192,24 +192,41 @@ async function walkTabs(page, steps, check) {
 async function checkDrawable(page) {
   await page.waitForFunction(() => {
     const svg = document.querySelector("svg.graph-map");
-    const label = document.querySelector("canvas.graph-canvas a.graph-label");
-    const box = label?.getBoundingClientRect();
-    return !!svg?.hasAttribute("hidden") && !!box && box.width > 0 && box.height > 0;
+    const box = svg?.getBoundingClientRect();
+    const button = document.querySelector("#graph-3d");
+    return !!svg && !svg.hasAttribute("hidden") && !!box && box.width >= 1 && box.height >= 1
+      && !!button && !button.hidden && (button.textContent ?? "").includes("3D view");
   });
-  const hiddenDisplay = await page.evaluate(() => getComputedStyle(document.querySelector("svg.graph-map")).display);
-  if (hiddenDisplay !== "none") {
-    fail(`drawable: svg display is ${hiddenDisplay}`);
+  const shown = await page.evaluate(() => {
+    const svg = document.querySelector("svg.graph-map");
+    const box = svg.getBoundingClientRect();
+    const style = getComputedStyle(svg);
+    return {
+      display: style.display,
+      visibility: style.visibility,
+      width: box.width,
+      height: box.height,
+    };
+  });
+  if (shown.display === "none" || shown.visibility === "hidden") {
+    fail(`drawable: citation map is hidden (${shown.display}, ${shown.visibility})`);
+  }
+  if (shown.width < 1 || shown.height < 1) {
+    fail(`drawable: citation map is ${shown.width} by ${shown.height}`);
   }
   const spinHidden = await page.locator("#graph-spin").getAttribute("hidden");
-  if (spinHidden === null) fail("drawable: pause control is visible on the flat map");
+  if (spinHidden === null) fail("drawable: pause control is visible on the citation map");
+  const canvasHidden = await page.locator("canvas.graph-canvas").getAttribute("hidden");
+  const webglHidden = await page.locator("canvas.graph-webgl").getAttribute("hidden");
+  if (canvasHidden === null || webglHidden === null) fail("drawable: a canvas is visible before 3D view");
   const exposed = await assertExposed(page, "drawable");
-  if (exposed.some((link) => !link.label || link.svg || !link.canvas.includes("graph-canvas"))) {
-    fail("drawable: an exposed map link is not a canvas family label");
+  if (exposed.some((link) => link.label || !link.svg)) {
+    fail("drawable: an exposed map link is not an SVG family link");
   }
   await page.locator("#graph-3d").focus();
   const tabs = await walkTabs(page, expected, (state) => {
-    if (!state.label || state.svg || !state.canvas.includes("graph-canvas")) {
-      return `drawable: tab landed on ${state.text || state.id || "an unnamed control"} instead of a canvas label`;
+    if (!state.svg || state.label) {
+      return `drawable: tab landed on ${state.text || state.id || "an unnamed control"} instead of an SVG family link`;
     }
     return "";
   });
@@ -268,6 +285,42 @@ async function checkDrawable(page) {
     if (after < before + 40) {
       fail(`drawable: wheel over the 3D view did not scroll the page (${before} to ${after})`);
     }
+  }
+
+  await page.setViewportSize({ width: 1280, height: 1600 });
+  await page.locator("#graph-3d").click();
+  await page.waitForFunction(() => {
+    const svg = document.querySelector("svg.graph-map");
+    const label = document.querySelector("canvas.graph-canvas a.graph-label");
+    const box = label?.getBoundingClientRect();
+    const button = document.querySelector("#graph-3d");
+    return !!svg?.hasAttribute("hidden")
+      && !!box && box.width > 0 && box.height > 0
+      && (button?.textContent ?? "").includes("3D view");
+  });
+  const flatDisplay = await page.evaluate(() => getComputedStyle(document.querySelector("svg.graph-map")).display);
+  if (flatDisplay !== "none") fail(`drawable: flat canvas left the svg display as ${flatDisplay}`);
+  const spinAfter = await page.locator("#graph-spin").getAttribute("hidden");
+  if (spinAfter === null) fail("drawable: pause control stays visible on the flat canvas");
+  const flatLinks = await assertExposed(page, "drawable flat canvas");
+  if (flatLinks.some((link) => !link.label || link.svg || !link.canvas.includes("graph-canvas"))) {
+    fail("drawable: flat canvas exposed a link that is not a canvas family label");
+  }
+  await page.locator("#graph-3d").focus();
+  const flatTabs = await walkTabs(page, expected, (state) => {
+    if (!state.label || state.svg || !state.canvas.includes("graph-canvas")) {
+      return `drawable: flat canvas tab landed on ${state.text || state.id || "an unnamed control"} instead of a canvas label`;
+    }
+    return "";
+  });
+  const flatNames = new Set(flatTabs.map((state) => state.text));
+  if (flatNames.size !== expected) {
+    fail(`drawable: flat canvas tab order visited ${flatNames.size} family labels, expected ${expected}`);
+  }
+  await page.keyboard.press("Tab");
+  const flatAfter = await focusState(page);
+  if (flatAfter.label || flatAfter.svg) {
+    fail(`drawable: tab left the labels onto another map link (${flatAfter.text})`);
   }
 }
 

@@ -70,7 +70,7 @@ any built page is missing `og:image` or `twitter:card`, if `og:image` or
 `og:image:alt` is over 420 characters, if `twitter:description` or
 `og:description` is over 200 characters, or if `twitter:title` is over 70
 characters.
-Package version 0.5.0.
+Package version 0.5.1.
 
 To regenerate the catalogue from a clone that is already at the commit you
 want:
@@ -172,16 +172,17 @@ URL as its receipt. Counts on the graph page come from that merged data.
 When a shared-topic link is rendered, the label is “our grouping, not a
 citation.”
 
-On a browser that can draw HTML inside a canvas, the map labels are those
-same family links, present in the page HTML. The earlier map leaves the tab
-order. A 3D view draws the same edges and keeps the labels as HTML in the
-scene. A pause control stops the turn, and the view starts paused when the
-browser asks for reduced motion. The page can still scroll past that view.
-It adds no edges. Browsers without that canvas keep the earlier map, and the
-3D control stays hidden. Three.js is packaged with the site. The graph page
-does not load a script, stylesheet, or font from another origin. The build
-checks the label links, rejects an asset URL on another origin, and checks
-that the map exposes one link per family.
+The citation map stays visible at load. On a browser that can draw HTML
+inside a canvas, a 3D view draws the same edges and keeps the family labels
+as HTML in the scene. A pause control stops the turn, and the view starts
+paused when the browser asks for reduced motion. The page can still scroll
+past that view. It adds no edges. Choosing Flat map draws those same family
+links in the canvas, and the earlier map leaves the tab order. Browsers
+without that canvas keep the map, and the 3D control stays hidden. Three.js
+is packaged with the site. The graph page does not load a script, stylesheet,
+or font from another origin. The build checks the label links, rejects an
+asset URL on another origin, and checks that the map exposes one link per
+family.
 
 ## Checks
 
@@ -372,7 +373,9 @@ Shannon capacity of cycle graphs, and cap sets. Uncertainty principles has two
 notebooks. The omega row is a claimed bound on the matrix multiplication
 exponent, checked in exact rational arithmetic by a notebook. Two further rows
 are the matrix-multiplication tensor rank and the tensor support rank. The
-badge says Checked by notebook. The README paper link is still TODO. This
+badge says Checked by notebook. The README links the paper
+[AlphaEvolve: A coding agent for scientific and algorithmic discovery](https://arxiv.org/abs/2506.13131)
+(arXiv 2506.13131). This
 atlas did not run the notebooks. The repository says this is not an official
 Google product.
 

@@ -108,7 +108,14 @@ const commit = atlas.upstream.commit;
       AlphaEvolve is a separate DeepMind source, next to AlphaProof Nexus. Each row is one
       construction from the pinned tree. The maths directory, the matrix-multiplication exponent
       notebook, and the tensor-decomposition notebooks are checked by notebook. This tree has no
-      Lean files. The README paper link is still TODO. This atlas did not run the notebooks.
+      Lean files. {atlas.alphaevolve.paper_note}
+      {atlas.alphaevolve.source.paper ? (
+        <>
+          {" "}
+          <a href={atlas.alphaevolve.source.paper}>{atlas.alphaevolve.source.paper}</a>.
+        </>
+      ) : null}{" "}
+      This atlas did not run the notebooks.
       The repository says this is not an official Google product.
     </p>
     <p>

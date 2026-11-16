@@ -33,8 +33,16 @@ ALPHAEVOLVE_JSON = ROOT / "data" / "alphaevolve.json"
 ALPHAEVOLVE_URL = "https://github.com/google-deepmind/alphaevolve.git"
 ALPHAEVOLVE_WEB = "https://github.com/google-deepmind/alphaevolve"
 ALPHAEVOLVE_SOURCE_ID = "alphaevolve"
-PAPER_TODO = "TODO(franrruiz): Add link to paper."
-PAPER_NOTE = "The README paper link is still TODO."
+PAPER_URL = "https://arxiv.org/abs/2506.13131"
+PAPER_TITLE = "AlphaEvolve: A coding agent for scientific and algorithmic discovery"
+PAPER_MARKDOWN = f"[*{PAPER_TITLE}*]({PAPER_URL})"
+PAPER_CITE = "@misc{novikov2025alphaevolve,"
+PAPER_EPRINT = "eprint={2506.13131},"
+PAPER_BIB_URL = f"url={{{PAPER_URL}}},"
+PAPER_NOTE = (
+    "The README links the paper "
+    "AlphaEvolve: A coding agent for scientific and algorithmic discovery (arXiv 2506.13131)."
+)
 PRODUCT_NOTE = "The repository says this is not an official Google product."
 CHECK_WORDING = (
     "Constructions checked by notebook. This tree has no Lean files. "
@@ -256,7 +264,7 @@ def alphaevolve_preview(payload: dict[str, Any]) -> dict[str, Any]:
             {"value": str(notebooks), "label": "notebooks"},
             {"value": str(lean), "label": "Lean files"},
         ],
-        "detail": "Checked by notebook. Not formal Lean artifacts. The README paper link is still TODO.",
+        "detail": "Checked by notebook. Not formal Lean artifacts. The README links the paper.",
         "bindings": [
             {"value": str(records), "path": ["alphaevolve", "counts", "records"]},
             {"value": str(problems), "path": ["alphaevolve", "counts", "maths_problems"]},
@@ -266,15 +274,28 @@ def alphaevolve_preview(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _require_paper(readme: str) -> str:
+    """The README names one paper. Any other shape stops the build."""
+    if "TODO(franrruiz)" in readme or "Add link to paper." in readme or "Add citation." in readme:
+        raise AtlasError("AlphaEvolve README still marks the paper link as TODO")
+    if "This repository accompanies the paper:" not in readme:
+        raise AtlasError("AlphaEvolve README no longer introduces the paper")
+    if readme.count(PAPER_MARKDOWN) != 1:
+        raise AtlasError("AlphaEvolve README paper link is not the arXiv 2506.13131 link")
+    if readme.count(PAPER_CITE) != 1 or readme.count(PAPER_EPRINT) != 1 or readme.count(PAPER_BIB_URL) != 1:
+        raise AtlasError("AlphaEvolve README citation is not novikov2025alphaevolve")
+    if readme.count(PAPER_URL) != 2:
+        raise AtlasError("AlphaEvolve README arXiv link count is not the paper link plus the citation")
+    return PAPER_URL
+
+
 def assemble(paths: list[str], files: dict[str, str], commit: str, commit_date: str, commit_subject: str) -> dict[str, Any]:
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise AtlasError("AlphaEvolve commit must be a full sha")
     readme = files["README.md"]
-    if PAPER_TODO not in readme:
-        raise AtlasError("AlphaEvolve README no longer marks the paper link as TODO")
+    paper = _require_paper(readme)
     if "not an official Google product" not in readme:
         raise AtlasError("AlphaEvolve README no longer says it is not an official Google product")
-        raise AtlasError("AlphaEvolve README no longer marks the paper link as TODO")
     if "Creative Commons Attribution 4.0" not in readme:
         raise AtlasError("AlphaEvolve README does not name CC-BY 4.0")
     lean = [path for path in paths if path.endswith(".lean")]
@@ -296,7 +317,7 @@ def assemble(paths: list[str], files: dict[str, str], commit: str, commit_date: 
             "name": "AlphaEvolve",
             "org": "Google DeepMind",
             "repo": ALPHAEVOLVE_WEB,
-            "paper": None,
+            "paper": paper,
             "license": "Apache-2.0 code; CC-BY 4.0 other materials",
             "sync": "tree-snapshot",
             "commit": commit,
@@ -351,8 +372,8 @@ def assert_alphaevolve(
     source = payload.get("source")
     if not isinstance(source, dict) or source.get("id") != ALPHAEVOLVE_SOURCE_ID:
         raise AtlasError("alphaevolve source is missing")
-    if source.get("paper") is not None:
-        raise AtlasError("AlphaEvolve paper link is not in the README")
+    if source.get("paper") != PAPER_URL:
+        raise AtlasError("AlphaEvolve paper link is not the arXiv 2506.13131 link")
     if payload.get("check_wording") != CHECK_WORDING or payload.get("badge") != BADGE:
         raise AtlasError("AlphaEvolve wording drifted")
     if payload.get("paper_note") != PAPER_NOTE or payload.get("product_note") != PRODUCT_NOTE:
