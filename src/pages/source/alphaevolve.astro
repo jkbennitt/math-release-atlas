@@ -28,12 +28,15 @@ const commit = record.source.commit;
           Paper <a href={record.source.paper}>{record.source.paper}</a>.
         </>
       ) : null}
+      {" "}
       Commit <a href={`${record.source.repo}/commit/${commit}`}><code>{commit}</code></a>{" "}
       ({shortSha(commit)}), committed {formatIso(record.commit_date)}, message “{record.commit_subject}”.
     </p>
     <p class="summary-lead">
       {counts.records} constructions at this commit: {counts.maths_problems} maths problems,
+      {" "}
       {counts.notebooks} notebooks, {counts.lean_files} Lean files.
+      {" "}
       {record.paper_note} {record.product_note}
     </p>
     <p class="meta">License: {record.source.license}. Sync: {record.source.sync}.</p>
