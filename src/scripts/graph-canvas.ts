@@ -316,6 +316,22 @@ export function mountGraph(): void {
     }
   }
 
+  // The citation map stays on screen at load. Chrome 157 can draw the canvas
+  // labels, and opening that canvas here would set the SVG to display:none.
+  function showCitationMap(): void {
+    view = "flat";
+    flat.hidden = true;
+    space.hidden = true;
+    showMap();
+    stage.classList.remove("is-live", "is-space");
+    showSpin(false);
+    button.hidden = false;
+    button.disabled = false;
+    button.setAttribute("aria-pressed", "false");
+    button.textContent = buttonLabel("flat");
+    showNote();
+  }
+
   button.addEventListener("click", () => {
     if (view === "flat") {
       void showSpace();
@@ -340,5 +356,5 @@ export function mountGraph(): void {
     }
   });
 
-  showFlat();
+  showCitationMap();
 }
